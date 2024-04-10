@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using ProgressSystem.GameEvents.Events;
 using ProgressSystem.UIEditor.ExtraUI;
 using RUIModule.RUIElements;
+using System.Collections.Generic;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.ID;
@@ -12,6 +13,7 @@ namespace ProgressSystem.UIEditor
     public class EventEditor : ContainerElement
     {
         internal static EventEditor Ins;
+        internal static HashSet<Vector2> GEPos = [];
         public EventEditor() => Ins = this;
         private UIContainerPanel eventView;
         private bool dragging;
@@ -121,6 +123,14 @@ namespace ProgressSystem.UIEditor
                 };
                 ge.Events.OnLeftDown += evt => dragging = true;
                 ge.Events.OnLeftUp += evt => dragging = false;
+                Vector2 pos = Vector2.Zero;
+                while (GEPos.Contains(pos))
+                {
+                    pos.X++;
+                }
+                ge.pos = pos;
+                ge.SetPos(pos * 80);
+                GEPos.Add(pos);
                 eventView.AddElement(ge);
             };
             taskPanel.Register(create);

@@ -15,14 +15,13 @@ namespace ProgressSystem.UIEditor.ExtraUI
     {
         public GameEvent ge;
         private bool dragging;
-        private Vector2 oldPos;
+        private Vector2 oldlocal;
         public Texture2D Icon;
         /// <summary>
         /// 吸附位置
         /// </summary>
         private Vector2? adsorption;
-        private UIVnlPanel right;
-        public Vector2 Pos { get; private set; }
+        public Vector2 pos;
         public UIGESlot(GameEvent ge = null, Texture2D tex = null) : base(AssetLoader.Slot)
         {
             this.ge = ge;
@@ -38,7 +37,8 @@ namespace ProgressSystem.UIEditor.ExtraUI
             Events.OnLeftDown += evt =>
             {
                 if (!dragging) dragging = true;
-                oldPos = Main.MouseScreen;
+                oldlocal = Main.MouseScreen;
+                EventEditor.GEPos.Remove(pos);
                 color = Color.White * 0.75f;
             };
             Events.OnLeftUp += evt =>
@@ -47,12 +47,17 @@ namespace ProgressSystem.UIEditor.ExtraUI
                 if (adsorption != null)
                 {
                     SetPos(adsorption.Value * 80);
+                    EventEditor.GEPos.Add(pos);
                     adsorption = null;
                 }
                 color = Color.White;
             };
             Events.OnLeftDoubleClick += evt => dragging = false;
-            Events.OnRightDoubleClick += evt => ParentElement.Remove(this);
+            Events.OnRightDoubleClick += evt =>
+            {
+                ParentElement.Remove(this);
+                EventEditor.GEPos.Remove(pos);
+            };
         }
 
         public override void Update(GameTime gt)
@@ -61,21 +66,25 @@ namespace ProgressSystem.UIEditor.ExtraUI
             if (dragging)
             {
                 Vector2 mouse = Main.MouseScreen;
-                if (oldPos != mouse)
+                if (oldlocal != mouse)
                 {
                     Vector2 origin = ParentElement.HitBox(false).TopLeft();
                     int x = (int)(mouse.X - origin.X) / 80;
                     int y = (int)(mouse.Y - origin.Y) / 80;
                     x = Math.Max(x, 0);
                     y = Math.Max(y, 0);
-                    adsorption = new(x, y);
-                    Pos = adsorption.Value;
+                    Vector2 p = new(x, y);
+                    if (!EventEditor.GEPos.Contains(p))
+                    {
+                        adsorption = new(x, y);
+                        pos = adsorption.Value;
+                    }
                     SetCenter(mouse - origin, false);
                     if (Info.Left.Pixel < 0) Info.Left.Pixel = 0;
                     if (Info.Top.Pixel < 0) Info.Top.Pixel = 0;
                     Calculation();
                 }
-                oldPos = mouse;
+                oldlocal = mouse;
             }
         }
         public override void Calculation()
@@ -94,7 +103,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
             {
                 sb.SimpleDraw(Tex, adsorption.Value * 80 + ParentElement.HitBox(false).TopLeft(), null, Vector2.Zero, color: Color.White * 0.5f);
             }
-            ChatManager.DrawColorCodedStringWithShadow(sb, FontAssets.MouseText.Value, Pos.ToString(),
+            ChatManager.DrawColorCodedStringWithShadow(sb, FontAssets.MouseText.Value, pos.ToString(),
                 hitbox.TopLeft() + new Vector2(0, 55), Color.White, 0, Vector2.Zero, Vector2.One, -1, 1.5f);
         }
     }
