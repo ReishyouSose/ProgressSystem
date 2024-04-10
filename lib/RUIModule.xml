@@ -1,0 +1,738 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>RUIModule</name>
+    </assembly>
+    <members>
+        <member name="T:RUIModule.RUIElements.BaseUIElement.PositionStyle">
+            <summary>
+            表示位置信息
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.PositionStyle.Pixel">
+            <summary>
+            绝对距离，单位为像素
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.PositionStyle.Percent">
+            <summary>
+            相对距离
+            </summary>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.PositionStyle.GetPixelBaseParent(System.Single)">
+            <summary>
+            获取基于输入参数的精确坐标
+            </summary>
+            <param name="pixel">输入参数</param>
+            <returns></returns>
+        </member>
+        <member name="T:RUIModule.RUIElements.BaseUIElement.ElementInfo">
+            <summary>
+            储存位置、大小等信息
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.Left">
+            <summary>
+            左坐标
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.Top">
+            <summary>
+            上坐标
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.Width">
+            <summary>
+            宽度
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.Height">
+            <summary>
+            高度
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.LeftMargin">
+            <summary>
+            左边距
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.RightMargin">
+            <summary>
+            右边距
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.TopMargin">
+            <summary>
+            上边距
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.ButtomMargin">
+            <summary>
+            下边距
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.HiddenOverflow">
+            <summary>
+            是否隐藏溢出
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.IsVisible">
+            <summary>
+            UI部件是否激活
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.IsHidden">
+            <summary>
+            UI部件是否隐藏（不调用 DrawSelf 方法）
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.IsSensitive">
+            <summary>
+            是否敏感（触发子元素事件时同时触发此元素事件）
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.CanBeInteract">
+            <summary>
+            是否可以被交互
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.InitDone">
+            <summary>
+            指示实际坐标与实际大小是否已经经过计算
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.Location">
+            <summary>
+            实际坐标（被内边距裁切过）
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.Size">
+            <summary>
+            实际大小（被内边距裁切过）
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.TotalLocation">
+            <summary>
+            实际坐标（无内边距裁切）
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.TotalSize">
+            <summary>
+            实际大小（无内边距裁切）
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.HitBox">
+            <summary>
+            碰撞箱（被内边距裁切过）
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.ElementInfo.TotalHitBox">
+            <summary>
+            完整碰撞箱（无内边距裁切）
+            </summary>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.ElementInfo.SetMargin(System.Single)">
+            <summary>
+            设置内边距
+            </summary>
+            <param name="pixel">以像素为单位的内边距</param>
+        </member>
+        <member name="T:RUIModule.RUIElements.BaseUIElement.ElementEvents">
+            <summary>
+            储存事件
+            </summary>
+        </member>
+        <member name="T:RUIModule.RUIElements.BaseUIElement.ElementEvents.UIMouseEvent">
+            <summary>
+            被鼠标点击的委托
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.OnLeftClick">
+            <summary>
+            左键点击UI的事件（按下时触发）
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.OnRightClick">
+            <summary>
+            右键点击UI的事件（按下时触发）
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.OnLeftDoubleClick">
+            <summary>
+            左键双击UI的事件
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.OnRightDoubleClick">
+            <summary>
+            右键双击UI的事件
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.OnLeftDown">
+            <summary>
+            鼠标左键按下的事件
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.OnLeftUp">
+            <summary>
+            鼠标左键抬起的事件
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.OnRightDown">
+            <summary>
+            鼠标右键按下的事件
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.OnRightUp">
+            <summary>
+            鼠标右键抬起的事件
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.UnLeftClick">
+            <summary>
+            左键点击UI的事件（鼠标不在UI内）（按下时触发）
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.UnRightClick">
+            <summary>
+            右键点击UI的事件（鼠标不在UI内）（按下时触发）
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.UnLeftDoubleClick">
+            <summary>
+            左键双击UI的事件（鼠标不在UI内）
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.UnRightDoubleClick">
+            <summary>
+            右键双击UI的事件（鼠标不在UI内）
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.UnLeftDown">
+            <summary>
+            鼠标左键按下的事件（鼠标不在UI内）
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.UnLeftUp">
+            <summary>
+            鼠标左键抬起的事件（鼠标不在UI内）
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.UnRightDown">
+            <summary>
+            鼠标右键按下的事件（鼠标不在UI内）
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.UnRightUp">
+            <summary>
+            鼠标右键抬起的事件（鼠标不在UI内）
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.OnMouseOver">
+            <summary>
+            鼠标进入UI时的事件
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.BaseUIElement.ElementEvents.OnMouseOut">
+            <summary>
+            鼠标离开UI时的事件
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.events">
+            <summary>
+            事件管理
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.Info">
+            <summary>
+            UI信息
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.defInfo">
+            <summary>
+            注册时默认UI信息
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUIElements.BaseUIElement.ParentElement">
+            <summary>
+            上一级UI部件
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUIElements.BaseUIElement.ChildrenElements">
+            <summary>
+            下一级UI部件
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUIElements.BaseUIElement.IsVisible">
+            <summary>
+            指示此UI部件是否激活
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUIElements.BaseUIElement.HiddenOverflowRectangle">
+            <summary>
+            溢出隐藏的裁切矩形
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUIElements.BaseUIElement.Events">
+            <summary>
+            事件管理器
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.DrawRec">
+            <summary>
+            是否绘制UI碰撞箱，0是整框，1是内框
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.id">
+            <summary>
+            用于某些时候排序
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.BaseUIElement.PreLoadEvents">
+            <summary>
+            可用于阻止元素自身的事件注册
+            </summary>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.LoadEvents">
+            <summary>
+            加载事件
+            </summary>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.OnInitialization">
+            <summary>
+            初始化UI部件, 不要删除Base
+            </summary>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.PreUpdate(Microsoft.Xna.Framework.GameTime)">
+            <summary>
+            用于执行逻辑的更新方法（不受IsVisible限制）
+            </summary>
+            <param name="gt"></param>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.Update(Microsoft.Xna.Framework.GameTime)">
+            <summary>
+            用于执行逻辑的更新方法（受IsVisible限制）
+            </summary>
+            <param name="gt"></param>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.Draw(Microsoft.Xna.Framework.Graphics.SpriteBatch)">
+            <summary>
+            绘制
+            </summary>
+            <param name="sb">画笔</param>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.DrawSelf(Microsoft.Xna.Framework.Graphics.SpriteBatch)">
+            <summary>
+            绘制自己
+            </summary>
+            <param name="sb">画笔</param>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.DrawChildren(Microsoft.Xna.Framework.Graphics.SpriteBatch)">
+            <summary>
+            绘制子元素
+            </summary>
+            <param name="sb">画笔</param>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.Register(RUIModule.RUIElements.BaseUIElement)">
+            <summary>
+            添加子元素
+            </summary>
+            <param name="element">需要添加的子元素</param>
+            <returns>成功时返回true，否则返回false</returns>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.Remove(RUIModule.RUIElements.BaseUIElement)">
+            <summary>
+            移除子元素
+            </summary>
+            <param name="element">需要移除的子元素</param>
+            <returns>成功时返回true，否则返回false</returns>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.RemoveAll">
+            <summary>
+            移除所有子元素
+            </summary>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.Calculation">
+            <summary>
+            将相对坐标计算为具体坐标
+            </summary>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.ContainsPoint(Microsoft.Xna.Framework.Point)">
+            <summary>
+            此UI部件是否包含点
+            </summary>
+            <param name="point">输入的点</param>
+            <returns>如果包含返回true，否则返回false</returns>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.ContainsPoint(Microsoft.Xna.Framework.Vector2)">
+            <summary>
+            此UI部件是否包含点
+            </summary>
+            <param name="point">输入的点</param>
+            <returns>如果包含返回true，否则返回false</returns>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.GetElementsContainsPoint(Microsoft.Xna.Framework.Point)">
+            <summary>
+            获取在点上的UI部件及上级敏感部件
+            </summary>
+            <param name="point">输入的点</param>
+            <returns>包含点上的UI部件及敏感部件的集合</returns>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.GetAllChilds">
+            <summary>
+            获取所有部件
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.ForEach(System.Action{RUIModule.RUIElements.BaseUIElement})">
+            <summary>
+            使此UI部件包括其所有UI部件执行输入的方法
+            </summary>
+            <param name="action">输入的方法</param>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.GetCanHitBox">
+            <summary>
+            获取被父部件裁切过的碰撞箱
+            </summary>
+            <returns>被父部件裁切过的碰撞箱</returns>
+        </member>
+        <member name="M:RUIModule.RUIElements.BaseUIElement.GetParentElementIsHiddenOverflow">
+            <summary>
+            获取此元素与父元素是否开启溢出隐藏
+            </summary>
+            <returns>如果有则返回true，否则返回false</returns>
+        </member>
+        <member name="F:RUIModule.RUIElements.UIContainerPanel.autoPos">
+            <summary>
+            0纵1横2全，配合<see cref="F:RUIModule.RUIElements.UIContainerPanel.spaceX"/>与<see cref="F:RUIModule.RUIElements.UIContainerPanel.spaceY"/>使用自动间隔
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUIElements.UIFuncText.Style">
+            <summary>
+            0是中心绘制，1是左上角起始，2是左中
+            </summary>
+        </member>
+        <member name="M:RUIModule.RUIElements.UIIconSlot.#ctor(Microsoft.Xna.Framework.Graphics.Texture2D,System.Int32)">
+            <summary>
+            蓝底0，选中9
+            <br/>红底1，选中18
+            <br/>金底13，选中16
+            <br/>绿2，枯绿5，暗绿7
+            <br/>蓝紫3，深蓝8，湖蓝14，灰蓝6，暗蓝11
+            <br/>暗红4，深红10
+            <br/>白12，白框15，空白17
+            </summary>
+        </member>
+        <member name="T:RUIModule.RUIElements.UIImage.CalculationStyle">
+            <summary>
+            计算实际位置时的方式
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.UIImage.CalculationStyle.None">
+            <summary>
+            默认
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.UIImage.CalculationStyle.LockAspectRatioMainWidth">
+            <summary>
+            锁定宽高比，以宽为参考轴
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.UIImage.CalculationStyle.LockAspectRatioMainHeight">
+            <summary>
+            锁定宽高比，以高为参考轴
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUIElements.UIImage.DrawStyle">
+            <summary>
+            0是铺满，1是中心
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.UIItem.Ignore">
+            <summary>
+            是否忽视堆叠显示限制
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUIElements.UIItemSlot.SlotBackTexture">
+            <summary>
+            框贴图
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUIElements.UIItemSlot.CanPutInSlot">
+            <summary>
+            是否可以放置物品
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUIElements.UIItemSlot.CanTakeOutSlot">
+            <summary>
+            是否可以拿去物品
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUIElements.UIItemSlot.Infinity">
+            <summary>
+            物品无限拿取
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUIElements.UIItemSlot.ContainedItem">
+            <summary>
+            框内物品
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUIElements.UIItemSlot.CornerSize">
+            <summary>
+            框的绘制的拐角尺寸
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUIElements.UIItemSlot.DrawColor">
+            <summary>
+            绘制颜色
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUIElements.UIItemSlot.Tooltip">
+            <summary>
+            介绍
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.UIItemSlot.PostExchangeItem">
+            <summary>
+            更改物品时调用
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.UIItemSlot.OnPickItem">
+            <summary>
+            玩家拿取物品时调用
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUIElements.UIItemSlot.OnPutItem">
+            <summary>
+            玩家放入物品时调用
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUIElements.UIItemSlot.Opacity">
+            <summary>
+            透明度
+            </summary>
+        </member>
+        <member name="M:RUIModule.RUIElements.UIItemSlot.#ctor(Terraria.Item,Microsoft.Xna.Framework.Graphics.Texture2D)">
+            <param name="texture"></param>
+        </member>
+        <member name="M:RUIModule.RUIElements.UIItemSlot.DrawAdvBox(Microsoft.Xna.Framework.Graphics.SpriteBatch,System.Int32,System.Int32,System.Int32,System.Int32,Microsoft.Xna.Framework.Color,Microsoft.Xna.Framework.Graphics.Texture2D,Microsoft.Xna.Framework.Vector2,System.Single)">
+            <summary>
+            绘制物品框
+            </summary>
+            <param name="sp"></param>
+            <param name="x"></param>
+            <param name="y"></param>
+            <param name="w"></param>
+            <param name="h"></param>
+            <param name="c"></param>
+            <param name="img"></param>
+            <param name="size4"></param>
+            <param name="scale"></param>
+        </member>
+        <member name="M:RUIModule.RUIElements.UISideBar.#ctor(System.Single,System.Single,System.Int32)">
+            <param name="dir">0123顺转四向</param>
+        </member>
+        <member name="M:RUIModule.RUIElements.UIText.#ctor(System.String,System.Nullable{Microsoft.Xna.Framework.Color},System.Nullable{Microsoft.Xna.Framework.Vector2},System.Int32,System.Int32,ReLogic.Graphics.DynamicSpriteFont)">
+            <summary>
+            
+            </summary>
+            <param name="text"></param>
+            <param name="color"></param>
+            <param name="drawStyle">0是从左上角，1是从中心，2是从左中</param>
+            <param name="maxWidth">-2则为使用相对父级的宽度来限制</param>
+        </member>
+        <member name="M:RUIModule.RUIHelper.GetPath(System.Object,System.Boolean)">
+            <summary>
+            自动命名空间路径
+            </summary>
+            <param name="type"></param>
+            <param name="name">是否自带类名</param>
+            <returns></returns>
+        </member>
+        <member name="M:RUIModule.RUIHelper.GetPath``1(System.Boolean)">
+            <summary>
+            上面那个的静态版本
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="name"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RUIModule.RUIHelper.GetPath(System.Object,System.String)">
+            <summary>
+            自动命名空间路径
+            </summary>
+            <param name="type"></param>
+            <param name="fileName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RUIModule.RUIHelper.ScaleRec(Microsoft.Xna.Framework.Rectangle,Microsoft.Xna.Framework.Matrix)">
+            <summary>
+            让矩形整体被矩阵缩放
+            </summary>
+            <param name="r"></param>
+            <param name="matrix">万恶的缩放矩阵</param>
+            <returns></returns>
+        </member>
+        <member name="M:RUIModule.RUIHelper.Rec3x3(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            
+            </summary>
+            <param name="w">横向单个</param>
+            <param name="h">纵向单个</param>
+            <param name="offset"></param>
+            <returns>从左到右从上到下的裁剪</returns>
+        </member>
+        <member name="M:RUIModule.RUIHelper.DrawLine(Microsoft.Xna.Framework.Graphics.SpriteBatch,Microsoft.Xna.Framework.Vector2,Microsoft.Xna.Framework.Vector2,System.Single,Microsoft.Xna.Framework.Color)">
+            <summary>
+            简易画线
+            </summary>
+            <param name="spriteBatch"></param>
+            <param name="start">起点</param>
+            <param name="end">终点</param>
+            <param name="wide">粗细</param>
+            <param name="color">颜色</param>
+        </member>
+        <member name="M:RUIModule.RUIHelper.AutoScale(Microsoft.Xna.Framework.Vector2,System.Single)">
+            <summary>
+            获取相对于给定大小的自动缩放修正
+            </summary>
+            <returns>用于乘算的修正值</returns>
+        </member>
+        <member name="F:RUIModule.RUISys.AssetLoader.InvSlot">
+            <summary>
+            蓝底0，选中9
+            <br/>红底1，选中18
+            <br/>金底13，选中16
+            <br/>绿2，枯绿5，暗绿7
+            <br/>蓝紫3，深蓝8，湖蓝14，灰蓝6，暗蓝11
+            <br/>暗红4，深红10
+            <br/>白12，白框15，空白17
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUISys.KeyCooldown.CoolDownTime">
+            <summary>
+            冷却的时长
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUISys.RUISystem.Elements">
+            <summary>
+            存放着所有<see cref="T:RUIModule.RUIElements.ContainerElement"/>实例的字典
+            </summary>
+        </member>
+        <member name="P:RUIModule.RUISys.RUISystem.CallOrder">
+            <summary>
+            访问顺序
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUISys.RUISystem.interactContainerElementsBuffer">
+            <summary>
+            交互部件缓存
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUISys.RUISystem.needCallMouseLeftUpElements">
+            <summary>
+            记录需要触发MouseLeftUp事件的部件
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUISys.RUISystem.needCallMouseRightUpElements">
+            <summary>
+            记录需要触发MouseRightUp事件的部件
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUISys.RUISystem.mouseLeftDown">
+            <summary>
+            缓存鼠标左键状态
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUISys.RUISystem.mouseRightDown">
+            <summary>
+            缓存鼠标右键状态
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUISys.RUISystem.mouseLeftCooldown">
+            <summary>
+            鼠标右键冷却
+            </summary>
+        </member>
+        <member name="F:RUIModule.RUISys.RUISystem.mouseRightCooldown">
+            <summary>
+            鼠标左键冷却
+            </summary>
+        </member>
+        <member name="E:RUIModule.RUISys.RUISystem.ExtraDrawOver">
+            <summary>
+            额外的绘制，位于UI上层
+            </summary>
+        </member>
+        <member name="M:RUIModule.RUISys.RUISystem.Load(Terraria.ModLoader.Mod)">
+            <summary>
+            反射加载所有ContainerElement
+            </summary>
+        </member>
+        <member name="M:RUIModule.RUISys.RUISystem.Update(Microsoft.Xna.Framework.GameTime)">
+            <summary>
+            执行逻辑
+            </summary>
+            <param name="gt"></param>
+        </member>
+        <member name="M:RUIModule.RUISys.RUISystem.Draw(Microsoft.Xna.Framework.Graphics.SpriteBatch)">
+            <summary>
+            绘制
+            </summary>
+            <param name="sb">画笔</param>
+        </member>
+        <member name="M:RUIModule.RUISys.RUISystem.Register(RUIModule.RUIElements.ContainerElement)">
+            <summary>
+            添加子元素
+            </summary>
+            <param name="element">需要添加的子元素</param>
+            <returns>成功时返回true，否则返回false</returns>
+        </member>
+        <member name="M:RUIModule.RUISys.RUISystem.Register(System.String,RUIModule.RUIElements.ContainerElement)">
+            <summary>
+            添加子元素
+            </summary>
+            <param name="name">需要添加的子元素的Name</param>
+            <param name="element">需要添加的子元素</param>
+            <returns>成功时返回true，否则返回false</returns>
+        </member>
+        <member name="M:RUIModule.RUISys.RUISystem.Remove(System.String)">
+            <summary>
+            移除子元素
+            </summary>
+            <param name="name">需要移除的子元素的Key</param>
+            <returns>成功时返回true，否则返回false</returns>
+        </member>
+        <member name="M:RUIModule.RUISys.RUISystem.Calculation">
+            <summary>
+            将所有容器相对坐标计算为具体坐标
+            </summary>
+        </member>
+        <member name="M:RUIModule.RUISys.RUISystem.SetContainerTop(System.String)">
+            <summary>
+            将容器置顶
+            </summary>
+            <param name="name">需要置顶的容器Name</param>
+            <returns>成功返回true，否则返回false</returns>
+        </member>
+        <member name="M:RUIModule.RUISys.RUISystem.ExchangeContainer(System.String,System.String)">
+            <summary>
+            交换两个容器的顺序
+            </summary>
+            <param name="name1">容器1的Name</param>
+            <param name="name2">容器2的Name</param>
+            <returns>是否交换成功。成功则返回true，否则返回false</returns>
+        </member>
+        <member name="M:RUIModule.RUISys.RUISystem.FindTopContainer">
+            <summary>
+            寻找开启的顶部容器索引
+            </summary>
+            <returns>开启的顶部容器索引</returns>
+        </member>
+        <member name="M:RUIModule.RUISys.RUISystem.OnResolutionChange">
+            <summary>
+            分辨率改变时
+            </summary>
+        </member>
+    </members>
+</doc>
