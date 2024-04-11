@@ -13,6 +13,8 @@ namespace ProgressSystem
 {
     public class ProgressSystem : Mod
     {
+        internal static ProgressSystem Ins;
+        public ProgressSystem() => Ins = this;
         public override void Load()
         {
             RUIManager.mod = this;

@@ -1,9 +1,11 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using ProgressSystem.GameEvents;
 using ProgressSystem.GameEvents.Events;
 using ProgressSystem.UIEditor.ExtraUI;
 using System.Linq;
 using Terraria.GameContent;
+using Terraria.ModLoader;
 
 namespace ProgressSystem.UIEditor
 {
@@ -72,28 +74,6 @@ namespace ProgressSystem.UIEditor
                     frameSelect.Clear();
                 }
             };
-            /*eventView.Events.OnUpdate += evt =>
-            {
-                if (collision != null)
-                {
-                    tempSelect = [];
-                    foreach (BaseUIElement uie in eventView.InnerUIE)
-                    {
-                        if (uie is UIGESlot ge)
-                        {
-                            if (ge.HitBox().Intersects(collision.selector))
-                            {
-                                tempSelect.Add(ge);
-                                ge.selected = true;
-                            }
-                            else if (!frameSelect.Contains(ge))
-                            {
-                                ge.selected = false;
-                            }
-                        }
-                    }
-                }
-            };*/
             eventView.Events.OnRightUp += evt =>
             {
                 eventView.RemoveElement(collision);
@@ -133,12 +113,12 @@ namespace ProgressSystem.UIEditor
                 eventView.AddElement(vline);
             }
 
-            UIVnlPanel taskPanel = new(200, 100);
+            UIVnlPanel taskPanel = new(200, 300);
             taskPanel.SetCenter(100, 0, 0, 0.5f);
             taskPanel.Info.SetMargin(10);
             Register(taskPanel);
 
-            UIItemSlot itemSlot = new();
+            /*UIItemSlot itemSlot = new();
             itemSlot.Events.OnLeftDown += evt =>
             {
                 if (itemSlot.ContainedItem.type <= 0)
@@ -153,7 +133,19 @@ namespace ProgressSystem.UIEditor
                     itemSlot.ContainedItem.SetDefaults();
                 }
             };
-            taskPanel.Register(itemSlot);
+            taskPanel.Register(itemSlot);*/
+
+            UIDropDownList<UIText> typeSelector = new(null, x => new(x.text));
+            typeSelector.SetSize(0, 30, 1);
+            typeSelector.expandArea.SetPos(0, 100);
+            typeSelector.expandArea.SetSize(0, 100, 1);
+
+
+            var geIns = from c in ProgressSystem.Ins.GetType().Assembly.GetTypes()
+                        where !c.IsAbstract && c.IsSubclassOf(typeof(GameEvent))
+                        select c;
+
+
 
             UIText create = new("创建制造物品任务");
             create.SetSize(create.TextSize);
@@ -162,7 +154,7 @@ namespace ProgressSystem.UIEditor
             create.Events.OnMouseOut += evt => create.color = Color.White;
             create.Events.OnLeftDown += evt =>
             {
-                int id = itemSlot.ContainedItem?.type ?? -1;
+                int id =/* itemSlot.ContainedItem?.type ?? -1*/-1;
                 if (id <= 0) return;
                 CraftItem task = CraftItem.CreateAndSetUp(id);
                 Main.instance.LoadItem(id);
