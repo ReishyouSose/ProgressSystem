@@ -13,11 +13,6 @@
     <PackageReference Include="tModLoader.CodeAssist" Version="0.1.*" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RUIModule\RUIModule\RUIModule.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="RUIModule">
-      <HintPath>lib\RUIModule.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\RUIModule\RUIModule.csproj" />
   </ItemGroup>
 </Project>
