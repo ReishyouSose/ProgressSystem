@@ -3,6 +3,7 @@
 public static class GEM
 {
     static Dictionary<string, GameEvent> _events = [];
+    internal static Dictionary<string, List<ConstructInfoTable<GameEvent>>> _constructInfoTables = [];
     public static bool Register(string uniqueLabel, GameEvent gameEvent, bool cover = true)
     {
         if (cover)
@@ -16,9 +17,8 @@ public static class GEM
     {
         return _events.TryGetValue(uniqueLabel, out gameEvent);
     }
-    public static bool GetConstructorInfoTable(string fullName, out ConstructInfoTable<GameEvent> table)
+    public static bool GetConstructorInfoTable(string fullName, out List<ConstructInfoTable<GameEvent>> table)
     {
-        table = null;
-        return false;
+        return _constructInfoTables.TryGetValue(fullName, out table);
     }
 }

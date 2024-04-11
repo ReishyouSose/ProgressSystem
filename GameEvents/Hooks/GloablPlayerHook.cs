@@ -2,7 +2,7 @@
 
 internal class GloablPlayerHook : ModPlayer
 {
-    public override bool CloneNewInstances => true;
+    protected override bool CloneNewInstances => true;
 
     public override void PostBuyItem(NPC vendor, Item[] shopInventory, Item item)
     {

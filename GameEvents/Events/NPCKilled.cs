@@ -15,8 +15,8 @@ public class NPCKilled : CountInt
     }
     public static void SetUp(NPCKilled @event)
     {
-        GEListener.OnNPCKilled += @event.Complete;
-        @event.OnCompleted += e => GEListener.OnNPCKilled -= @event.Complete;
+        GEListener.OnNPCKilled += @event.TryComplete;
+        @event.OnCompleted += e => GEListener.OnNPCKilled -= @event.TryComplete;
     }
     public static NPCKilled CreateAndSetUp(int netID, int target = 1)
     {
@@ -43,14 +43,11 @@ public class NPCKilled : CountInt
         tag[nameof(NetID)] = NetID;
         base.Save(tag);
     }
-    public override void Complete(params object[] args)
+    public void TryComplete(Player player, NPC npc)
     {
-        if (args.Length > 2 && args[1] is Player player && args[2] is NPC npc)
+        if (npc.netID==NetID)
         {
-            if (npc.netID == NetID)
-            {
-                base.Complete(args);
-            }
+            Increase(1);
         }
     }
 }

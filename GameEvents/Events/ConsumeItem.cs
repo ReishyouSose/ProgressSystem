@@ -16,8 +16,8 @@ public class ConsumeItem : CountInt
 
     public static void SetUp(ConsumeItem @event)
     {
-        GEListener.OnConsumeItem += @event.Complete;
-        @event.OnCompleted += e => GEListener.OnConsumeItem -= @event.Complete;
+        GEListener.OnConsumeItem += @event.TryComplete;
+        @event.OnCompleted += e => GEListener.OnConsumeItem -= @event.TryComplete;
     }
 
     public static ConsumeItem CreateAndSetUp(int type, int target = 1)
@@ -47,14 +47,11 @@ public class ConsumeItem : CountInt
         tag[nameof(Type)] = Type;
         base.Save(tag);
     }
-    public override void Complete(params object[] args)
+    public void TryComplete(Player player, Item item)
     {
-        if (args.Length > 2 && args[1] is Player player && args[2] is Item item)
+        if (item.type == Type)
         {
-            if (item.type == Type)
-            {
-                base.Complete(args);
-            }
+            Increase(1);
         }
     }
 }
