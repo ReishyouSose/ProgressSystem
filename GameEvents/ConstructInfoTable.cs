@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Linq;
 using System.Reflection;
 
 namespace ProgressSystem.GameEvents
@@ -64,7 +63,7 @@ namespace ProgressSystem.GameEvents
         public ConstructInfoTable<T> Clone()
         {
             var table = new ConstructInfoTable<T>(_createFunc);
-            foreach(var entry in _entries)
+            foreach (var entry in _entries)
             {
                 table.AddEntry(new(entry.Type, entry.Name, entry.Important));
             }

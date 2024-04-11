@@ -3,7 +3,8 @@ namespace ProgressSystem.Core;
 /// <summary>
 /// 成就
 /// </summary>
-public class Achievement {
+public class Achievement
+{
     #region Vars
     /// <summary>
     /// 自己所归属的成就页
@@ -37,28 +38,32 @@ public class Achievement {
     /// <summary>
     /// 显示的名字
     /// </summary>
-    public TextGetter DisplayName {
+    public TextGetter DisplayName
+    {
         get => !_displayName.IsNone ? _displayName : _displayName = Mod.GetLocalization($"Achievements.{LocalizedKey}.DisplayName");
         set => _displayName = value;
     }
     /// <summary>
     /// 鼠标移上去时显示的提示
     /// </summary>
-    public TextGetter Tooltip {
+    public TextGetter Tooltip
+    {
         get => !_tooltip.IsNone ? _tooltip : _tooltip = Mod.GetLocalization($"Achievements.{LocalizedKey}.Tooltip");
         set => _tooltip = value;
     }
     /// <summary>
     /// 详细说明
     /// </summary>
-    public TextGetter Description {
+    public TextGetter Description
+    {
         get => !_description.IsNone ? _description : _description = Mod.GetLocalization($"Achievements.{LocalizedKey}.Description");
         set => _description = value;
     }
     /// <summary>
     /// 图片
     /// </summary>
-    public Texture2DGetter Texture {
+    public Texture2DGetter Texture
+    {
         get => !_texture.IsNone ? _texture : _texture = $"{Mod.Name}/Achievements/Textures/{TexturePath}";
         set => _texture = value;
     }
@@ -78,9 +83,12 @@ public class Achievement {
     /// <summary>
     /// 前置任务(都在同一页)
     /// </summary>
-    public IReadOnlyList<Achievement> Predecessors {
-        get {
-            if (predecessors == null) {
+    public IReadOnlyList<Achievement> Predecessors
+    {
+        get
+        {
+            if (predecessors == null)
+            {
                 predecessors = [];
                 _predecessorNames?.ForEach(AddPredecessor);
             }
@@ -97,7 +105,8 @@ public class Achievement {
     /// 设置所有的前置名(覆盖)
     /// </summary>
     /// <param name="predecessorNames"></param>
-    public void SetPredecessorNames(List<string>? predecessorNames) {
+    public void SetPredecessorNames(List<string>? predecessorNames)
+    {
         predecessors = null;
         successors.Clear();
         _predecessorNames = predecessorNames;
@@ -106,8 +115,10 @@ public class Achievement {
     /// 添加一个前置
     /// </summary>
     /// <param name="predecessorName"></param>
-    public void AddPredecessor(string predecessorName) {
-        if(predecessors == null) {
+    public void AddPredecessor(string predecessorName)
+    {
+        if (predecessors == null)
+        {
             (_predecessorNames ??= []).Add(predecessorName);
             return;
         }
@@ -119,17 +130,22 @@ public class Achievement {
     /// 移除一个前置
     /// </summary>
     /// <param name="predecessorName"></param>
-    public void RemovePredecessor(string predecessorName) {
-        if(predecessors == null) {
-            if(_predecessorNames == null) {
+    public void RemovePredecessor(string predecessorName)
+    {
+        if (predecessors == null)
+        {
+            if (_predecessorNames == null)
+            {
                 return;
             }
             _predecessorNames.Remove(predecessorName);
             return;
         }
-        foreach(var i in predecessors.Count) {
+        foreach (var i in predecessors.Count)
+        {
             var predecessor = predecessors[i];
-            if(predecessor.Name != predecessorName) {
+            if (predecessor.Name != predecessorName)
+            {
                 continue;
             }
             predecessor.successors.Remove(this);
@@ -168,15 +184,18 @@ public class Achievement {
     /// <summary>
     /// 判断前置是否完成
     /// </summary>
-    public virtual bool IsPredecessorsMet() {
+    public virtual bool IsPredecessorsMet()
+    {
         int count = Predecessors.Count;
         int needed = (PredecessorCountNeeded ?? count).WithMax(count);
-        if(_predecessorsSaved) {
+        if (_predecessorsSaved)
+        {
             return needed >= 0;
         }
         int sum = Predecessors.Sum(p => p.Completed.ToInt());
         bool saveCondition = sum >= Math.Abs(needed);
-        if(!PredecessorMetNotSaved) {
+        if (!PredecessorMetNotSaved)
+        {
             _predecessorsSaved = saveCondition;
         }
         return needed < 0 ^ saveCondition;
@@ -193,7 +212,8 @@ public class Achievement {
     /// 条件是否满足
     /// </summary>
     /// <returns>默认返回是否所有条件都分别满足</returns>
-    public virtual bool IsRequirementsMet() {
+    public virtual bool IsRequirementsMet()
+    {
         return !Requirements.ForeachDoB(r => !r.Completed);
     }
     #endregion
@@ -209,7 +229,8 @@ public class Achievement {
     /// 一键获得所有奖励
     /// </summary>
     /// <returns>是否全部获取</returns>
-    public bool GetAllReward() {
+    public bool GetAllReward()
+    {
         bool result = true;
         Rewards.ForEach(r => result &= r.Receive());
         OnGetAllReward?.Invoke();
@@ -240,7 +261,8 @@ public class Achievement {
         TextGetter displayName = default,
         TextGetter tooltip = default,
         TextGetter description = default,
-        Texture2DGetter texture = default) {
+        Texture2DGetter texture = default)
+    {
         Mod = mod;
         Page = page;
         Name = name;
@@ -256,8 +278,10 @@ public class Achievement {
 
     public bool Completed { get; protected set; }
     public event Action? OnComplete;
-    public void Complete() {
-        if (Completed) {
+    public void Complete()
+    {
+        if (Completed)
+        {
             return;
         }
         Completed = true;
@@ -268,11 +292,14 @@ public class Achievement {
     /// 在每一个前置完成时被调用
     /// </summary>
     /// <param name="predecessor">前置</param>
-    public virtual void PredecessorCompleted(Achievement predecessor) {
+    public virtual void PredecessorCompleted(Achievement predecessor)
+    {
         CheckCompleted();
     }
-    public virtual void CheckCompleted() {
-        if(!Completed && IsPredecessorsMet() && IsRequirementsMet()) {
+    public virtual void CheckCompleted()
+    {
+        if (!Completed && IsPredecessorsMet() && IsRequirementsMet())
+        {
             Complete();
         }
     }

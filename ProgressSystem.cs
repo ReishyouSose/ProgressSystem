@@ -1,5 +1,6 @@
-global using ProgressSystem.Core;
+global using Microsoft.Xna.Framework;
 global using ProgressSystem.TheUtils;
+global using RUIModule.RUIElements;
 global using RUIModule.RUISys;
 global using System;
 global using System.Collections.Generic;
@@ -9,8 +10,6 @@ global using Terraria.DataStructures;
 global using Terraria.ID;
 global using Terraria.ModLoader;
 global using Terraria.ModLoader.IO;
-global using Microsoft.Xna.Framework;
-global using RUIModule.RUIElements;
 global using static ProgressSystem.TheUtils.TigerClasses;
 global using static ProgressSystem.TheUtils.TigerUtils;
 

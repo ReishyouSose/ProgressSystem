@@ -1,5 +1,4 @@
-﻿using System.Linq;
-namespace ProgressSystem.GameEvents.Events;
+﻿namespace ProgressSystem.GameEvents.Events;
 
 public class AllCompleted : GameEvent
 {

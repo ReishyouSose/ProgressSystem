@@ -7,12 +7,12 @@ namespace ProgressSystem.GameEvents;
 /// </summary>
 public static class GEListener
 {
-    public static event Action<Player,NPC> OnNPCKilled;
-    public static event Action<Player,Item,RecipeItemCreationContext> OnCreateItem;
-    public static event Action<Player,int,int,Tile> OnTileBreak;
-    public static event Action<Player, NPC, Item[] ,Item> OnBuyItem;
-    public static event Action<Player,Item> OnConsumeItem;
-    public static event Action<Player,Item> OnPickItem;
+    public static event Action<Player, NPC> OnNPCKilled;
+    public static event Action<Player, Item, RecipeItemCreationContext> OnCreateItem;
+    public static event Action<Player, int, int, Tile> OnTileBreak;
+    public static event Action<Player, NPC, Item[], Item> OnBuyItem;
+    public static event Action<Player, Item> OnConsumeItem;
+    public static event Action<Player, Item> OnPickItem;
 
     /// <summary>
     /// Set this hook in <see cref="GlobalNPC.HitEffect(NPC, NPC.HitInfo)"/> when <see cref="NPC.life"/> less than 1 if in server 
@@ -37,7 +37,7 @@ public static class GEListener
         var data = TileObjectData.GetTileData(tile);
         if (data is null)
         {
-            OnTileBreak?.Invoke( player, x, y, tile);
+            OnTileBreak?.Invoke(player, x, y, tile);
         }
         else
         {
@@ -53,7 +53,7 @@ public static class GEListener
             {
                 return;
             }
-            OnTileBreak?.Invoke( player, x, y, tile);
+            OnTileBreak?.Invoke(player, x, y, tile);
         }
     }
     internal static void ListenBuyItem(Player player, NPC vendor, Item[] shopInventory, Item item)

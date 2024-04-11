@@ -4,7 +4,8 @@
 /// 成就页
 /// 代表一个显示多个成就的界面
 /// </summary>
-public class AchievementPage {
+public class AchievementPage
+{
 
     #region Vars
     public Mod Mod;
@@ -33,8 +34,10 @@ public class AchievementPage {
 
     #region 锁定
     public bool Locked { get; protected set; }
-    public void Unlock() {
-        if(!Locked) {
+    public void Unlock()
+    {
+        if (!Locked)
+        {
             return;
         }
         Locked = false;
@@ -51,7 +54,8 @@ public class AchievementPage {
     /// </summary>
     /// <param name="mod">添加此成就页的模组</param>
     /// <param name="name">此成就页的内部名</param>
-    private AchievementPage(Mod mod, string name) {
+    private AchievementPage(Mod mod, string name)
+    {
         Mod = mod;
         Name = name;
     }
@@ -62,17 +66,21 @@ public class AchievementPage {
     /// <param name="mod">添加此成就页的模组</param>
     /// <param name="name">此成就页的内部名</param>
     /// <returns>创建的成就页, 若已有同名页则返回此同名页</returns>
-    public static AchievementPage Create(Mod mod, string name) {
+    public static AchievementPage Create(Mod mod, string name)
+    {
         string fullName = string.Join('.', mod.Name, name);
-        if(AchievementManager.Pages.ContainsKey(fullName)) {
+        if (AchievementManager.Pages.ContainsKey(fullName))
+        {
             return AchievementManager.Pages[fullName];
         }
         AchievementPage result = new(mod, name);
         AchievementManager.Pages.Add(fullName, result);
         return result;
     }
-    public static AchievementPage Create(Mod mod, string name, string customFullName) {
-        if(AchievementManager.Pages.ContainsKey(customFullName)) {
+    public static AchievementPage Create(Mod mod, string name, string customFullName)
+    {
+        if (AchievementManager.Pages.ContainsKey(customFullName))
+        {
             return AchievementManager.Pages[customFullName];
         }
         AchievementPage result = new(mod, name) { FullNameOverride = customFullName };
@@ -86,7 +94,8 @@ public class AchievementPage {
     /// <param name="mod">添加此成就页的模组</param>
     /// <param name="name">此成就页的内部名</param>
     /// <returns>创建的成就页, 若已有同名页则替换它</returns>
-    public static AchievementPage ForceCreate(Mod mod, string name) {
+    public static AchievementPage ForceCreate(Mod mod, string name)
+    {
         return AchievementManager.Pages[string.Join('.', mod.Name, name)] = new(mod, name);
     }
 
@@ -96,7 +105,8 @@ public class AchievementPage {
     /// <param name="mod">添加此成就页的模组</param>
     /// <param name="name">此成就页的内部名</param>
     /// <returns>创建的成就页, 若已有同名页则替换它</returns>
-    public static AchievementPage ForceCreate(Mod mod, string name, string customFullName) {
+    public static AchievementPage ForceCreate(Mod mod, string name, string customFullName)
+    {
         return AchievementManager.Pages[customFullName] = new AchievementPage(mod, name) { FullNameOverride = customFullName };
     }
     #endregion
@@ -106,8 +116,10 @@ public class AchievementPage {
     /// </summary>
     /// <param name="achievement">要添加的成就</param>
     /// <returns>是否成功添加(当此成就页内有同名成就时失败)</returns>
-    public bool Add(Achievement achievement) {
-        if(Achievements.ContainsKey(achievement.Name)) {
+    public bool Add(Achievement achievement)
+    {
+        if (Achievements.ContainsKey(achievement.Name))
+        {
             return false;
         }
         Achievements.Add(achievement.Name, achievement);
@@ -119,7 +131,8 @@ public class AchievementPage {
     /// </summary>
     /// <param name="achievementName">成就名</param>
     /// <returns>找到的成就, 若没有这个名字的成就, 则返回<see langword="null"/></returns>
-    public Achievement? Get(string achievementName) {
+    public Achievement? Get(string achievementName)
+    {
         return Achievements.TryGetValue(achievementName, out var result) ? result : null;
     }
 
@@ -128,7 +141,8 @@ public class AchievementPage {
     /// </summary>
     /// <param name="achievementName">成就名</param>
     /// <returns>找到的成就, 若没有这个名字的成就, 则报错</returns>
-    public Achievement GetF(string achievementName) {
+    public Achievement GetF(string achievementName)
+    {
         return Achievements[achievementName];
     }
 }

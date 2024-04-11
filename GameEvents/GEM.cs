@@ -19,10 +19,10 @@ public static class GEM
     }
     public static bool GetConstructorInfoTable(string fullName, out List<ConstructInfoTable<GameEvent>> tables)
     {
-        if( _constructInfoTables.TryGetValue(fullName, out var origTables))
+        if (_constructInfoTables.TryGetValue(fullName, out var origTables))
         {
             tables = new();
-            foreach(var table in origTables)
+            foreach (var table in origTables)
             {
                 tables.Add(table.Clone());
             }

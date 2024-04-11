@@ -45,7 +45,7 @@ public class NPCKilled : CountInt
     }
     public void TryComplete(Player player, NPC npc)
     {
-        if (npc.netID==NetID)
+        if (npc.netID == NetID)
         {
             Increase(1);
         }
