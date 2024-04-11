@@ -315,7 +315,6 @@ namespace ProgressSystem.UIEditor
                             ge.pos += offset;
                             GEPos.Add(ge.pos);
                             ge.SetPos(ge.pos * 80);
-                            ge.Calculation();
                         }
                         selectedStart = p;
                     }
