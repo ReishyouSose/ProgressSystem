@@ -1,6 +1,9 @@
+global using ProgressSystem.Core;
+global using ProgressSystem.TheUtils;
 global using RUIModule.RUISys;
 global using System;
 global using System.Collections.Generic;
+global using System.Linq;
 global using Terraria;
 global using Terraria.DataStructures;
 global using Terraria.ID;
@@ -8,17 +11,19 @@ global using Terraria.ModLoader;
 global using Terraria.ModLoader.IO;
 global using Microsoft.Xna.Framework;
 global using RUIModule.RUIElements;
+global using static ProgressSystem.TheUtils.TigerClasses;
+global using static ProgressSystem.TheUtils.TigerUtils;
 
-namespace ProgressSystem
+namespace ProgressSystem;
+
+public class ProgressSystem : Mod
 {
-    public class ProgressSystem : Mod
+    public static ProgressSystem Ins => Instance;
+    public static ProgressSystem Instance { get; private set; } = null!;
+    public override void Load()
     {
-        internal static ProgressSystem Ins;
-        public ProgressSystem() => Ins = this;
-        public override void Load()
-        {
-            RUIManager.mod = this;
-            AddContent<RUIManager>();
-        }
+        Instance = this;
+        RUIManager.mod = this;
+        AddContent<RUIManager>();
     }
 }
