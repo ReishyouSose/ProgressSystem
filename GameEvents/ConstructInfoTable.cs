@@ -12,10 +12,6 @@ namespace ProgressSystem.GameEvents
         public ConstructInfoTable(Func<ConstructInfoTable<T>, T> createFunc)
         {
             Type t = typeof(T);
-            if (t.IsAbstract || t.IsInterface)
-            {
-                throw new ArgumentException($"Can't construct {t.FullName}");
-            }
             _createFunc = createFunc ?? throw new ArgumentNullException(nameof(createFunc));
             _entries = [];
             Closed = false;
