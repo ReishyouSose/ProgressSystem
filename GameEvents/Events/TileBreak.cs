@@ -1,29 +1,27 @@
 ﻿namespace ProgressSystem.GameEvents.Events;
 
-public class CraftItem : CountInt
+public class TileBreak : CountInt
 {
     public int Type { get; private set; }
-    public static CraftItem Create(int type, int target = 1)
+    public static TileBreak Create(int type, int target = 1)
     {
         target = Math.Max(target, 1);
-        Main.instance.LoadItem(type);
-        CraftItem @event = new()
+        TileBreak @event = new()
         {
             Type = type,
             _target = target
         };
         return @event;
     }
-    public static void SetUp(CraftItem @event)
+    public static void SetUp(TileBreak @event)
     {
-        GEListener.OnCreateItem += @event.Complete;
-        @event.OnCompleted += e => GEListener.OnCreateItem -= @event.Complete;
+        GEListener.OnTileBreak += @event.Complete;
+        @event.OnCompleted += e => GEListener.OnTileBreak -= @event.Complete;
     }
-    public static CraftItem CreateAndSetUp(int type, int target = 1)
+    public static TileBreak CreateAndSetUp(int type, int target = 1)
     {
         target = Math.Max(target, 1);
-        CraftItem createItem = Create(type, target);
-        CraftItem @event = createItem;
+        TileBreak @event = Create(type, target);
         SetUp(@event);
         return @event;
     }
@@ -47,9 +45,9 @@ public class CraftItem : CountInt
     }
     public override void Complete(params object[] args)
     {
-        if (args.Length > 3 && args[1] is Player player && args[2] is Item item && args[3] is ItemCreationContext context)
+        if (args.Length > 4 && args[1] is Player player && args[2] is int x && args[3] is int y && args[4] is Tile tile)
         {
-            if (item.type == Type)
+            if (tile.type == Type)
             {
                 base.Complete(args);
             }

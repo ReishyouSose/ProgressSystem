@@ -3,10 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using ProgressSystem.GameEvents.Events;
 using ProgressSystem.UIEditor.ExtraUI;
 using RUIModule.RUIElements;
-using System.Collections.Generic;
-using Terraria;
 using Terraria.GameContent;
-using Terraria.ID;
 
 namespace ProgressSystem.UIEditor
 {
@@ -108,7 +105,7 @@ namespace ProgressSystem.UIEditor
             {
                 int id = itemSlot.ContainedItem?.type ?? -1;
                 if (id <= 0) return;
-                CraftItem task = new(id);
+                CraftItem task = CraftItem.CreateAndSetUp(id);
                 Main.instance.LoadItem(id);
                 UIGESlot ge = new(task, TextureAssets.Item[id].Value);
                 ge.Events.OnMouseOver += evt =>

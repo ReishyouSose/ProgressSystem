@@ -1,29 +1,27 @@
 ﻿namespace ProgressSystem.GameEvents.Events;
-
-public class CraftItem : CountInt
+public class PickItem : CountInt
 {
     public int Type { get; private set; }
-    public static CraftItem Create(int type, int target = 1)
+    public float Progress => Math.Clamp(Count / (float)Target, 0, 1);
+    public static PickItem Create(int type, int target = 1)
     {
         target = Math.Max(target, 1);
-        Main.instance.LoadItem(type);
-        CraftItem @event = new()
+        PickItem @event = new()
         {
             Type = type,
             _target = target
         };
         return @event;
     }
-    public static void SetUp(CraftItem @event)
+    public static void SetUp(PickItem @event)
     {
-        GEListener.OnCreateItem += @event.Complete;
-        @event.OnCompleted += e => GEListener.OnCreateItem -= @event.Complete;
+        GEListener.OnPickItem += @event.Complete;
+        @event.OnCompleted += e => GEListener.OnPickItem -= @event.Complete;
     }
-    public static CraftItem CreateAndSetUp(int type, int target = 1)
+    public static PickItem CreateAndSetUp(int type, int target = 1)
     {
         target = Math.Max(target, 1);
-        CraftItem createItem = Create(type, target);
-        CraftItem @event = createItem;
+        PickItem @event = Create(type, target);
         SetUp(@event);
         return @event;
     }
@@ -47,7 +45,7 @@ public class CraftItem : CountInt
     }
     public override void Complete(params object[] args)
     {
-        if (args.Length > 3 && args[1] is Player player && args[2] is Item item && args[3] is ItemCreationContext context)
+        if (args.Length > 2 && args[1] is Player player && args[2] is Item item)
         {
             if (item.type == Type)
             {

@@ -1,29 +1,26 @@
 ﻿namespace ProgressSystem.GameEvents.Events;
-
-public class CraftItem : CountInt
+public class BuyItem : CountInt
 {
     public int Type { get; private set; }
-    public static CraftItem Create(int type, int target = 1)
+    public static BuyItem Create(int type, int target = 1)
     {
         target = Math.Max(target, 1);
-        Main.instance.LoadItem(type);
-        CraftItem @event = new()
+        BuyItem @event = new()
         {
             Type = type,
             _target = target
         };
         return @event;
     }
-    public static void SetUp(CraftItem @event)
+    public static void SetUp(BuyItem @event)
     {
-        GEListener.OnCreateItem += @event.Complete;
-        @event.OnCompleted += e => GEListener.OnCreateItem -= @event.Complete;
+        GEListener.OnBuyItem += @event.Complete;
+        @event.OnCompleted += e => GEListener.OnBuyItem -= @event.Complete;
     }
-    public static CraftItem CreateAndSetUp(int type, int target = 1)
+    public static BuyItem CreateAndSetUp(int type, int target = 1)
     {
         target = Math.Max(target, 1);
-        CraftItem createItem = Create(type, target);
-        CraftItem @event = createItem;
+        BuyItem @event = Create(type, target);
         SetUp(@event);
         return @event;
     }
@@ -47,8 +44,9 @@ public class CraftItem : CountInt
     }
     public override void Complete(params object[] args)
     {
-        if (args.Length > 3 && args[1] is Player player && args[2] is Item item && args[3] is ItemCreationContext context)
+        if (args.Length > 4 && args[1] is Player player && args[2] is NPC npc && args[3] is Item[] items && args[4] is Item item)
         {
+
             if (item.type == Type)
             {
                 base.Complete(args);
@@ -56,3 +54,4 @@ public class CraftItem : CountInt
         }
     }
 }
+

@@ -3,9 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using ProgressSystem.GameEvents;
 using RUIModule;
 using RUIModule.RUIElements;
-using RUIModule.RUISys;
-using System;
-using Terraria;
 using Terraria.GameContent;
 using Terraria.UI.Chat;
 
