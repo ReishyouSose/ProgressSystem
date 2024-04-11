@@ -15,7 +15,7 @@ namespace ProgressSystem.System
         {
             if (check.JustPressed)
             {
-                EventEditor.Ins.OnInitialization();
+                GEEditor.Ins.OnInitialization();
             }
         }
     }
