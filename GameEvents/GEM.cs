@@ -17,8 +17,18 @@ public static class GEM
     {
         return _events.TryGetValue(uniqueLabel, out gameEvent);
     }
-    public static bool GetConstructorInfoTable(string fullName, out List<ConstructInfoTable<GameEvent>> table)
+    public static bool GetConstructorInfoTable(string fullName, out List<ConstructInfoTable<GameEvent>> tables)
     {
-        return _constructInfoTables.TryGetValue(fullName, out table);
+        if( _constructInfoTables.TryGetValue(fullName, out var origTables))
+        {
+            tables = new();
+            foreach(var table in origTables)
+            {
+                tables.Add(table.Clone());
+            }
+            return true;
+        }
+        tables = null;
+        return false;
     }
 }

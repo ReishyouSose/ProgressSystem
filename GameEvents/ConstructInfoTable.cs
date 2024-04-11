@@ -65,6 +65,15 @@ namespace ProgressSystem.GameEvents
                 return _entries.All(e => e.IsMeet);
             }
         }
+        public ConstructInfoTable<T> Clone()
+        {
+            var table = new ConstructInfoTable<T>(_createFunc);
+            foreach(var entry in _entries)
+            {
+                table.AddEntry(new(entry.Type, entry.Name, entry.Important));
+            }
+            return table;
+        }
         public static bool TryAutoCreate(out ConstructInfoTable<T> table)
         {
             table = default;
