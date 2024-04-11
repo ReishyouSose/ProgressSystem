@@ -1,15 +1,15 @@
-﻿using Terraria.ModLoader.IO;
-
-namespace ProgressSystem.Core;
+﻿namespace ProgressSystem.Core;
 
 // DOING...
 
 /// <summary>
 /// 储存并管理所有的成就
 /// </summary>
-public class AchievementManager : ModSystem {
+public class AchievementManager : ModSystem
+{
     #region Test
-    public override void OnModLoad() {
+    public override void OnModLoad()
+    {
         var page = AchievementPage.Create(ModInstance, "Achievements");
         page.Add(new(ModInstance, page, "First", requirements: [new SubmitRequirement()], rewards: [new ItemReward(ItemID.SilverCoin, 20)]));
         page.Add(new(ModInstance, page, "Workbench", predecessorNames: ["Wood"],
@@ -38,26 +38,33 @@ public class AchievementManager : ModSystem {
 
     public static Dictionary<string, AchievementPage> Pages { get; set; } = [];
 
-    public override void PostUpdatePlayers() {
+    public override void PostUpdatePlayers()
+    {
         base.PostUpdatePlayers();
 
     }
-    public override void SaveWorldData(TagCompound tag) {
+    public override void SaveWorldData(TagCompound tag)
+    {
         base.SaveWorldData(tag);
     }
-    public override void LoadWorldData(TagCompound tag) {
+    public override void LoadWorldData(TagCompound tag)
+    {
         base.LoadWorldData(tag);
     }
 }
 
-public class AchievementPlayerManager : ModPlayer {
-    public override void OnEnterWorld() {
+public class AchievementPlayerManager : ModPlayer
+{
+    public override void OnEnterWorld()
+    {
         base.OnEnterWorld();
     }
-    public override void SaveData(TagCompound tag) {
+    public override void SaveData(TagCompound tag)
+    {
         base.SaveData(tag);
     }
-    public override void LoadData(TagCompound tag) {
+    public override void LoadData(TagCompound tag)
+    {
         base.LoadData(tag);
     }
 }

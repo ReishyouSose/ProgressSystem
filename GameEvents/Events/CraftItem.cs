@@ -45,7 +45,7 @@ public class CraftItem : CountInt
         tag[nameof(Type)] = Type;
         base.Save(tag);
     }
-    public void TryComplete(Player player, Item item,RecipeItemCreationContext context)
+    public void TryComplete(Player player, Item item, RecipeItemCreationContext context)
     {
         if (item.type == Type)
         {

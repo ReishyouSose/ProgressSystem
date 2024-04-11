@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Input;
 using ProgressSystem.GameEvents;
 using ProgressSystem.GameEvents.Events;
 using ProgressSystem.UIEditor.ExtraUI;
-using System.Linq;
 using Terraria.GameContent;
 
 namespace ProgressSystem.UIEditor

@@ -43,7 +43,7 @@ public class TileBreak : CountInt
         tag[nameof(Type)] = Type;
         base.Save(tag);
     }
-    public void TryComplete(Player player, int x,int y,Tile tile)
+    public void TryComplete(Player player, int x, int y, Tile tile)
     {
         if (tile.TileType == Type)
         {

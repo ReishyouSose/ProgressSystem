@@ -11,7 +11,7 @@
             get => _count == _target;
             protected set
             {
-                if(value)
+                if (value)
                 {
                     _count = _target;
                 }

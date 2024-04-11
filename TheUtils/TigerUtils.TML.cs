@@ -16,7 +16,8 @@ using Terraria.Utilities;
 
 namespace ProgressSystem.TheUtils;
 
-public static partial class TigerUtils {
+public static partial class TigerUtils
+{
     public static Mod ModInstance => ProgressSystem.Instance;
     public const string ModName = nameof(ProgressSystem);
     public static Item NewItem<T>(int stack = 1, int prefix = 0) where T : ModItem => new(ModContent.ItemType<T>(), stack, prefix);
@@ -30,16 +31,19 @@ public static partial class TigerUtils {
     public static bool TryGetGlobalSafe<TGlobal, TResult>(int entityType, ReadOnlySpan<TGlobal> entityGlobals, out TResult? result) where TGlobal : GlobalType<TGlobal> where TResult : TGlobal
         => TryGetGlobalSafe(entityType, entityGlobals, ModContent.GetInstance<TResult>(), out result);
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool TryGetGlobalSafe<TGlobal, TResult>(int entityType, ReadOnlySpan<TGlobal> entityGlobals, TResult baseInstance, out TResult? result) where TGlobal : GlobalType<TGlobal> where TResult : TGlobal {
+    public static bool TryGetGlobalSafe<TGlobal, TResult>(int entityType, ReadOnlySpan<TGlobal> entityGlobals, TResult baseInstance, out TResult? result) where TGlobal : GlobalType<TGlobal> where TResult : TGlobal
+    {
         short perEntityIndex = baseInstance.PerEntityIndex;
         //只是加了下面这句中对entityGlobals长度的检查
         //TryGetModPlayer中都有的TryGetGlobal却没有
-        if(entityType > 0 && perEntityIndex >= 0 && perEntityIndex < entityGlobals.Length) {
+        if (entityType > 0 && perEntityIndex >= 0 && perEntityIndex < entityGlobals.Length)
+        {
             result = entityGlobals[perEntityIndex] as TResult;
             return result != null;
         }
 
-        if(GlobalTypeLookups<TGlobal>.AppliesToType(baseInstance, entityType)) {
+        if (GlobalTypeLookups<TGlobal>.AppliesToType(baseInstance, entityType))
+        {
             result = baseInstance;
             return true;
         }
@@ -57,19 +61,25 @@ public static partial class TigerUtils {
     /// <br/>注意不要把它设置为<see langword="null"/>
     /// <br/>另外用之前先检查一下<see cref="Item.IsAir"/>
     /// </summary>
-    public static Item LocalRealHeldItem {
-        get {
-            if(Main.mouseItem.IsNotAirS()) {
+    public static Item LocalRealHeldItem
+    {
+        get
+        {
+            if (Main.mouseItem.IsNotAirS())
+            {
                 return Main.mouseItem;
             }
             return Main.LocalPlayer.HeldItem;
         }
-        set {
+        set
+        {
             int selected = Main.LocalPlayer.selectedItem;
-            if(selected == 58) {
+            if (selected == 58)
+            {
                 Main.mouseItem = value;
             }
-            else {
+            else
+            {
                 Main.LocalPlayer.inventory[Main.LocalPlayer.selectedItem] = value;
             }
         }
@@ -78,18 +88,24 @@ public static partial class TigerUtils {
     /// 以更安全的方式调用<see cref="LocalRealHeldItem"/><br/>
     /// 即使<see cref="Main.LocalPlayer"/>为<see langword="null"/>也不会报错
     /// </summary>
-    public static Item? LocalRealHeldItemSafe {
-        get {
+    public static Item? LocalRealHeldItemSafe
+    {
+        get
+        {
             return Main.LocalPlayer == null || !Main.LocalPlayer.active ? null : LocalRealHeldItem;
         }
-        set {
-            if(Main.LocalPlayer == null) {
+        set
+        {
+            if (Main.LocalPlayer == null)
+            {
                 return;
             }
-            if(value == null) {
+            if (value == null)
+            {
                 LocalRealHeldItem = new();
             }
-            else {
+            else
+            {
                 LocalRealHeldItem = value;
             }
 
@@ -97,8 +113,10 @@ public static partial class TigerUtils {
     }
 
     #region 同步相关
-    public static void WriteIntWithNegativeAsN1(BitWriter bitWriter, BinaryWriter binaryWriter, int value) {
-        if(value < 0) {
+    public static void WriteIntWithNegativeAsN1(BitWriter bitWriter, BinaryWriter binaryWriter, int value)
+    {
+        if (value < 0)
+        {
             bitWriter.WriteBit(true);
             return;
         }
@@ -109,15 +127,18 @@ public static partial class TigerUtils {
        => bitReader.ReadBit() ? -1 : binaryReader.Read7BitEncodedInt();
     #endregion
     #region Random
-    public static partial class MyRandom {
+    public static partial class MyRandom
+    {
         /// <summary>
         /// 将double转化为int
         /// 其中小数部分按概率转化为0或1
         /// </summary>
-        public static int RandomD2I(double x, UnifiedRandom rand) {
+        public static int RandomD2I(double x, UnifiedRandom rand)
+        {
             int floor = (int)Math.Floor(x);
             double delta = x - floor;
-            if(rand.NextDouble() < delta) {
+            if (rand.NextDouble() < delta)
+            {
                 return floor + 1;
             }
             return floor;
@@ -130,13 +151,15 @@ public static partial class TigerUtils {
         /// <param name="x"></param>
         /// <param name="rand"></param>
         /// <returns></returns>
-        public static bool RandomD2B(double x, UnifiedRandom rand) {
+        public static bool RandomD2B(double x, UnifiedRandom rand)
+        {
             return x > 1 - rand.NextDouble();
         }
     }
     #endregion
 
-    public static class TMLReflection {
+    public static class TMLReflection
+    {
         public const BindingFlags bfall = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
         public const BindingFlags bfpi = BindingFlags.Public | BindingFlags.Instance;
         public const BindingFlags bfps = BindingFlags.Public | BindingFlags.Static;
@@ -144,46 +167,55 @@ public static partial class TigerUtils {
         public const BindingFlags bfns = BindingFlags.NonPublic | BindingFlags.Static;
         private static Assembly? assembly;
         public static Assembly Assembly => assembly ??= typeof(Main).Assembly;
-        public static class Types {
+        public static class Types
+        {
             private static Dictionary<string, Type>? allTypes;
             public static Dictionary<string, Type> AllTypes => allTypes ?? GetRight(InitTypes, allTypes)!;
-            private static void InitTypes() {
+            private static void InitTypes()
+            {
                 allTypes = [];
-                Assembly.GetTypes().ForeachDo(t => {
-                    if(t.FullName != null) {
+                Assembly.GetTypes().ForeachDo(t =>
+                {
+                    if (t.FullName != null)
+                    {
                         allTypes.Add(t.FullName, t);
                     }
                 });
             }
             public static Type UIModConfig => AllTypes["UIModConfig"];
         }
-        public static class Item {
+        public static class Item
+        {
             public static readonly ValueDG<Type> Type = new(() => typeof(Terraria.Item));
             public static readonly ValueDG<MethodInfo> Clone = new(() => Type.Value.GetMethod(nameof(Terraria.Item.Clone), bfpi)!);
         }
-        public static class Main {
+        public static class Main
+        {
             public static readonly ValueDG<Type> Type = new(() => typeof(Terraria.Main));
             public static readonly ValueDG<FieldInfo> MouseItem = new(() => Type.Value.GetField(nameof(Terraria.Main.mouseItem), bfps)!);
         }
-        public static class Player {
+        public static class Player
+        {
             public static readonly ValueDG<Type> Type = new(() => typeof(Terraria.Player));
-            public static readonly ValueDG<FieldInfo> Inventory          = new(() => Type.Value.GetField(nameof(Terraria.Player.inventory        ), bfpi)!);
-            public static readonly ValueDG<FieldInfo> ManaRegen          = new(() => Type.Value.GetField(nameof(Terraria.Player.manaRegen        ), bfpi)!);
-            public static readonly ValueDG<FieldInfo> ManaRegenCount     = new(() => Type.Value.GetField(nameof(Terraria.Player.manaRegenCount   ), bfpi)!);
-            public static readonly ValueDG<FieldInfo> NebulaLevelMana    = new(() => Type.Value.GetField(nameof(Terraria.Player.nebulaLevelMana  ), bfpi)!);
-            public static readonly ValueDG<FieldInfo> NebulaManaCounter  = new(() => Type.Value.GetField(nameof(Terraria.Player.nebulaManaCounter), bfpi)!);
-            public static readonly ValueDG<FieldInfo> StatMana           = new(() => Type.Value.GetField(nameof(Terraria.Player.statMana         ), bfpi)!);
-            public static readonly ValueDG<FieldInfo> StatManaMax        = new(() => Type.Value.GetField(nameof(Terraria.Player.statManaMax      ), bfpi)!);
-            public static readonly ValueDG<FieldInfo> StatManaMax2       = new(() => Type.Value.GetField(nameof(Terraria.Player.statManaMax2     ), bfpi)!);
-            public static readonly ValueDG<MethodInfo> DropItemCheck     = new(() => Type.Value.GetMethod(nameof(Terraria.Player.dropItemCheck   ), bfpi)!);
-            public static readonly ValueDG<MethodInfo> ItemCheck_Shoot   = new(() => Type.Value.GetMethod("ItemCheck_Shoot"                       , bfni)!);
+            public static readonly ValueDG<FieldInfo> Inventory = new(() => Type.Value.GetField(nameof(Terraria.Player.inventory), bfpi)!);
+            public static readonly ValueDG<FieldInfo> ManaRegen = new(() => Type.Value.GetField(nameof(Terraria.Player.manaRegen), bfpi)!);
+            public static readonly ValueDG<FieldInfo> ManaRegenCount = new(() => Type.Value.GetField(nameof(Terraria.Player.manaRegenCount), bfpi)!);
+            public static readonly ValueDG<FieldInfo> NebulaLevelMana = new(() => Type.Value.GetField(nameof(Terraria.Player.nebulaLevelMana), bfpi)!);
+            public static readonly ValueDG<FieldInfo> NebulaManaCounter = new(() => Type.Value.GetField(nameof(Terraria.Player.nebulaManaCounter), bfpi)!);
+            public static readonly ValueDG<FieldInfo> StatMana = new(() => Type.Value.GetField(nameof(Terraria.Player.statMana), bfpi)!);
+            public static readonly ValueDG<FieldInfo> StatManaMax = new(() => Type.Value.GetField(nameof(Terraria.Player.statManaMax), bfpi)!);
+            public static readonly ValueDG<FieldInfo> StatManaMax2 = new(() => Type.Value.GetField(nameof(Terraria.Player.statManaMax2), bfpi)!);
+            public static readonly ValueDG<MethodInfo> DropItemCheck = new(() => Type.Value.GetMethod(nameof(Terraria.Player.dropItemCheck), bfpi)!);
+            public static readonly ValueDG<MethodInfo> ItemCheck_Shoot = new(() => Type.Value.GetMethod("ItemCheck_Shoot", bfni)!);
         }
-        public static class ProjectileLoader {
+        public static class ProjectileLoader
+        {
             public static readonly ValueDG<Type> Type = new(() => typeof(Terraria.ModLoader.ProjectileLoader));
             public static readonly ValueDG<MethodInfo> OnSpawn = new(() => Type.Value.GetMethod("OnSpawn", bfns)!);
             public delegate void OnSpawnDelegate(Projectile projectile, IEntitySource source);
         }
-        public static class UIModConfig {
+        public static class UIModConfig
+        {
             public static Type Type => Types.AllTypes["UIModConfig"];
             private static PropertyInfo? tooltip;
             private static PropertyInfo Tooltip => tooltip ??= Type.GetProperty("Tooltip", BindingFlags.Public | BindingFlags.Static)!;
@@ -192,7 +224,8 @@ public static partial class TigerUtils {
             private static Func<string>? getTooltip;
             public static Func<string> GetTooltip_Func => getTooltip ??= Tooltip.GetMethod!.CreateDelegate<Func<string>>(null);
         }
-        public static class ConfigManager {
+        public static class ConfigManager
+        {
             public static ValueDG<Type> Type = new(() => typeof(Terraria.ModLoader.Config.ConfigManager));
             public static ValueDG<MethodInfo> Save = new(() => Type.Value.GetMethod("Save", bfns)!);
             public static ValueDG<Action<Terraria.ModLoader.Config.ModConfig>> Save_Func = new(Save.Value.CreateDelegate<Action<Terraria.ModLoader.Config.ModConfig>>);
@@ -201,7 +234,8 @@ public static partial class TigerUtils {
     public static T TMLInstance<T>() where T : class => ContentInstance<T>.Instance;
 }
 
-public static partial class TigerClasses {
+public static partial class TigerClasses
+{
 #if MOUSE_MANAGER
     public class MouseManager : ModSystem
     {
@@ -278,14 +312,16 @@ public static partial class TigerClasses {
     /// <br/>如果要使用委托, 可以使用 new(delegate) 的形式获得
     /// </summary>
     [StructLayout(LayoutKind.Explicit, Size = 12)]
-    public struct TextGetter {
+    public struct TextGetter
+    {
         #region 构造函数
         public TextGetter(string stringValue) => StringValue = stringValue;
         public TextGetter(LocalizedText localizedTextValue) => LocalizedTextValue = localizedTextValue;
         public TextGetter(Func<string> stringGetterValue) => StringGetterValue = stringGetterValue;
         #endregion
         #region Vars
-        enum TextGetterType {
+        enum TextGetterType
+        {
             None,
             String,
             LocalizedText,
@@ -302,21 +338,25 @@ public static partial class TigerClasses {
         #endregion
         #region 设置与获取值
         public readonly bool IsNone => Type == TextGetterType.None;
-        public readonly string? Value => Type switch {
+        public readonly string? Value => Type switch
+        {
             TextGetterType.String => stringValue,
             TextGetterType.LocalizedText => localizedTextValue?.Value,
             TextGetterType.StringGetter => stringGetterValue?.Invoke(),
             _ => null
         };
-        public string? StringValue {
+        public string? StringValue
+        {
             readonly get => Type == TextGetterType.String ? stringValue : null;
             set => (Type, stringValue) = (TextGetterType.String, value);
         }
-        public LocalizedText? LocalizedTextValue {
+        public LocalizedText? LocalizedTextValue
+        {
             readonly get => Type == TextGetterType.LocalizedText ? localizedTextValue : null;
             set => (Type, localizedTextValue) = (TextGetterType.LocalizedText, value);
         }
-        public Func<string>? StringGetterValue {
+        public Func<string>? StringGetterValue
+        {
             readonly get => Type == TextGetterType.StringGetter ? stringGetterValue : null;
             set => (Type, stringGetterValue) = (TextGetterType.StringGetter, value);
         }
@@ -336,7 +376,8 @@ public static partial class TigerClasses {
     /// <br/>如果要使用委托, 可以使用 new(delegate) 的形式获得
     /// </summary>
     [StructLayout(LayoutKind.Explicit, Size = 12)]
-    public struct Texture2DGetter {
+    public struct Texture2DGetter
+    {
         #region 构造函数
         public Texture2DGetter(string texturePath) => SetTexturePath(texturePath);
         public Texture2DGetter(Texture2D texture2DValue) => Texture2DValue = texture2DValue;
@@ -344,7 +385,8 @@ public static partial class TigerClasses {
         public Texture2DGetter(Func<Texture2D> texture2DGetterValue) => Texture2DGetterValue = texture2DGetterValue;
         #endregion
         #region Vars
-        enum Texture2DGetterType {
+        enum Texture2DGetterType
+        {
             None,
             Texture2D,
             AssetOfTexture2D,
@@ -361,24 +403,29 @@ public static partial class TigerClasses {
         #endregion
         #region 设置与获取值
         public readonly bool IsNone => Type == Texture2DGetterType.None;
-        public readonly Texture2D? Value => Type switch {
+        public readonly Texture2D? Value => Type switch
+        {
             Texture2DGetterType.Texture2D => texture2DValue,
             Texture2DGetterType.AssetOfTexture2D => assetOfTexture2DValue?.Value,
             Texture2DGetterType.Texture2DGetter => texture2DGetterValue?.Invoke(),
             _ => null
         };
-        public void SetTexturePath(string texturePath) {
+        public void SetTexturePath(string texturePath)
+        {
             AssetOfTexture2DValue = ModContent.Request<Texture2D>(texturePath);
         }
-        public Texture2D? Texture2DValue {
+        public Texture2D? Texture2DValue
+        {
             readonly get => Type == Texture2DGetterType.Texture2D ? texture2DValue : null;
             set => (Type, texture2DValue) = (Texture2DGetterType.Texture2D, value);
         }
-        public Asset<Texture2D>? AssetOfTexture2DValue {
+        public Asset<Texture2D>? AssetOfTexture2DValue
+        {
             readonly get => Type == Texture2DGetterType.AssetOfTexture2D ? assetOfTexture2DValue : null;
             set => (Type, assetOfTexture2DValue) = (Texture2DGetterType.AssetOfTexture2D, value);
         }
-        public Func<Texture2D>? Texture2DGetterValue {
+        public Func<Texture2D>? Texture2DGetterValue
+        {
             readonly get => Type == Texture2DGetterType.Texture2DGetter ? texture2DGetterValue : null;
             set => (Type, texture2DGetterValue) = (Texture2DGetterType.Texture2DGetter, value);
         }
@@ -395,13 +442,16 @@ public static partial class TigerClasses {
     }
 }
 
-public static partial class TigerExtensions {
+public static partial class TigerExtensions
+{
     #region TagCompound 拓展
     /// <summary>
     /// 若不为默认值则将值保存到<paramref name="tag"/>中
     /// </summary>
-    public static void SetWithDefault<T>(this TagCompound tag, string key, T? value, T? defaultValue = default, bool replace = false) where T : IEquatable<T> {
-        if(value == null && defaultValue == null || value?.Equals(defaultValue) == true) {
+    public static void SetWithDefault<T>(this TagCompound tag, string key, T? value, T? defaultValue = default, bool replace = false) where T : IEquatable<T>
+    {
+        if (value == null && defaultValue == null || value?.Equals(defaultValue) == true)
+        {
             return;
         }
         tag.Set(key, value, replace);
@@ -410,8 +460,10 @@ public static partial class TigerExtensions {
     /// 若不为默认值则将值保存到<paramref name="tag"/>中
     /// </summary>
     /// <param name="checkDefault">检查值是否是默认值</param>
-    public static void SetWithDefault<T>(this TagCompound tag, string key, T? value, Func<T?, bool> checkDefault, bool replace = false) {
-        if(checkDefault(value)) {
+    public static void SetWithDefault<T>(this TagCompound tag, string key, T? value, Func<T?, bool> checkDefault, bool replace = false)
+    {
+        if (checkDefault(value))
+        {
             return;
         }
         tag.Set(key, value, replace);
@@ -421,60 +473,75 @@ public static partial class TigerExtensions {
     /// <br/>获得此值, 若不存在则返回默认值(<paramref name="defaultValue"/>)
     /// <br/>若类型不正确会报错
     /// </summary>
-    public static T? GetWithDefault<T>(this TagCompound tag, string key, T? defaultValue = default) {
+    public static T? GetWithDefault<T>(this TagCompound tag, string key, T? defaultValue = default)
+    {
         return !tag.TryGet(key, out T value) ? defaultValue : value;
     }
     /// <summary>
     /// <br/>返回是否成功得到值, 返回假时得到的是默认值(返回真时也可能得到默认值(若保存的为默认值的话))
     /// <br/>若类型不正确会报错
     /// </summary>
-    public static bool GetWithDefault<T>(this TagCompound tag, string key, out T? value, T? defaultValue = default) {
-        if(tag.TryGet(key, out value)) {
+    public static bool GetWithDefault<T>(this TagCompound tag, string key, out T? value, T? defaultValue = default)
+    {
+        if (tag.TryGet(key, out value))
+        {
             return true;
         }
         value = defaultValue;
         return false;
     }
-    public static void SetWithDefaultN<T>(this TagCompound tag, string key, T? value, bool replace = false) where T : struct {
-        if(!value.HasValue) {
+    public static void SetWithDefaultN<T>(this TagCompound tag, string key, T? value, bool replace = false) where T : struct
+    {
+        if (!value.HasValue)
+        {
             return;
         }
         tag.Set(key, value.Value, replace);
     }
-    public static bool GetWithDefaultN<T>(this TagCompound tag, string key, out T? value) where T : struct {
-        if(tag.TryGet(key, out T val)) {
+    public static bool GetWithDefaultN<T>(this TagCompound tag, string key, out T? value) where T : struct
+    {
+        if (tag.TryGet(key, out T val))
+        {
             value = val;
             return true;
         }
         value = null;
         return false;
     }
-    public static T? GetWithDefaultN<T>(this TagCompound tag, string key) where T : struct {
+    public static T? GetWithDefaultN<T>(this TagCompound tag, string key) where T : struct
+    {
         return tag.TryGet(key, out T val) ? val : null;
     }
 
-    public static bool Replace<TOld, TNew>(this TagCompound tag, string oldKey, string newKey, Func<TOld?, TNew?> convert, TOld? oldDefaultValue = default, TNew? newDefaultValue = default, bool removeOldKey = true) where TNew : IEquatable<TNew> {
+    public static bool Replace<TOld, TNew>(this TagCompound tag, string oldKey, string newKey, Func<TOld?, TNew?> convert, TOld? oldDefaultValue = default, TNew? newDefaultValue = default, bool removeOldKey = true) where TNew : IEquatable<TNew>
+    {
         bool result = tag.GetWithDefault(oldKey, out TOld? oldValue, oldDefaultValue);
-        if(removeOldKey) {
+        if (removeOldKey)
+        {
             tag.Remove(oldKey);
         }
         tag.SetWithDefault(newKey, convert(oldValue), newDefaultValue, replace: true);
         return result;
     }
-    public static bool Replace<T>(this TagCompound tag, string oldKey, string newKey, T? defaultValue = default, bool removeOldKey = true) where T : IEquatable<T> {
+    public static bool Replace<T>(this TagCompound tag, string oldKey, string newKey, T? defaultValue = default, bool removeOldKey = true) where T : IEquatable<T>
+    {
         bool result = tag.GetWithDefault(oldKey, out T? value, defaultValue);
-        if(removeOldKey) {
+        if (removeOldKey)
+        {
             tag.Remove(oldKey);
         }
         tag.SetWithDefault(newKey, value, defaultValue);
         return result;
     }
-    public static bool Replace(this TagCompound tag, string oldKey, string newKey, bool removeOldKey = true) {
-        if(!tag.ContainsKey(oldKey)) {
+    public static bool Replace(this TagCompound tag, string oldKey, string newKey, bool removeOldKey = true)
+    {
+        if (!tag.ContainsKey(oldKey))
+        {
             return false;
         }
         tag[newKey] = tag[oldKey];
-        if(removeOldKey) {
+        if (removeOldKey)
+        {
             tag.Remove(oldKey);
         }
         return true;
@@ -482,33 +549,42 @@ public static partial class TigerExtensions {
     /// <summary>
     /// 需要 <paramref name="tag"/>[<paramref name="key"/>] 中是 List&lt;<typeparamref name="TElement"/>&gt;
     /// </summary>
-    public static void AddElement<TElement>(this TagCompound tag, string key, TElement element) {
-        if(tag.ContainsKey(key)) {
+    public static void AddElement<TElement>(this TagCompound tag, string key, TElement element)
+    {
+        if (tag.ContainsKey(key))
+        {
             tag.Get<List<TElement>>(key).Add(element);
         }
-        else {
+        else
+        {
             tag[key] = new List<TElement>() { element };
         }
     }
     /// <summary>
     /// 需要 <paramref name="tag"/>[<paramref name="key"/>] 中是 List&lt;<typeparamref name="TElement"/>&gt;
     /// </summary>
-    public static void AddElementRange<TElement>(this TagCompound tag, string key, IEnumerable<TElement> elements) {
-        if(tag.ContainsKey(key)) {
+    public static void AddElementRange<TElement>(this TagCompound tag, string key, IEnumerable<TElement> elements)
+    {
+        if (tag.ContainsKey(key))
+        {
             tag.Get<List<TElement>>(key).AddRange(elements);
         }
-        else {
+        else
+        {
             tag.Add(key, new List<TElement>([.. elements]));
         }
     }
     /// <summary>
     /// 需要 <paramref name="tag"/>[<paramref name="key"/>] 中是 List&lt;<typeparamref name="TElement"/>&gt;
     /// </summary>
-    public static void AddElementRange<TElement>(this TagCompound tag, string key, List<TElement> elementList) {
-        if(tag.ContainsKey(key)) {
+    public static void AddElementRange<TElement>(this TagCompound tag, string key, List<TElement> elementList)
+    {
+        if (tag.ContainsKey(key))
+        {
             tag.Get<List<TElement>>(key).AddRange(elementList);
         }
-        else {
+        else
+        {
             tag.Add(key, elementList);
         }
     }
@@ -520,10 +596,13 @@ public static partial class TigerExtensions {
         stringBuilder.Append(ItemTagHandler.GenerateTag(ContentSamples.ItemsByType[itemID]));
     #endregion
     #region 关于Tooltips
-    public static bool AddIf(this List<TooltipLine> tooltips, bool condition, string name, string text, Color? overrideColor = null) {
-        if(condition) {
+    public static bool AddIf(this List<TooltipLine> tooltips, bool condition, string name, string text, Color? overrideColor = null)
+    {
+        if (condition)
+        {
             TooltipLine line = new(ModInstance, name, text);
-            if(overrideColor != null) {
+            if (overrideColor != null)
+            {
                 line.OverrideColor = overrideColor;
             }
             tooltips.Add(line);
@@ -531,10 +610,13 @@ public static partial class TigerExtensions {
         }
         return false;
     }
-    public static bool AddIf(this List<TooltipLine> tooltips, bool condition, Func<string> nameDelegate, Func<string> textDelegate, Color? overrideColor = null) {
-        if(condition) {
+    public static bool AddIf(this List<TooltipLine> tooltips, bool condition, Func<string> nameDelegate, Func<string> textDelegate, Color? overrideColor = null)
+    {
+        if (condition)
+        {
             TooltipLine line = new(ModInstance, nameDelegate?.Invoke(), textDelegate?.Invoke());
-            if(overrideColor != null) {
+            if (overrideColor != null)
+            {
                 line.OverrideColor = overrideColor;
             }
             tooltips.Add(line);
@@ -542,10 +624,13 @@ public static partial class TigerExtensions {
         }
         return false;
     }
-    public static bool AddIf(this List<TooltipLine> tooltips, bool condition, string name, Func<string> textDelegate, Color? overrideColor = null) {
-        if(condition) {
+    public static bool AddIf(this List<TooltipLine> tooltips, bool condition, string name, Func<string> textDelegate, Color? overrideColor = null)
+    {
+        if (condition)
+        {
             TooltipLine line = new(ModInstance, name, textDelegate?.Invoke());
-            if(overrideColor != null) {
+            if (overrideColor != null)
+            {
                 line.OverrideColor = overrideColor;
             }
             tooltips.Add(line);
@@ -553,10 +638,13 @@ public static partial class TigerExtensions {
         }
         return false;
     }
-    public static bool InsertIf(this List<TooltipLine> tooltips, bool condition, int index, string name, string text, Color? overrideColor = null) {
-        if(condition) {
+    public static bool InsertIf(this List<TooltipLine> tooltips, bool condition, int index, string name, string text, Color? overrideColor = null)
+    {
+        if (condition)
+        {
             TooltipLine line = new(ModInstance, name, text);
-            if(overrideColor != null) {
+            if (overrideColor != null)
+            {
                 line.OverrideColor = overrideColor;
             }
             tooltips.Insert(index, line);
@@ -564,10 +652,13 @@ public static partial class TigerExtensions {
         }
         return false;
     }
-    public static bool InsertIf(this List<TooltipLine> tooltips, bool condition, int index, Func<string> nameDelegate, Func<string> textDelegate, Color? overrideColor = null) {
-        if(condition) {
+    public static bool InsertIf(this List<TooltipLine> tooltips, bool condition, int index, Func<string> nameDelegate, Func<string> textDelegate, Color? overrideColor = null)
+    {
+        if (condition)
+        {
             TooltipLine line = new(ModInstance, nameDelegate?.Invoke(), textDelegate?.Invoke());
-            if(overrideColor != null) {
+            if (overrideColor != null)
+            {
                 line.OverrideColor = overrideColor;
             }
             tooltips.Insert(index, line);
@@ -575,10 +666,13 @@ public static partial class TigerExtensions {
         }
         return false;
     }
-    public static bool InsertIf(this List<TooltipLine> tooltips, bool condition, int index, string name, Func<string> textDelegate, Color? overrideColor = null) {
-        if(condition) {
+    public static bool InsertIf(this List<TooltipLine> tooltips, bool condition, int index, string name, Func<string> textDelegate, Color? overrideColor = null)
+    {
+        if (condition)
+        {
             TooltipLine line = new(ModInstance, name, textDelegate?.Invoke());
-            if(overrideColor != null) {
+            if (overrideColor != null)
+            {
                 line.OverrideColor = overrideColor;
             }
             tooltips.Insert(index, line);
@@ -586,19 +680,24 @@ public static partial class TigerExtensions {
         }
         return false;
     }
-    public static List<TooltipLine> GetTooltips(this Item item) {
+    public static List<TooltipLine> GetTooltips(this Item item)
+    {
         //摘自Main.MouseText_DrawItemTooltip
         float num = 1f;
-        if(item.DamageType == DamageClass.Melee && Main.player[Main.myPlayer].kbGlove) {
+        if (item.DamageType == DamageClass.Melee && Main.player[Main.myPlayer].kbGlove)
+        {
             num += 1f;
         }
-        if(Main.player[Main.myPlayer].kbBuff) {
+        if (Main.player[Main.myPlayer].kbBuff)
+        {
             num += 0.5f;
         }
-        if(num != 1f) {
+        if (num != 1f)
+        {
             item.knockBack *= num;
         }
-        if(item.DamageType == DamageClass.Ranged && Main.player[Main.myPlayer].shroomiteStealth) {
+        if (item.DamageType == DamageClass.Ranged && Main.player[Main.myPlayer].shroomiteStealth)
+        {
             item.knockBack *= 1f + (1f - Main.player[Main.myPlayer].stealth) * 0.5f;
         }
         int num2 = 30;
@@ -609,106 +708,125 @@ public static partial class TigerExtensions {
         string[] texts = new string[num2];
         bool[] modifier = new bool[num2];
         bool[] badModifier = new bool[num2];
-        for(int m = 0; m < num2; m++) {
+        for (int m = 0; m < num2; m++)
+        {
             modifier[m] = false;
             badModifier[m] = false;
         }
         string[] names = new string[num2];
         Main.MouseText_DrawItemTooltip_GetLinesInfo(item, ref oneDropLogo, ref researchLine, knockBack, ref numTooltips, texts, modifier, badModifier, names, out int prefixlineIndex);
-        if(Main.npcShop > 0 && item.value >= 0 && (item.type < ItemID.CopperCoin || item.type > ItemID.PlatinumCoin)) {
+        if (Main.npcShop > 0 && item.value >= 0 && (item.type < ItemID.CopperCoin || item.type > ItemID.PlatinumCoin))
+        {
             Main.LocalPlayer.GetItemExpectedPrice(item, out long calcForSelling, out long calcForBuying);
             long price = (item.isAShopItem || item.buyOnce) ? calcForBuying : calcForSelling;
-            if(item.shopSpecialCurrency != -1) {
+            if (item.shopSpecialCurrency != -1)
+            {
                 names[numTooltips] = "SpecialPrice";
                 CustomCurrencyManager.GetPriceText(item.shopSpecialCurrency, texts, ref numTooltips, price);
             }
-            else if(price > 0L) {
+            else if (price > 0L)
+            {
                 string text = "";
                 long platinum = 0L;
                 long gold = 0L;
                 long silver = 0L;
                 long copper = 0L;
                 price *= item.stack;
-                if(!item.buy) {
+                if (!item.buy)
+                {
                     price /= 5L;
-                    if(price < 1L) {
+                    if (price < 1L)
+                    {
                         price = 1L;
                     }
                     long singlePrice = price;
                     price *= item.stack;
                     int amount = Main.shopSellbackHelper.GetAmount(item);
-                    if(amount > 0) {
+                    if (amount > 0)
+                    {
                         price += (-singlePrice + calcForBuying) * Math.Min(amount, item.stack);
                     }
                 }
-                if(price < 1L) {
+                if (price < 1L)
+                {
                     price = 1L;
                 }
-                if(price >= 1000000L) {
+                if (price >= 1000000L)
+                {
                     platinum = price / 1000000L;
                     price -= platinum * 1000000L;
                 }
-                if(price >= 10000L) {
+                if (price >= 10000L)
+                {
                     gold = price / 10000L;
                     price -= gold * 10000L;
                 }
-                if(price >= 100L) {
+                if (price >= 100L)
+                {
                     silver = price / 100L;
                     price -= silver * 100L;
                 }
-                if(price >= 1L) {
+                if (price >= 1L)
+                {
                     copper = price;
                 }
-                if(platinum > 0L) {
+                if (platinum > 0L)
+                {
                     text = string.Concat(
                     [
                     text,
-                    platinum.ToString(),
-                    " ",
-                    Lang.inter[15].Value,
-                    " "
+                        platinum.ToString(),
+                        " ",
+                        Lang.inter[15].Value,
+                        " "
                     ]);
                 }
-                if(gold > 0L) {
+                if (gold > 0L)
+                {
                     text = string.Concat(
                     [
                     text,
-                    gold.ToString(),
-                    " ",
-                    Lang.inter[16].Value,
-                    " "
+                        gold.ToString(),
+                        " ",
+                        Lang.inter[16].Value,
+                        " "
                     ]);
                 }
-                if(silver > 0L) {
+                if (silver > 0L)
+                {
                     text = string.Concat(
                     [
                     text,
-                    silver.ToString(),
-                    " ",
-                    Lang.inter[17].Value,
-                    " "
+                        silver.ToString(),
+                        " ",
+                        Lang.inter[17].Value,
+                        " "
                     ]);
                 }
-                if(copper > 0L) {
+                if (copper > 0L)
+                {
                     text = string.Concat(
                     [
                     text,
-                    copper.ToString(),
-                    " ",
-                    Lang.inter[18].Value,
-                    " "
+                        copper.ToString(),
+                        " ",
+                        Lang.inter[18].Value,
+                        " "
                     ]);
                 }
-                if(!item.buy) {
+                if (!item.buy)
+                {
                     texts[numTooltips] = Lang.tip[49].Value + " " + text;
                 }
-                else {
+                else
+                {
                     texts[numTooltips] = Lang.tip[50].Value + " " + text;
                 }
                 names[numTooltips] = "Price";
                 numTooltips++;
             }
-            else if(item.type != ItemID.DefenderMedal) {
+            else if (item.type != ItemID.DefenderMedal)
+            {
                 texts[numTooltips] = Lang.tip[51].Value;
                 names[numTooltips] = "Price";
                 numTooltips++;
@@ -717,25 +835,32 @@ public static partial class TigerExtensions {
 
         //摘自ItemLoader.ModifyTooltips
         List<TooltipLine> tooltips = [];
-        for(int i = 0; i < numTooltips; i++) {
-            tooltips.Add(new TooltipLine(ModInstance, names[i], texts[i]) {
+        for (int i = 0; i < numTooltips; i++)
+        {
+            tooltips.Add(new TooltipLine(ModInstance, names[i], texts[i])
+            {
                 IsModifier = modifier[i],
                 IsModifierBad = badModifier[i]
             });
         }
-        if(item.prefix >= PrefixID.Count && prefixlineIndex != -1) {
+        if (item.prefix >= PrefixID.Count && prefixlineIndex != -1)
+        {
             ModPrefix prefix = PrefixLoader.GetPrefix(item.prefix);
             IEnumerable<TooltipLine>? tooltipLines = prefix?.GetTooltipLines(item);
-            if(tooltipLines != null) {
-                foreach(TooltipLine line in tooltipLines) {
+            if (tooltipLines != null)
+            {
+                foreach (TooltipLine line in tooltipLines)
+                {
                     tooltips.Insert(prefixlineIndex, line);
                     prefixlineIndex++;
                 }
             }
         }
         item.ModItem?.ModifyTooltips(tooltips);
-        if(!item.IsAir) {
-            foreach(GlobalItem globalItem in item.Globals) {
+        if (!item.IsAir)
+        {
+            foreach (GlobalItem globalItem in item.Globals)
+            {
                 globalItem.ModifyTooltips(item, tooltips);
             }
         }
@@ -792,11 +917,13 @@ public static partial class TigerExtensions {
         => projectile.hostile && !projectile.friendly;
     public static bool IsFullyFriendly(this Projectile projectile)
         => projectile.friendly && !projectile.hostile;
-    public static void SetFullyHostile(this Projectile projectile) {
+    public static void SetFullyHostile(this Projectile projectile)
+    {
         projectile.hostile = true;
         projectile.friendly = false;
     }
-    public static void SetFullyFriendly(this Projectile projectile) {
+    public static void SetFullyFriendly(this Projectile projectile)
+    {
         projectile.friendly = true;
         projectile.hostile = false;
     }
@@ -808,10 +935,12 @@ public static partial class TigerExtensions {
     /// <br/>需确保<paramref name="enumerable"/>不会变化长度
     /// <br/>若可能会变化, 请调用<see cref="RandomS{T}(IEnumerable{T}, UnifiedRandom)"/>
     /// </summary>
-    public static T? Random<T>(this IEnumerable<T> enumerable, UnifiedRandom? rand = null) {
+    public static T? Random<T>(this IEnumerable<T> enumerable, UnifiedRandom? rand = null)
+    {
         rand ??= DefaultUnifiedRandomGetter();
         int length = enumerable.Count();
-        if(length == 0) {
+        if (length == 0)
+        {
             return default;
         }
         return enumerable.ElementAt(rand.Next(length));
@@ -819,7 +948,8 @@ public static partial class TigerExtensions {
     /// <summary>
     /// 需确保<paramref name="enumerable"/>不会变化长度且长度非0
     /// </summary>
-    public static T RandomF<T>(this IEnumerable<T> enumerable, UnifiedRandom? rand = null) {
+    public static T RandomF<T>(this IEnumerable<T> enumerable, UnifiedRandom? rand = null)
+    {
         rand ??= DefaultUnifiedRandomGetter();
         int length = enumerable.Count();
         return enumerable.ElementAt(rand.Next(length));
@@ -828,15 +958,18 @@ public static partial class TigerExtensions {
     /// <br/>需确保<paramref name="enumerable"/>不会变化长度且<paramref name="weight"/>在固定参数下的返回值不变
     /// <br/>若可能会变化, 请调用<see cref="RandomS{T}(IEnumerable{T}, Func{T, double}, UnifiedRandom?, bool)"/>
     /// </summary>
-    public static T? Random<T>(this IEnumerable<T> enumerable, Func<T, double> weight, UnifiedRandom? rand = null, bool uncheckNegative = false) {
+    public static T? Random<T>(this IEnumerable<T> enumerable, Func<T, double> weight, UnifiedRandom? rand = null, bool uncheckNegative = false)
+    {
         rand ??= DefaultUnifiedRandomGetter();
         double w = default;
-        if(uncheckNegative) {
+        if (uncheckNegative)
+        {
             double totalWeight = enumerable.Sum(t => weight(t));
             double randDouble = rand.NextDouble() * totalWeight;
             return enumerable.FirstOrDefault(t => GetRight(w = weight(t), w > randDouble || TigerUtils.Do(randDouble -= w)));
         }
-        else {
+        else
+        {
             double totalWeight = enumerable.Sum(t => weight(t).WithMin(0));
             double randDouble = rand.NextDouble() * totalWeight;
             return totalWeight <= 0 ? default : enumerable.FirstOrDefault(t => GetRight(w = weight(t).WithMin(0), w > randDouble || TigerUtils.Do(randDouble -= w)));
@@ -847,15 +980,18 @@ public static partial class TigerExtensions {
     /// <br/>需确保<paramref name="enumerable"/>不会变化长度且<paramref name="weight"/>在固定参数下的返回值不变
     /// <br/>若可能会变化, 请调用<see cref="RandomS{T}(IEnumerable{T}, Func{T, float}, UnifiedRandom?, bool)"/>
     /// </summary>
-    public static T? Random<T>(this IEnumerable<T> enumerable, Func<T, float> weight, UnifiedRandom? rand = null, bool uncheckNegative = false) {
+    public static T? Random<T>(this IEnumerable<T> enumerable, Func<T, float> weight, UnifiedRandom? rand = null, bool uncheckNegative = false)
+    {
         rand ??= DefaultUnifiedRandomGetter();
         float w = default;
-        if(uncheckNegative) {
+        if (uncheckNegative)
+        {
             float totalWeight = enumerable.Sum(t => weight(t));
             float randFloat = rand.NextFloat() * totalWeight;
             return enumerable.FirstOrDefault(t => GetRight(w = weight(t), w > randFloat || TigerUtils.Do(randFloat -= w)));
         }
-        else {
+        else
+        {
             float totalWeight = enumerable.Sum(t => weight(t).WithMin(0f));
             float randFloat = rand.NextFloat() * totalWeight;
             return totalWeight <= 0 ? default : enumerable.FirstOrDefault(t => GetRight(w = weight(t).WithMin(0f), w > randFloat || TigerUtils.Do(randFloat -= w)));
@@ -866,29 +1002,35 @@ public static partial class TigerExtensions {
     /// <br/>需确保<paramref name="enumerable"/>不会变化长度且<paramref name="weight"/>在固定参数下的返回值不变
     /// <br/>若可能会变化, 请调用<see cref="RandomS{T}(IEnumerable{T}, Func{T, int}, UnifiedRandom?, bool)"/>
     /// </summary>
-    public static T? Random<T>(this IEnumerable<T> enumerable, Func<T, int> weight, UnifiedRandom? rand = null, bool uncheckNegative = false) {
+    public static T? Random<T>(this IEnumerable<T> enumerable, Func<T, int> weight, UnifiedRandom? rand = null, bool uncheckNegative = false)
+    {
         rand ??= DefaultUnifiedRandomGetter();
         int w = default;
-        if(uncheckNegative) {
+        if (uncheckNegative)
+        {
             int totalWeight = enumerable.Sum(t => weight(t));
             int randInt = rand.Next(totalWeight);
             return enumerable.FirstOrDefault(t => GetRight(w = weight(t), w > randInt || TigerUtils.Do(randInt -= w)));
         }
-        else {
+        else
+        {
             int totalWeight = enumerable.Sum(t => weight(t).WithMin(0));
             int randInt = rand.Next(totalWeight);
             return totalWeight <= 0 ? default : enumerable.FirstOrDefault(t => GetRight(w = weight(t).WithMin(0), w > randInt || TigerUtils.Do(randInt -= w)));
         }
     }
-    public static T? RandomS<T>(this IEnumerable<T> enumerable, UnifiedRandom? rand = null) {
+    public static T? RandomS<T>(this IEnumerable<T> enumerable, UnifiedRandom? rand = null)
+    {
         rand ??= DefaultUnifiedRandomGetter();
         T[] list = [.. enumerable];
-        if(list.Length == 0) {
+        if (list.Length == 0)
+        {
             return default;
         }
         return list[rand.Next(list.Length)];
     }
-    public static T? RandomS<T>(this IEnumerable<T> enumerable, Func<T, double> weight, UnifiedRandom? rand = null, bool uncheckNegative = false) {
+    public static T? RandomS<T>(this IEnumerable<T> enumerable, Func<T, double> weight, UnifiedRandom? rand = null, bool uncheckNegative = false)
+    {
         rand ??= DefaultUnifiedRandomGetter();
         double w = default;
         double totalWeight = default;
@@ -897,7 +1039,8 @@ public static partial class TigerExtensions {
         double randDouble = rand.NextDouble() * totalWeight;
         return list.FirstOrDefault(p => p.weight > randDouble || TigerUtils.Do(randDouble -= p.weight)).value;
     }
-    public static T? RandomS<T>(this IEnumerable<T> enumerable, Func<T, float> weight, UnifiedRandom? rand = null, bool uncheckNegative = false) {
+    public static T? RandomS<T>(this IEnumerable<T> enumerable, Func<T, float> weight, UnifiedRandom? rand = null, bool uncheckNegative = false)
+    {
         rand ??= DefaultUnifiedRandomGetter();
         float w = default;
         float totalWeight = default;
@@ -906,7 +1049,8 @@ public static partial class TigerExtensions {
         float randFloat = rand.NextFloat() * totalWeight;
         return list.FirstOrDefault(p => p.weight > randFloat || TigerUtils.Do(randFloat -= p.weight)).value;
     }
-    public static T? RandomS<T>(this IEnumerable<T> enumerable, Func<T, int> weight, UnifiedRandom? rand = null, bool uncheckNegative = false) {
+    public static T? RandomS<T>(this IEnumerable<T> enumerable, Func<T, int> weight, UnifiedRandom? rand = null, bool uncheckNegative = false)
+    {
         rand ??= DefaultUnifiedRandomGetter();
         int w = default;
         int totalWeight = default;
@@ -915,9 +1059,11 @@ public static partial class TigerExtensions {
         int randInt = rand.Next(totalWeight);
         return list.FirstOrDefault(p => p.weight > randInt || TigerUtils.Do(randInt -= p.weight)).value;
     }
-    public static T? Random<T>(this IList<T> list, UnifiedRandom? rand = null) {
+    public static T? Random<T>(this IList<T> list, UnifiedRandom? rand = null)
+    {
         int count = list.Count;
-        if(count <= 0) {
+        if (count <= 0)
+        {
             return default;
         }
         rand ??= DefaultUnifiedRandomGetter();
@@ -926,7 +1072,8 @@ public static partial class TigerExtensions {
     /// <summary>
     /// 需确保<paramref name="list"/>的长度非0
     /// </summary>
-    public static T RandomF<T>(this IList<T> list, UnifiedRandom? rand = null) {
+    public static T RandomF<T>(this IList<T> list, UnifiedRandom? rand = null)
+    {
         rand ??= DefaultUnifiedRandomGetter();
         return list.ElementAt(rand.Next(list.Count));
     }
@@ -934,15 +1081,18 @@ public static partial class TigerExtensions {
     /// <br/>需确保<paramref name="weight"/>在固定参数下的返回值不变
     /// <br/>若可能会变化, 请调用<see cref="RandomS{T}(IList{T}, Func{T, double}, UnifiedRandom?, bool)"/>
     /// </summary>
-    public static T? Random<T>(this IList<T> list, Func<T, double> weight, UnifiedRandom? rand = null, bool uncheckNegative = false) {
+    public static T? Random<T>(this IList<T> list, Func<T, double> weight, UnifiedRandom? rand = null, bool uncheckNegative = false)
+    {
         rand ??= DefaultUnifiedRandomGetter();
         double w = default;
-        if(uncheckNegative) {
+        if (uncheckNegative)
+        {
             double totalWeight = list.Sum(t => weight(t));
             double randDouble = rand.NextDouble() * totalWeight;
             return list.FirstOrDefault(t => GetRight(w = weight(t), w > randDouble || TigerUtils.Do(randDouble -= w)));
         }
-        else {
+        else
+        {
             double totalWeight = list.Sum(t => weight(t).WithMin(0));
             double randDouble = rand.NextDouble() * totalWeight;
             return totalWeight <= 0 ? default : list.FirstOrDefault(t => GetRight(w = weight(t).WithMin(0), w > randDouble || TigerUtils.Do(randDouble -= w)));
@@ -953,15 +1103,18 @@ public static partial class TigerExtensions {
     /// <br/>需确保<paramref name="weight"/>在固定参数下的返回值不变
     /// <br/>若可能会变化, 请调用<see cref="RandomS{T}(IList{T}, Func{T, float}, UnifiedRandom?, bool)"/>
     /// </summary>
-    public static T? Random<T>(this IList<T> list, Func<T, float> weight, UnifiedRandom? rand = null, bool uncheckNegative = false) {
+    public static T? Random<T>(this IList<T> list, Func<T, float> weight, UnifiedRandom? rand = null, bool uncheckNegative = false)
+    {
         rand ??= DefaultUnifiedRandomGetter();
         float w = default;
-        if(uncheckNegative) {
+        if (uncheckNegative)
+        {
             float totalWeight = list.Sum(t => weight(t));
             float randFloat = rand.NextFloat() * totalWeight;
             return list.FirstOrDefault(t => GetRight(w = weight(t), w > randFloat || TigerUtils.Do(randFloat -= w)));
         }
-        else {
+        else
+        {
             float totalWeight = list.Sum(t => weight(t).WithMin(0f));
             float randFloat = rand.NextFloat() * totalWeight;
             return totalWeight <= 0 ? default : list.FirstOrDefault(t => GetRight(w = weight(t).WithMin(0f), w > randFloat || TigerUtils.Do(randFloat -= w)));
@@ -972,22 +1125,26 @@ public static partial class TigerExtensions {
     /// <br/>需确保<paramref name="weight"/>在固定参数下的返回值不变
     /// <br/>若可能会变化, 请调用<see cref="RandomS{T}(IList{T}, Func{T, int}, UnifiedRandom?, bool)"/>
     /// </summary>
-    public static T? Random<T>(this IList<T> list, Func<T, int> weight, UnifiedRandom? rand = null, bool uncheckNegative = false) {
+    public static T? Random<T>(this IList<T> list, Func<T, int> weight, UnifiedRandom? rand = null, bool uncheckNegative = false)
+    {
         rand ??= DefaultUnifiedRandomGetter();
         int w = default;
-        if(uncheckNegative) {
+        if (uncheckNegative)
+        {
             int totalWeight = list.Sum(t => weight(t));
             int randInt = rand.Next(totalWeight);
             return list.FirstOrDefault(t => GetRight(w = weight(t), w < randInt || TigerUtils.Do(randInt -= w)));
         }
-        else {
+        else
+        {
             int totalWeight = list.Sum(t => weight(t).WithMin(0));
             int randInt = rand.Next(totalWeight);
             return totalWeight <= 0 ? default : list.FirstOrDefault(t => GetRight(w = weight(t).WithMin(0), w > randInt || TigerUtils.Do(randInt -= w)));
         }
 
     }
-    public static T? RandomS<T>(this IList<T> list, Func<T, double> weight, UnifiedRandom? rand = null, bool uncheckNegative = false) {
+    public static T? RandomS<T>(this IList<T> list, Func<T, double> weight, UnifiedRandom? rand = null, bool uncheckNegative = false)
+    {
         rand ??= DefaultUnifiedRandomGetter();
         double w = default;
         double totalWeight = default;
@@ -995,12 +1152,14 @@ public static partial class TigerExtensions {
         : [.. list.Select(t => GetRight(totalWeight += w = weight(t).WithMin(0), w))];
         double randDouble = rand.NextDouble() * totalWeight;
         int index = Range(list.Count).FirstOrDefault(i => weights[i] > randDouble || TigerUtils.Do(randDouble -= weights[i]), -1);
-        if(index == -1) {
+        if (index == -1)
+        {
             return default;
         }
         return list.ElementAt(index);
     }
-    public static T? RandomS<T>(this IList<T> list, Func<T, float> weight, UnifiedRandom? rand = null, bool uncheckNegative = false) {
+    public static T? RandomS<T>(this IList<T> list, Func<T, float> weight, UnifiedRandom? rand = null, bool uncheckNegative = false)
+    {
         rand ??= DefaultUnifiedRandomGetter();
         float w = default;
         float totalWeight = default;
@@ -1008,12 +1167,14 @@ public static partial class TigerExtensions {
         : [.. list.Select(t => GetRight(totalWeight += w = weight(t).WithMin(0), w))];
         float randFloat = rand.NextFloat() * totalWeight;
         int index = Range(list.Count).FirstOrDefault(i => weights[i] > randFloat || TigerUtils.Do(randFloat -= weights[i]), -1);
-        if(index == -1) {
+        if (index == -1)
+        {
             return default;
         }
         return list.ElementAt(index);
     }
-    public static T? RandomS<T>(this IList<T> list, Func<T, int> weight, UnifiedRandom? rand = null, bool uncheckNegative = false) {
+    public static T? RandomS<T>(this IList<T> list, Func<T, int> weight, UnifiedRandom? rand = null, bool uncheckNegative = false)
+    {
         rand ??= DefaultUnifiedRandomGetter();
         int w = default;
         int totalWeight = default;
@@ -1021,7 +1182,8 @@ public static partial class TigerExtensions {
         : [.. list.Select(t => GetRight(totalWeight += w = weight(t).WithMin(0), w))];
         int randInt = rand.Next(totalWeight);
         int index = Range(list.Count).FirstOrDefault(i => weights[i] > randInt || TigerUtils.Do(randInt -= weights[i]), -1);
-        if(index == -1) {
+        if (index == -1)
+        {
             return default;
         }
         return list.ElementAt(index);
