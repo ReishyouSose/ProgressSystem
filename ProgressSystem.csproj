@@ -15,9 +15,4 @@
   <ItemGroup>
     <ProjectReference Include="..\RUIModule\RUIModule.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="RUIModule">
-      <HintPath>lib\RUIModule.dll</HintPath>
-    </Reference>
-  </ItemGroup>
 </Project>
