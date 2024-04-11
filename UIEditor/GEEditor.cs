@@ -5,7 +5,6 @@ using ProgressSystem.GameEvents.Events;
 using ProgressSystem.UIEditor.ExtraUI;
 using System.Linq;
 using Terraria.GameContent;
-using Terraria.ModLoader;
 
 namespace ProgressSystem.UIEditor
 {
@@ -24,6 +23,7 @@ namespace ProgressSystem.UIEditor
         private static UIGECollision collision;
         private static bool LeftShift;
         private static bool LeftCtrl;
+        private static IEnumerable<Type> geIns;
         public override void OnInitialization()
         {
             base.OnInitialization();
@@ -113,8 +113,9 @@ namespace ProgressSystem.UIEditor
                 eventView.AddElement(vline);
             }
 
-            UIVnlPanel taskPanel = new(200, 300);
-            taskPanel.SetCenter(100, 0, 0, 0.5f);
+            UIVnlPanel taskPanel = new(300, 200);
+            taskPanel.canDrag = true;
+            taskPanel.SetCenter(150, 0, 0, 0.5f);
             taskPanel.Info.SetMargin(10);
             Register(taskPanel);
 
@@ -135,21 +136,42 @@ namespace ProgressSystem.UIEditor
             };
             taskPanel.Register(itemSlot);*/
 
-            UIDropDownList<UIText> typeSelector = new(null, x => new(x.text));
+            UIVnlPanel dataInput = new(0, 0);
+            dataInput.SetPos(0, 30);
+            dataInput.SetSize(0, -30, 1, 1);
+            taskPanel.Register(dataInput);
+
+            UIDropDownList<UIText> typeSelector = new(dataInput, x => new(x.text));
             typeSelector.SetSize(0, 30, 1);
-            typeSelector.expandArea.SetPos(0, 100);
+            typeSelector.Events.OnUpdate += evt => Main.NewText(evt.Info.IsMouseHover);
+
+            typeSelector.showArea.SetSize(0, 30, 1);
+            typeSelector.showArea.Info.LeftMargin.Pixel = 10;
+            typeSelector.showArea.Info.TopMargin.Pixel = 5;
+
+            typeSelector.expandArea.SetPos(0, 30);
             typeSelector.expandArea.SetSize(0, 100, 1);
 
+            typeSelector.expandView.autoPos[0] = true;
+            taskPanel.Register(typeSelector);
 
-            var geIns = from c in ProgressSystem.Ins.GetType().Assembly.GetTypes()
-                        where !c.IsAbstract && c.IsSubclassOf(typeof(GameEvent))
-                        select c;
+            geIns ??= from c in ProgressSystem.Ins.GetType().Assembly.GetTypes()
+                      where !c.IsAbstract && c.IsSubclassOf(typeof(GameEvent))
+                      select c;
 
-
+            foreach (var ins in geIns)
+            {
+                UIText type = new(ins.Name);
+                type.SetSize(type.TextSize);
+                type.Events.OnMouseOver += evt => type.color = Color.Gold;
+                type.Events.OnMouseOut += evt => type.color = Color.White;
+                typeSelector.AddElement(type);
+            }
+            typeSelector.ChangeShowElement(typeSelector.expandView.InnerUIE[0] as UIText);
 
             UIText create = new("创建制造物品任务");
             create.SetSize(create.TextSize);
-            create.SetPos(0, 62);
+            create.SetPos(10, 10);
             create.Events.OnMouseOver += evt => create.color = Color.Gold;
             create.Events.OnMouseOut += evt => create.color = Color.White;
             create.Events.OnLeftDown += evt =>
@@ -237,7 +259,7 @@ namespace ProgressSystem.UIEditor
                 GEPos.Add(pos);
                 eventView.AddElement(ge);
             };
-            taskPanel.Register(create);
+            dataInput.Register(create);
         }
         public override void Update(GameTime gt)
         {

@@ -21,14 +21,14 @@ public abstract class GameEvent : ILoadable
     }
     public void Load(Mod mod)
     {
-        var cs = GetType().GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        /*var cs = GetType().GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         string FullName = $"{mod.Name}.{GetType().FullName}";
         var list = GEM._constructInfoTables[FullName] = [];
         foreach (var c in cs)
         {
             var table = ConstructInfoTable<GameEvent>.Create(c);
             list.Add(table);
-        }
+        }*/
     }
     public void Unload()
     {

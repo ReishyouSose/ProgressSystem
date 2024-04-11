@@ -62,7 +62,7 @@ namespace ProgressSystem.GameEvents
         {
             get
             {
-                return _entries.All(e => e.IsMeet);
+                return _entries.All(e => e.IsMet);
             }
         }
         public static bool TryAutoCreate(out ConstructInfoTable<T> table)
@@ -99,6 +99,9 @@ namespace ProgressSystem.GameEvents
         {
             public readonly string Name;
             public readonly Type Type;
+            /// <summary>
+            /// 是否必填
+            /// </summary>
             public readonly bool Important;
             private object _value;
             public Entry(Type type, string name, bool important = true)
@@ -120,8 +123,11 @@ namespace ProgressSystem.GameEvents
                 }
                 return false;
             }
+            /// <summary>
+            /// 是否至少填入一次合法参数
+            /// </summary>
             public bool HasValue { get; private set; }
-            public bool IsMeet
+            public bool IsMet
             {
                 get
                 {
