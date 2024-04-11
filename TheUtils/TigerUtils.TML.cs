@@ -412,7 +412,9 @@ public static partial class TigerClasses
         };
         public void SetTexturePath(string texturePath)
         {
-            AssetOfTexture2DValue = ModContent.Request<Texture2D>(texturePath);
+            if (ModContent.RequestIfExists<Texture2D>(texturePath, out var texture)) {
+                AssetOfTexture2DValue = texture;
+            }
         }
         public Texture2D? Texture2DValue
         {
@@ -470,18 +472,38 @@ public static partial class TigerExtensions
     }
     public static Func<Item?, bool> ItemCheckDefault => i => i == null || i.IsAir;
     /// <summary>
+    /// <br/>获得此值, 若不存在则返回默认值
+    /// <br/>若类型不正确会报错
+    /// </summary>
+    public static T? GetWithDefault<T>(this TagCompound tag, string key) {
+        return tag.TryGet(key, out T value) ? value : default;
+    }
+    /// <summary>
     /// <br/>获得此值, 若不存在则返回默认值(<paramref name="defaultValue"/>)
     /// <br/>若类型不正确会报错
     /// </summary>
-    public static T? GetWithDefault<T>(this TagCompound tag, string key, T? defaultValue = default)
+    public static T GetWithDefault<T>(this TagCompound tag, string key, T defaultValue)
     {
-        return !tag.TryGet(key, out T value) ? defaultValue : value;
+        return tag.TryGet(key, out T value) ? value : defaultValue;
     }
     /// <summary>
     /// <br/>返回是否成功得到值, 返回假时得到的是默认值(返回真时也可能得到默认值(若保存的为默认值的话))
     /// <br/>若类型不正确会报错
     /// </summary>
-    public static bool GetWithDefault<T>(this TagCompound tag, string key, out T? value, T? defaultValue = default)
+    public static bool GetWithDefault<T>(this TagCompound tag, string key, out T? value)
+    {
+        if (tag.TryGet(key, out value))
+        {
+            return true;
+        }
+        value = default;
+        return false;
+    }
+    /// <summary>
+    /// <br/>返回是否成功得到值, 返回假时得到的是默认值(返回真时也可能得到默认值(若保存的为默认值的话))
+    /// <br/>若类型不正确会报错
+    /// </summary>
+    public static bool GetWithDefault<T>(this TagCompound tag, string key, out T value, T defaultValue)
     {
         if (tag.TryGet(key, out value))
         {

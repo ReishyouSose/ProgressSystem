@@ -1,4 +1,6 @@
-﻿namespace ProgressSystem.Core;
+﻿using System.IO;
+
+namespace ProgressSystem.Core;
 
 /// <summary>
 /// 成就页
@@ -6,7 +8,6 @@
 /// </summary>
 public class AchievementPage
 {
-
     #region Vars
     public Mod Mod;
 
@@ -20,7 +21,7 @@ public class AchievementPage
 
     /// <summary>
     /// 成就页包含的所有成就<br/>
-    /// 键为<see cref="Achievement.Name"/>
+    /// 键为<see cref="Achievement.FullName"/>
     /// </summary>
     public Dictionary<string, Achievement> Achievements = [];
 
@@ -30,6 +31,21 @@ public class AchievementPage
     /// 发布时请确保此值为假
     /// </summary>
     public bool Editable;
+    #endregion
+
+    #region 开始
+    public bool Started { get; protected set; }
+    public void Reset() {
+        Started = false;
+        Achievements.Values.ForeachDo(a => a.Reset());
+    }
+    public void Start() {
+        if (Started) {
+            return;
+        }
+        Started = true;
+        Achievements.Values.ForeachDo(a => a.Start());
+    }
     #endregion
 
     #region 锁定
@@ -118,31 +134,65 @@ public class AchievementPage
     /// <returns>是否成功添加(当此成就页内有同名成就时失败)</returns>
     public bool Add(Achievement achievement)
     {
-        if (Achievements.ContainsKey(achievement.Name))
+        if (Achievements.ContainsKey(achievement.FullName))
         {
             return false;
         }
-        Achievements.Add(achievement.Name, achievement);
+        Achievements.Add(achievement.FullName, achievement);
         return true;
     }
 
     /// <summary>
     /// 获得此成就页内某个名字的成就
     /// </summary>
-    /// <param name="achievementName">成就名</param>
+    /// <param name="achievementFullName">成就名</param>
     /// <returns>找到的成就, 若没有这个名字的成就, 则返回<see langword="null"/></returns>
-    public Achievement? Get(string achievementName)
+    public Achievement? Get(string achievementFullName)
     {
-        return Achievements.TryGetValue(achievementName, out var result) ? result : null;
+        return Achievements.TryGetValue(achievementFullName, out var result) ? result : null;
     }
 
     /// <summary>
     /// 强制获得此成就页内某个名字的成就
     /// </summary>
-    /// <param name="achievementName">成就名</param>
+    /// <param name="achievementFullName">成就名</param>
     /// <returns>找到的成就, 若没有这个名字的成就, 则报错</returns>
-    public Achievement GetF(string achievementName)
+    public Achievement GetF(string achievementFullName)
     {
-        return Achievements[achievementName];
+        return Achievements[achievementFullName];
     }
+
+    #region 存取数据
+    // TODO: 存取 Page 自身的数据
+    public void SaveDataInWorld(TagCompound tag) {
+        TagCompound achievementsData = [..Achievements.Select(p => NewPair(p.Key, (object)new TagCompound().WithAction(p.Value.SaveDataInWorld)))];
+        tag["Achievements"] = achievementsData;
+    }
+    public void LoadDataInWorld(TagCompound tag) {
+        if (tag.TryGet<TagCompound>("Achievements", out var achievementsData)) {
+            foreach (var key in Achievements.Keys) {
+                Achievements[key].LoadDataInWorld(achievementsData.GetWithDefault<TagCompound>(key, []));
+            }
+        }
+    }
+    public void SaveDataInPlayer(TagCompound tag) {
+        TagCompound achievementsData = [..Achievements.Select(p => NewPair(p.Key, (object)new TagCompound().WithAction(p.Value.SaveDataInPlayer)))];
+        tag["Achievements"] = achievementsData;
+    }
+    public void LoadDataInPlayer(TagCompound tag) {
+        if (tag.TryGet<TagCompound>("Achievements", out var achievementsData)) {
+            Achievements.Values.ForeachDo(a => a.LoadDataInPlayer(achievementsData.GetWithDefault<TagCompound>(a.FullName, [])));
+        }
+    }
+    #endregion
+
+    #region 网络同步
+    // TODO: Page 自身的网络同步
+    public void NetSend(BinaryWriter writer) {
+        Achievements.Values.ForeachDo(a => a.NetSend(writer));
+    }
+    public void NetReceive(BinaryReader reader) {
+        Achievements.Values.ForeachDo(a => a.NetReceive(reader));
+    }
+    #endregion
 }

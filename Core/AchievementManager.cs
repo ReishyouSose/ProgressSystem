@@ -36,6 +36,9 @@ public class AchievementManager : ModSystem
     }
     #endregion
 
+    /// <summary>
+    /// 存有所有的成就页, 键为<see cref="AchievementPage.FullName"/>
+    /// </summary>
     public static Dictionary<string, AchievementPage> Pages { get; set; } = [];
 
     public override void PostUpdatePlayers()
@@ -45,27 +48,38 @@ public class AchievementManager : ModSystem
     }
     public override void SaveWorldData(TagCompound tag)
     {
-        base.SaveWorldData(tag);
+        TagCompound pagesData = [..Pages.Select(p => NewPair(p.Key, (object)new TagCompound().WithAction(p.Value.SaveDataInWorld)))];
+        tag["Pages"] = pagesData;
     }
     public override void LoadWorldData(TagCompound tag)
     {
-        base.LoadWorldData(tag);
+        if (tag.TryGet("Page", out TagCompound pagesData)) {
+            Pages.Values.ForeachDo(p => p.LoadDataInWorld(pagesData.GetWithDefault<TagCompound>(p.FullName, [])));
+        }
     }
 }
 
 public class AchievementPlayerManager : ModPlayer
 {
+    /// <summary>
+    /// 同<see cref="AchievementManager.Pages"/>
+    /// </summary>
+    public static Dictionary<string, AchievementPage> Pages { get => AchievementManager.Pages; set => AchievementManager.Pages = value; }
     public override void OnEnterWorld()
     {
-        base.OnEnterWorld();
+        Pages.Values.ForeachDo(p => p.Reset());
+        Pages.Values.ForeachDo(p => p.Start());
     }
     public override void SaveData(TagCompound tag)
     {
-        base.SaveData(tag);
+        TagCompound pagesData = [..Pages.Select(p => NewPair(p.Key, (object)new TagCompound().WithAction(p.Value.SaveDataInPlayer)))];
+        tag["Pages"] = pagesData;
     }
     public override void LoadData(TagCompound tag)
     {
-        base.LoadData(tag);
+        if (tag.TryGet("Page", out TagCompound pagesData)) {
+            Pages.Values.ForeachDo(p => p.LoadDataInPlayer(pagesData.GetWithDefault<TagCompound>(p.FullName, [])));
+        }
     }
 }
 

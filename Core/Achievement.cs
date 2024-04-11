@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace ProgressSystem.Core;
 
 /// <summary>
@@ -17,12 +19,15 @@ public class Achievement
     public Mod Mod;
 
     /// <summary>
-    /// 内部名, 同一成就页内不允许有相同内部名的成就
+    /// 内部名
     /// </summary>
     public string Name;
 
-    public string? FullNameOverride;
+    /// <summary>
+    /// 全名, 默认为模组名与内部名, 在同一成就页内不允许有相同全名的成就
+    /// </summary>
     public string FullName => FullNameOverride ?? string.Join('.', Mod.Name, Name);
+    public string? FullNameOverride;
 
     /// <summary>
     /// 包含页名的全名, 可作为标识符, 全局唯一
@@ -78,6 +83,7 @@ public class Achievement
     /// 当在 UI 上设置了此成就的位置时此项失效
     /// </summary>
     public Vector2? PositionOverride;
+    #endregion
 
     #region 前后置相关
     /// <summary>
@@ -107,8 +113,8 @@ public class Achievement
     /// <param name="predecessorNames"></param>
     public void SetPredecessorNames(List<string>? predecessorNames)
     {
+        predecessors?.ForEach(p => p.successors.Remove(this));
         predecessors = null;
-        successors.Clear();
         _predecessorNames = predecessorNames;
     }
     /// <summary>
@@ -238,8 +244,6 @@ public class Achievement
     }
     #endregion
 
-    #endregion
-
     #region 构造函数
     /// <summary>
     /// 构造函数
@@ -268,6 +272,7 @@ public class Achievement
         Name = name;
         SetPredecessorNames(predecessorNames);
         Requirements = requirements ?? [];
+        Requirements.ForEach(r => r.OnComplete += TryComplete);
         Rewards = rewards ?? [];
         _displayName = displayName;
         _tooltip = tooltip;
@@ -276,6 +281,26 @@ public class Achievement
     }
     #endregion
 
+    #region 开始
+    public bool Started;
+    public void Reset() {
+        Started = false;
+        Requirements.ForEach(r => r.Reset());
+    }
+    public void Start() {
+        if (Started) {
+            return;
+        }
+        Started = true;
+        Predecessors.ForeachDo(p => p.Start());
+        if (IsPredecessorsMet()) {
+            Unlock();
+        }
+        Requirements.ForEach(r => r.Start());
+    }
+    #endregion
+
+    #region 完成相关
     public bool Completed { get; protected set; }
     public event Action? OnComplete;
     public void Complete()
@@ -294,13 +319,78 @@ public class Achievement
     /// <param name="predecessor">前置</param>
     public virtual void PredecessorCompleted(Achievement predecessor)
     {
-        CheckCompleted();
+        TryUnlock();
     }
-    public virtual void CheckCompleted()
+    public virtual void TryComplete()
     {
         if (!Completed && IsPredecessorsMet() && IsRequirementsMet())
         {
             Complete();
         }
     }
+    #endregion
+
+    #region 解锁
+    public bool Unlocked;
+    public void TryUnlock() {
+        if (Unlocked) {
+            return;
+        }
+        if (IsPredecessorsMet()) {
+            Unlock();
+        }
+    }
+    public virtual void Unlock() {
+        Unlocked = true;
+        Requirements.ForEach(r => DoIf(r.ListenType == Requirement.ListenTypeEnum.OnUnlocked, r.BeginListenSafe));
+    }
+    #endregion
+
+    #region 数据存取
+    // todo: 成就本身与奖励相关的数据存取
+    public void SaveDataInWorld(TagCompound tag) {
+        tag.SetWithDefault("Unlocked", Unlocked);
+        tag.SetWithDefault("Completed", Completed);
+        var requirementsData = Requirements.Select(r => new TagCompound().WithAction(r.SaveDataInWorld)).ToArray();
+        if (requirementsData.Any(t => t.Count > 0)) {
+            tag["Requirements"] = requirementsData;
+        }
+    }
+    public void LoadDataInWorld(TagCompound tag) {
+        if (tag.GetWithDefault<bool>("Unlocked")) {
+            Unlock();
+        }
+        if (tag.GetWithDefault<bool>("Completed")) {
+            Complete();
+        }
+        if (tag.TryGet("Requirements", out TagCompound[] requirementsData)) {
+            foreach (int i in Requirements.Count) {
+                Requirements[i].LoadDataInWorld(requirementsData.GetS(i, []));
+            }
+        }
+    }
+    public void SaveDataInPlayer(TagCompound tag) {
+        var requirementsData = Requirements.Select(r => new TagCompound().WithAction(r.SaveDataInPlayer)).ToArray();
+        if (requirementsData.Any(t => t.Count > 0)) {
+            tag["Requirements"] = requirementsData;
+        }
+    }
+    public void LoadDataInPlayer(TagCompound tag) {
+        if (tag.TryGet("Requirements", out TagCompound[] requirementsData)) {
+            foreach (int i in Requirements.Count) {
+                Requirements[i].LoadDataInPlayer(requirementsData.GetS(i, []));
+            }
+        }
+    }
+    #endregion
+
+    #region 网络同步
+    // todo: 成就本身与奖励相关的网络同步
+    public void NetSend(BinaryWriter writer) {
+        Requirements.ForEach(r => r.NetSend(writer));
+    }
+    public void NetReceive(BinaryReader reader) {
+        Requirements.ForEach(r => r.NetReceive(reader));
+    }
+    #endregion
 }
