@@ -14,8 +14,8 @@ public class BuyItem : CountInt
     }
     public static void SetUp(BuyItem @event)
     {
-        GEListener.OnBuyItem += @event.Complete;
-        @event.OnCompleted += e => GEListener.OnBuyItem -= @event.Complete;
+        GEListener.OnBuyItem += @event.TryComplete;
+        @event.OnCompleted += e => GEListener.OnBuyItem -= @event.TryComplete;
     }
     public static BuyItem CreateAndSetUp(int type, int target = 1)
     {
@@ -42,15 +42,11 @@ public class BuyItem : CountInt
         tag[nameof(Type)] = Type;
         base.Save(tag);
     }
-    public override void Complete(params object[] args)
+    public void TryComplete(Player player, NPC vendor, Item[] shopItems, Item item)
     {
-        if (args.Length > 4 && args[1] is Player player && args[2] is NPC npc && args[3] is Item[] items && args[4] is Item item)
+        if (item.type == Type)
         {
-
-            if (item.type == Type)
-            {
-                base.Complete(args);
-            }
+            Increase(1);
         }
     }
 }

@@ -16,8 +16,8 @@ public class CraftItem : CountInt
     }
     public static void SetUp(CraftItem @event)
     {
-        GEListener.OnCreateItem += @event.Complete;
-        @event.OnCompleted += e => GEListener.OnCreateItem -= @event.Complete;
+        GEListener.OnCreateItem += @event.TryComplete;
+        @event.OnCompleted += e => GEListener.OnCreateItem -= @event.TryComplete;
     }
     public static CraftItem CreateAndSetUp(int type, int target = 1)
     {
@@ -45,14 +45,11 @@ public class CraftItem : CountInt
         tag[nameof(Type)] = Type;
         base.Save(tag);
     }
-    public override void Complete(params object[] args)
+    public void TryComplete(Player player, Item item,RecipeItemCreationContext context)
     {
-        if (args.Length > 3 && args[1] is Player player && args[2] is Item item && args[3] is ItemCreationContext context)
+        if (item.type == Type)
         {
-            if (item.type == Type)
-            {
-                base.Complete(args);
-            }
+            Increase(1);
         }
     }
 }

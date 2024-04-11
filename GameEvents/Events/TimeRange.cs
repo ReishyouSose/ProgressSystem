@@ -48,7 +48,7 @@
             }
             return (NightStart + Main.time) % TimePerDay;
         }
-        public override void Complete(params object[] args)
+        public override void Complete()
         {
 
         }

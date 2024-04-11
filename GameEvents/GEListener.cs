@@ -7,12 +7,12 @@ namespace ProgressSystem.GameEvents;
 /// </summary>
 public static class GEListener
 {
-    public static event Action<object[]> OnNPCKilled;
-    public static event Action<object[]> OnCreateItem;
-    public static event Action<object[]> OnTileBreak;
-    public static event Action<object[]> OnBuyItem;
-    public static event Action<object[]> OnConsumeItem;
-    public static event Action<object[]> OnPickItem;
+    public static event Action<Player,NPC> OnNPCKilled;
+    public static event Action<Player,Item,RecipeItemCreationContext> OnCreateItem;
+    public static event Action<Player,int,int,Tile> OnTileBreak;
+    public static event Action<Player, NPC, Item[] ,Item> OnBuyItem;
+    public static event Action<Player,Item> OnConsumeItem;
+    public static event Action<Player,Item> OnPickItem;
 
     /// <summary>
     /// Set this hook in <see cref="GlobalNPC.HitEffect(NPC, NPC.HitInfo)"/> when <see cref="NPC.life"/> less than 1 if in server 
@@ -22,7 +22,7 @@ public static class GEListener
     internal static void ListenNPCKilled(NPC npc)
     {
         Player player = Main.player.IndexInRange(npc.lastInteraction) ? Main.player[npc.lastInteraction] : null;
-        OnNPCKilled?.Invoke([1, player, npc]);
+        OnNPCKilled?.Invoke(player, npc);
     }
     /// <summary>
     /// See <see cref="GlobalItem.OnCreated(Item, ItemCreationContext)"/>
@@ -30,14 +30,14 @@ public static class GEListener
     /// <param name="item"></param>
     internal static void ListenCreateItem(Item item, ItemCreationContext context)
     {
-        OnCreateItem?.Invoke([1, Main.LocalPlayer, item, context]);
+        OnCreateItem?.Invoke(Main.LocalPlayer, item, (RecipeItemCreationContext)context);
     }
     internal static void ListenTileBreak(Player player, int x, int y, Tile tile)
     {
         var data = TileObjectData.GetTileData(tile);
         if (data is null)
         {
-            OnTileBreak?.Invoke([1, player, x, y, tile]);
+            OnTileBreak?.Invoke( player, x, y, tile);
         }
         else
         {
@@ -53,19 +53,19 @@ public static class GEListener
             {
                 return;
             }
-            OnTileBreak?.Invoke([1, player, x, y, tile]);
+            OnTileBreak?.Invoke( player, x, y, tile);
         }
     }
     internal static void ListenBuyItem(Player player, NPC vendor, Item[] shopInventory, Item item)
     {
-        OnBuyItem?.Invoke([1, player, vendor, shopInventory, item]);
+        OnBuyItem?.Invoke(player, vendor, shopInventory, item);
     }
     internal static void ListenConsumeItem(Player player, Item item)
     {
-        OnConsumeItem?.Invoke([1, player, item]);
+        OnConsumeItem?.Invoke(player, item);
     }
     internal static void ListenPickItem(Player player, Item item)
     {
-        OnPickItem?.Invoke([item.stack, player, item]);
+        OnPickItem?.Invoke(player, item);
     }
 }

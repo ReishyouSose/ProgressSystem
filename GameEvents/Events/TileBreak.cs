@@ -15,8 +15,8 @@ public class TileBreak : CountInt
     }
     public static void SetUp(TileBreak @event)
     {
-        GEListener.OnTileBreak += @event.Complete;
-        @event.OnCompleted += e => GEListener.OnTileBreak -= @event.Complete;
+        GEListener.OnTileBreak += @event.TryComplete;
+        @event.OnCompleted += e => GEListener.OnTileBreak -= @event.TryComplete;
     }
     public static TileBreak CreateAndSetUp(int type, int target = 1)
     {
@@ -43,14 +43,11 @@ public class TileBreak : CountInt
         tag[nameof(Type)] = Type;
         base.Save(tag);
     }
-    public override void Complete(params object[] args)
+    public void TryComplete(Player player, int x,int y,Tile tile)
     {
-        if (args.Length > 4 && args[1] is Player player && args[2] is int x && args[3] is int y && args[4] is Tile tile)
+        if (tile.TileType == Type)
         {
-            if (tile.TileType == Type)
-            {
-                base.Complete(args);
-            }
+            Increase(1);
         }
     }
 }

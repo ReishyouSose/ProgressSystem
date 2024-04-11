@@ -15,8 +15,8 @@ public class PickItem : CountInt
     }
     public static void SetUp(PickItem @event)
     {
-        GEListener.OnPickItem += @event.Complete;
-        @event.OnCompleted += e => GEListener.OnPickItem -= @event.Complete;
+        GEListener.OnPickItem += @event.TryComplete;
+        @event.OnCompleted += e => GEListener.OnPickItem -= @event.TryComplete;
     }
     public static PickItem CreateAndSetUp(int type, int target = 1)
     {
@@ -43,14 +43,11 @@ public class PickItem : CountInt
         tag[nameof(Type)] = Type;
         base.Save(tag);
     }
-    public override void Complete(params object[] args)
+    public void TryComplete(Player player, Item item)
     {
-        if (args.Length > 2 && args[1] is Player player && args[2] is Item item)
+        if (item.type == Type)
         {
-            if (item.type == Type)
-            {
-                base.Complete(args);
-            }
+            Increase(item.stack);
         }
     }
 }

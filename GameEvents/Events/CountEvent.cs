@@ -6,7 +6,17 @@
         public int Count => _count;
         public int Target => _target;
         public virtual float Progress => Math.Clamp(_count / (float)_target, 0, 1);
-        public override bool IsCompleted => _count >= _target;
+        public override bool IsCompleted
+        {
+            get => _count == _target;
+            protected set
+            {
+                if(value)
+                {
+                    _count = _target;
+                }
+            }
+        }
         public virtual void Load(TagCompound tag)
         {
             tag.TryGet(nameof(_count), out _count);
@@ -17,16 +27,10 @@
             tag[nameof(_count)] = _count;
             tag[nameof(_target)] = _target;
         }
-        public override void Complete(params object[] args)
+        public void Increase(int count)
         {
-            if (args.Length > 0 && args[0] is int num)
-            {
-                if ((_count += num) >= _target)
-                {
-                    _count = Target;
-                    base.Complete(args);
-                }
-            }
+            _count += Math.Min(_target - _count, count);
+            Complete();
         }
     }
     public class Countfloat : GameEvent, IProgressable, ISaveable
@@ -46,16 +50,10 @@
             tag[nameof(_count)] = _count;
             tag[nameof(_target)] = _target;
         }
-        public override void Complete(params object[] args)
+        public void Increase(float count)
         {
-            if (args.Length > 0 && args[0] is float num)
-            {
-                if ((_count += num) >= _target)
-                {
-                    _count = Target;
-                    base.Complete(args);
-                }
-            }
+            _count += Math.Min(_target - _count, count);
+            Complete();
         }
     }
     public class Countdouble : GameEvent, IProgressable, ISaveable
@@ -75,16 +73,10 @@
             tag[nameof(_count)] = _count;
             tag[nameof(_target)] = _target;
         }
-        public override void Complete(params object[] args)
+        public void Increase(double count)
         {
-            if (args.Length > 0 && args[0] is double num)
-            {
-                if ((_count += num) >= _target)
-                {
-                    _count = Target;
-                    base.Complete(args);
-                }
-            }
+            _count += Math.Min(_target - _count, count);
+            Complete();
         }
     }
 }
