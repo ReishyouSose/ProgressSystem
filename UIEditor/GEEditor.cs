@@ -142,7 +142,10 @@ namespace ProgressSystem.UIEditor
 
             UIDropDownList<UIText> typeSelector = new(dataInput, x => new(x.text));
             typeSelector.SetSize(0, 30, 1);
-            typeSelector.Events.OnUpdate += evt => Main.NewText(evt.Info.IsMouseHover);
+            typeSelector.Events.OnUpdate += evt =>
+            {
+                //Main.NewText(evt.Info.IsMouseHover);
+            };
 
             typeSelector.showArea.SetSize(0, 30, 1);
             typeSelector.showArea.Info.LeftMargin.Pixel = 10;
@@ -154,7 +157,7 @@ namespace ProgressSystem.UIEditor
             typeSelector.expandView.autoPos[0] = true;
             taskPanel.Register(typeSelector);
 
-            geIns ??= from c in ProgressSystem.Ins.GetType().Assembly.GetTypes()
+            geIns ??= from c in ProgressSystem.Instance.GetType().Assembly.GetTypes()
                       where !c.IsAbstract && c.IsSubclassOf(typeof(GameEvent))
                       select c;
 
@@ -164,6 +167,8 @@ namespace ProgressSystem.UIEditor
                 type.SetSize(type.TextSize);
                 type.Events.OnMouseOver += evt => type.color = Color.Gold;
                 type.Events.OnMouseOut += evt => type.color = Color.White;
+                type.DrawRec[0] = Color.White;
+                type.DrawRec[2] = Color.Red;
                 typeSelector.AddElement(type);
             }
             typeSelector.ChangeShowElement(typeSelector.expandView.InnerUIE[0] as UIText);

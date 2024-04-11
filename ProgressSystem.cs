@@ -17,7 +17,6 @@ namespace ProgressSystem;
 
 public class ProgressSystem : Mod
 {
-    public static ProgressSystem Ins => Instance;
     public static ProgressSystem Instance { get; private set; } = null!;
     public override void Load()
     {
