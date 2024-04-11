@@ -1,4 +1,6 @@
-﻿namespace ProgressSystem.GameEvents.Events;
+﻿using System.Linq;
+
+namespace ProgressSystem.GameEvents.Events;
 
 public class AnyCompleted : GameEvent
 {

@@ -47,7 +47,7 @@ public class TileBreak : CountInt
     {
         if (args.Length > 4 && args[1] is Player player && args[2] is int x && args[3] is int y && args[4] is Tile tile)
         {
-            if (tile.type == Type)
+            if (tile.TileType == Type)
             {
                 base.Complete(args);
             }

@@ -1,8 +1,6 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework.Graphics;
 using ProgressSystem.GameEvents;
 using RUIModule;
-using RUIModule.RUIElements;
 using Terraria.GameContent;
 using Terraria.UI.Chat;
 
@@ -19,6 +17,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
         /// </summary>
         private Vector2? adsorption;
         public Vector2 pos;
+        public bool selected;
         public UIGESlot(GameEvent ge = null, Texture2D tex = null) : base(AssetLoader.Slot)
         {
             this.ge = ge;
@@ -35,7 +34,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
             {
                 if (!dragging) dragging = true;
                 oldlocal = Main.MouseScreen;
-                EventEditor.GEPos.Remove(pos);
+                GEEditor.GEPos.Remove(pos);
                 color = Color.White * 0.75f;
             };
             Events.OnLeftUp += evt =>
@@ -44,7 +43,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
                 if (adsorption != null)
                 {
                     SetPos(adsorption.Value * 80);
-                    EventEditor.GEPos.Add(pos);
+                    GEEditor.GEPos.Add(pos);
                     adsorption = null;
                 }
                 color = Color.White;
@@ -53,14 +52,14 @@ namespace ProgressSystem.UIEditor.ExtraUI
             Events.OnRightDoubleClick += evt =>
             {
                 ParentElement.Remove(this);
-                EventEditor.GEPos.Remove(pos);
+                GEEditor.GEPos.Remove(pos);
             };
         }
 
         public override void Update(GameTime gt)
         {
             base.Update(gt);
-            if (dragging)
+            if (dragging && !selected)
             {
                 Vector2 mouse = Main.MouseScreen;
                 if (oldlocal != mouse)
@@ -71,7 +70,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
                     x = Math.Max(x, 0);
                     y = Math.Max(y, 0);
                     Vector2 p = new(x, y);
-                    if (!EventEditor.GEPos.Contains(p))
+                    if (!GEEditor.GEPos.Contains(p))
                     {
                         adsorption = new(x, y);
                         pos = adsorption.Value;
@@ -91,6 +90,10 @@ namespace ProgressSystem.UIEditor.ExtraUI
         public override void DrawSelf(SpriteBatch sb)
         {
             base.DrawSelf(sb);
+            if (selected)
+            {
+                RUIHelper.DrawRec(sb, HitBox(), 2, Color.Red, false);
+            }
             Rectangle hitbox = HitBox();
             if (Icon != null)
             {
