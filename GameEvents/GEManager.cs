@@ -1,6 +1,6 @@
 ﻿namespace ProgressSystem.GameEvents;
 
-public static class GEM
+public static class GEManager
 {
     static Dictionary<string, GameEvent> _events = [];
     public static bool Register(string uniqueLabel, GameEvent gameEvent, bool cover = true)
