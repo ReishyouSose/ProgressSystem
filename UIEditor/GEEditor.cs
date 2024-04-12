@@ -36,8 +36,10 @@ namespace ProgressSystem.UIEditor
             Info.IsVisible = true;
             RemoveAll();
 
-            datas = [];
             Mod mod = ProgressSystem.Instance;
+            EditMod = mod.Name;
+            datas = [];
+            datas.Add(EditMod, []);
             if (mod.HasAsset("Datas.nbt"))
             {
                 using Stream stream = mod.GetFileStream("Datas.nbt");
@@ -86,7 +88,7 @@ namespace ProgressSystem.UIEditor
             UIVnlPanel eventPanel = new(0, 0);
             eventPanel.Info.SetMargin(10);
             eventPanel.SetPos(130, 40);
-            eventPanel.SetSize(-130, 0, 1, 1, false);
+            eventPanel.SetSize(-130, -40, 1, 1, false);
             bg.Register(eventPanel);
 
             UIDropDownList<UIText> indexList = new(bg, eventPanel, x =>
@@ -94,7 +96,8 @@ namespace ProgressSystem.UIEditor
                 UIText text = new(x.text);
                 text.SetPos(10, 5);
                 return text;
-            });
+            })
+            { buttonXoffset = 10 };
 
             indexList.showArea.SetPos(130, 0);
             indexList.showArea.SetSize(200, 30);
@@ -104,24 +107,28 @@ namespace ProgressSystem.UIEditor
 
             indexList.expandView.autoPos[0] = true;
 
-            UIVnlPanel newProgressPanel = new(300, 110);
+            UIVnlPanel newProgressPanel = new(300, 200, opacity: 1);
             newProgressPanel.SetCenter(0, 0, 0.5f, 0.5f);
             newProgressPanel.Info.IsVisible = false;
             newProgressPanel.Info.SetMargin(10);
             Register(newProgressPanel);
 
             UIVnlPanel inputBg = new(200, 30);
-            inputBg.Info.Left.Percent = 0.5f;
+            inputBg.SetCenter(0, 0, 0.5f, 0.25f);
             newProgressPanel.Register(inputBg);
 
-            UIText report = new("不可为空");
+            UIText report = new("不可为空")
+            {
+                color = Color.Red
+            };
             report.SetSize(report.TextSize);
-            report.Info.Left.Percent = 0.5f;
-            report.Info.Top.Pixel = 30;
+            report.SetCenter(0, 0, 0.5f, 0.5f);
             newProgressPanel.Register(report);
 
-            UIInputBox indexInputer = new("输入进度组名称");
-            indexInputer.SetPos(10, 5);
+            UIInputBox indexInputer = new("输入进度组名称", default, Color.White);
+            indexInputer.SetSize(0, 0, 1, 1);
+            /*indexInputer.Info.Left.Pixel += 10;
+            indexInputer.Info.Top.Pixel += 5;*/
             indexInputer.OnInputText += evt =>
             {
                 string text = indexInputer.Text;
@@ -151,30 +158,41 @@ namespace ProgressSystem.UIEditor
 
             UIText submit = new("创建");
             submit.SetSize(submit.TextSize);
-            submit.SetCenter(0, 60, 0.3f);
+            submit.SetCenter(0, 0, 0.3f, 0.75f);
             submit.Events.OnLeftDown += evt =>
             {
                 if (report.color == Color.Green)
                 {
+                    datas[EditMod] ??= [];
                     datas[EditMod][indexInputer.Text] = [];
-                    SaveProgress();
+                    bg.LockInteract(true);
+                    newProgressPanel.Info.IsVisible = false;
+                    //SaveProgress();
                 }
             };
             newProgressPanel.Register(submit);
 
             UIText cancel = new("取消");
             cancel.SetSize(cancel.TextSize);
-            cancel.SetCenter(0, 60, 0.7f);
+            cancel.SetCenter(0, 0, 0.7f, 0.75f);
+            cancel.Events.OnLeftDown += evt =>
+            {
+                bg.LockInteract(true);
+                newProgressPanel.Info.IsVisible = false;
+            };
             newProgressPanel.Register(cancel);
 
             UIText newProgress = new("新建进度表");
-            newProgress.SetPos(groupFilter.Width + indexList.showArea.Width + 20, 0);
+            newProgress.SetPos(groupFilter.Width + indexList.showArea.Width + 20, 5);
             newProgress.SetSize(newProgress.TextSize + new Vector2(10, 5));
             newProgress.Events.OnLeftDown += evt =>
             {
-
+                indexInputer.ClearText();
+                newProgressPanel.Info.IsVisible = true;
                 bg.LockInteract(false);
             };
+            newProgress.Events.OnMouseOver += evt => newProgress.color = Color.Gold;
+            newProgress.Events.OnMouseOut += evt => newProgress.color = Color.White;
             bg.Register(newProgress);
 
             eventView = new();
@@ -301,11 +319,10 @@ namespace ProgressSystem.UIEditor
                     type.Events.OnLeftDown += evt =>
                     {
                         var constructs = tables;
-                        int y = 0;
                         foreach (var constructData in constructs)
                         {
                             UIVnlPanel constructPanel = new(0, 0);
-                            dataInput.Register(constructPanel);
+                            dataView.AddElement(constructPanel);
                             constructPanel.Info.SetMargin(10);
                             int innerY = 0;
                             foreach (var info in constructData)
@@ -314,13 +331,12 @@ namespace ProgressSystem.UIEditor
                                 name.SetPos(0, innerY);
                                 name.SetSize(name.TextSize);
                                 constructPanel.Register(name);
+                                innerY += 28;
                             }
-                            constructPanel.SetSize(0, y, 1);
-                            y += constructPanel.Height + 10;
 
                             UIText create = new("创建进度");
                             create.SetSize(create.TextSize);
-                            create.SetPos(10, y);
+                            create.SetPos(0, innerY);
                             create.Events.OnMouseOver += evt => create.color = Color.Gold;
                             create.Events.OnMouseOut += evt => create.color = Color.White;
                             create.Events.OnLeftDown += evt =>
@@ -345,8 +361,6 @@ namespace ProgressSystem.UIEditor
                                         draggingSelected = false;
                                     };
                                     ge.Events.OnUpdate += GESlotUpdate;
-                                    {
-                                    };
                                     Vector2 pos = Vector2.Zero;
                                     while (GEPos.Contains(pos))
                                     {
@@ -358,7 +372,8 @@ namespace ProgressSystem.UIEditor
                                     eventView.AddElement(ge);
                                 }
                             };
-                            dataInput.Register(create);
+                            constructPanel.Register(create);
+                            constructPanel.SetSize(0, innerY + 48, 1);
                         }
                     };
                     typeSelector.AddElement(type);

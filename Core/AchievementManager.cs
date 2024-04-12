@@ -7,6 +7,7 @@
 /// </summary>
 public class AchievementManager : ModSystem
 {
+    public override bool IsLoadingEnabled(Mod mod) => false;
     #region Test
     public override void OnModLoad()
     {
@@ -53,17 +54,20 @@ public class AchievementManager : ModSystem
     {
         tag.LoadDictionaryData("Pages", Pages, (p, t) => p.LoadDataInWorld(t));
     }
-    public override void OnWorldLoad() {
+    public override void OnWorldLoad()
+    {
         // 在 LoadWorldData 前执行
     }
-    public override void OnWorldUnload() {
+    public override void OnWorldUnload()
+    {
         // 在 SaveWorldData 后执行
         Reset();
     }
     /// <summary>
     /// 重置所有的成就数据
     /// </summary>
-    public static void Reset() {
+    public static void Reset()
+    {
         Pages.Values.ForeachDo(p => p.Reset());
     }
     /// <summary>
