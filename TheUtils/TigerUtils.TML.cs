@@ -412,7 +412,8 @@ public static partial class TigerClasses
         };
         public void SetTexturePath(string texturePath)
         {
-            if (ModContent.RequestIfExists<Texture2D>(texturePath, out var texture)) {
+            if (ModContent.RequestIfExists<Texture2D>(texturePath, out var texture))
+            {
                 AssetOfTexture2DValue = texture;
             }
         }
@@ -462,25 +463,42 @@ public static partial class TigerExtensions
     /// 若不为默认值则将值保存到 <paramref name="tag"/> 中
     /// </summary>
     /// <param name="checkDefault">检查值是否是默认值</param>
-    public static void SetWithDefault<T>(this TagCompound tag, string key, T? value, Func<T?, bool> checkDefault, bool replace = false) {
-        if (!checkDefault(value)) {
+    public static void SetWithDefault<T>(this TagCompound tag, string key, T? value, Func<T?, bool> checkDefault, bool replace = false)
+    {
+        if (!checkDefault(value))
+        {
             tag.Set(key, value, replace);
         }
     }
     /// <summary>
     /// 若不为默认值 ( ! <paramref name="isDefault"/> ) 则将值保存到 <paramref name="tag"/> 中
     /// </summary>
-    public static void SetWithDefault<T>(this TagCompound tag, string key, T? value, bool isDefault, bool replace = false) {
-        if (!isDefault) {
+    public static void SetWithDefault<T>(this TagCompound tag, string key, T? value, bool isDefault, bool replace = false)
+    {
+        if (!isDefault)
+        {
             tag.Set(key, value, replace);
         }
     }
+    /// <summary>
+    /// 若不为默认值则将值保存到 <paramref name="tag"/> 中
+    /// </summary>
+    public static void SetWithDefaultN<T>(this TagCompound tag, string key, T value, T defaultValue = default, bool replace = false) where T : struct
+    {
+        if (value.Equals(defaultValue) == true)
+        {
+            return;
+        }
+        tag.Set(key, value, replace);
+    }
+
     public static Func<Item?, bool> ItemCheckDefault => i => i == null || i.IsAir;
     /// <summary>
     /// <br/>获得此值, 若不存在则返回默认值
     /// <br/>若类型不正确会报错
     /// </summary>
-    public static T? GetWithDefault<T>(this TagCompound tag, string key) {
+    public static T? GetWithDefault<T>(this TagCompound tag, string key)
+    {
         return tag.TryGet(key, out T value) ? value : default;
     }
     /// <summary>
@@ -616,47 +634,61 @@ public static partial class TigerExtensions
         }
     }
 
-    public static void SaveDictionaryData<T>(this TagCompound tag, string key, Dictionary<string, T> dictionary, Action<T, TagCompound> toTag) {
+    public static void SaveDictionaryData<T>(this TagCompound tag, string key, Dictionary<string, T> dictionary, Action<T, TagCompound> toTag)
+    {
         tag.SaveDictionaryData(key, dictionary, t => new TagCompound().WithAction(tag => toTag(t, tag)));
     }
-    public static void SaveDictionaryData<T>(this TagCompound tag, string key, Dictionary<string, T> dictionary, Func<T, TagCompound?> toTag) {
+    public static void SaveDictionaryData<T>(this TagCompound tag, string key, Dictionary<string, T> dictionary, Func<T, TagCompound?> toTag)
+    {
         TagCompound data = [.. dictionary.SelectWhere(
             p => toTag(p.Value).Transfer(
                 t => t?.Count > 0 ?
                 NewHolder(NewPair(p.Key, (object)t)) :
                 null)
         )];
-        if (data.Count > 0) {
+        if (data.Count > 0)
+        {
             tag[key] = data;
         }
     }
-    public static void LoadDictionaryData<T>(this TagCompound tag, string key, Dictionary<string, T> dictionary, Action<T, TagCompound> fromTag) {
-        if (!tag.TryGet(key, out TagCompound dictValue)) {
+    public static void LoadDictionaryData<T>(this TagCompound tag, string key, Dictionary<string, T> dictionary, Action<T, TagCompound> fromTag)
+    {
+        if (!tag.TryGet(key, out TagCompound dictValue))
+        {
             return;
         }
-        foreach (var (k, v) in dictValue) {
-            if (dictionary.TryGetValue(k, out var val)) {
+        foreach (var (k, v) in dictValue)
+        {
+            if (dictionary.TryGetValue(k, out var val))
+            {
                 fromTag(val, (TagCompound)v);
             }
         }
     }
-    public static void SaveListData<T>(this TagCompound tag, string key, IList<T> list, Action<T, TagCompound> toTag) {
+    public static void SaveListData<T>(this TagCompound tag, string key, IList<T> list, Action<T, TagCompound> toTag)
+    {
         tag.SaveListData(key, list, e => new TagCompound().WithAction(t => toTag(e, t)));
     }
-    public static void SaveListData<T>(this TagCompound tag, string key, IList<T> list, Func<T, TagCompound?> toTag) {
+    public static void SaveListData<T>(this TagCompound tag, string key, IList<T> list, Func<T, TagCompound?> toTag)
+    {
         bool needSave = false;
         var data = list.Select(e => toTag(e).WithAction(t => needSave.AssignIf(t?.Count > 0, true))).ToArray();
-        if (needSave) {
+        if (needSave)
+        {
             tag[key] = data;
         }
     }
-    public static void LoadListData<T>(this TagCompound tag, string key, IList<T> list, Action<T, TagCompound> fromTag) {
-        if (!tag.TryGet(key, out TagCompound?[] listData)) {
+    public static void LoadListData<T>(this TagCompound tag, string key, IList<T> list, Action<T, TagCompound> fromTag)
+    {
+        if (!tag.TryGet(key, out TagCompound?[] listData))
+        {
             return;
         }
-        foreach (int i in Math.Min(list.Count, listData.Length)) {
+        foreach (int i in Math.Min(list.Count, listData.Length))
+        {
             var ld = listData[i];
-            if (ld != null) {
+            if (ld != null)
+            {
                 fromTag(list[i], ld);
             }
         }

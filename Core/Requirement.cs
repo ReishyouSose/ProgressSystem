@@ -20,10 +20,18 @@ public abstract class Requirement
     }
     public virtual void Initialize() { }
     #endregion
-    #region 重置
-    public virtual void Reset() {
+    #region 重置与开始
+    public virtual void Reset()
+    {
         EndListenSafe();
         Completed = false;
+    }
+    public virtual void Start()
+    {
+        if (ListenType == ListenTypeEnum.OnStart)
+        {
+            BeginListenSafe();
+        }
     }
     #endregion
     #region 多人类型
@@ -154,7 +162,7 @@ public abstract class Requirement
     public Action? OnComplete;
     public void CompleteSafe()
     {
-        if (Completed == true)
+        if (Completed)
         {
             return;
         }
@@ -163,13 +171,12 @@ public abstract class Requirement
     protected virtual void Complete()
     {
         Completed = true;
-        OnComplete?.Invoke();
         EndListenSafe();
+        OnComplete?.Invoke();
     }
     #endregion
 }
 
-// WIP
 public abstract class RequirementList : Requirement
 {
     public List<Requirement> Requirements;
@@ -182,46 +189,31 @@ public abstract class RequirementList : Requirement
             Requirements[i].OnComplete += () => ElementComplete(i);
         }
     }
+    public override void Reset()
+    {
+        base.Reset();
+        Requirements.ForEach(r => r.Reset());
+    }
     #region 数据存取
     public override void SaveDataInPlayer(TagCompound tag)
     {
         base.SaveDataInPlayer(tag);
-        var requirementsData = Requirements.Select(r => new TagCompound().WithAction(r.SaveDataInPlayer)).ToArray();
-        if (requirementsData.Any(t => t.Count > 0))
-        {
-            tag["Requirements"] = requirementsData;
-        }
+        tag.SaveListData("Requirements", Requirements, (r, t) => r.SaveDataInPlayer(t));
     }
     public override void LoadDataInPlayer(TagCompound tag)
     {
         base.LoadDataInPlayer(tag);
-        if (tag.TryGet("Requirements", out TagCompound[] requirementsData))
-        {
-            foreach (int i in Requirements.Count)
-            {
-                Requirements[i].LoadDataInPlayer(requirementsData.GetS(i, []));
-            }
-        }
+        tag.LoadListData("Requirements", Requirements, (r, t) => r.LoadDataInPlayer(t));
     }
     public override void SaveDataInWorld(TagCompound tag)
     {
         base.SaveDataInWorld(tag);
-        var requirementsData = Requirements.Select(r => new TagCompound().WithAction(r.SaveDataInWorld)).ToArray();
-        if (requirementsData.Any(t => t.Count > 0))
-        {
-            tag["Requirements"] = requirementsData;
-        }
+        tag.SaveListData("Requirements", Requirements, (r, t) => r.SaveDataInWorld(t));
     }
     public override void LoadDataInWorld(TagCompound tag)
     {
         base.LoadDataInWorld(tag);
-        if (tag.TryGet("Requirements", out TagCompound[] requirementsData))
-        {
-            foreach (int i in Requirements.Count)
-            {
-                Requirements[i].LoadDataInWorld(requirementsData.GetS(i, []));
-            }
-        }
+        tag.LoadListData("Requirements", Requirements, (r, t) => r.LoadDataInWorld(t));
     }
     #endregion
     #region 多人同步
@@ -261,11 +253,36 @@ public abstract class RequirementList : Requirement
     }
     #endregion
     #region 完成状况
-    protected virtual void ElementComplete(int elementIndex)
-    {
-
-    }
+    protected abstract void ElementComplete(int elementIndex);
     #endregion
+}
+public class AllOfRequirements(IEnumerable<Requirement> requirements) : RequirementList(requirements)
+{
+    protected override void ElementComplete(int elementIndex)
+    {
+        if (Requirements.All(r => r.Completed))
+        {
+            CompleteSafe();
+        }
+    }
+}
+public class AnyOfRequirements(IEnumerable<Requirement> requirements) : RequirementList(requirements)
+{
+    protected override void ElementComplete(int elementIndex)
+    {
+        CompleteSafe();
+    }
+}
+public class SomeOfRequirements(IEnumerable<Requirement> requirements, int count) : RequirementList(requirements)
+{
+    public int Count = count;
+    protected override void ElementComplete(int elementIndex)
+    {
+        if (Requirements.Sum(r => r.Completed.ToInt()) >= Count)
+        {
+            CompleteSafe();
+        }
+    }
 }
 
 /// <summary>
@@ -289,6 +306,12 @@ public class PickItemRequirement : Requirement
         ItemType = itemType;
         Condition = condition;
         Count = count;
+    }
+
+    public override void Reset()
+    {
+        base.Reset();
+        CountNow = 0;
     }
 
     public override void SaveDataInPlayer(TagCompound tag)
@@ -320,7 +343,7 @@ public class PickItemRequirement : Requirement
     protected override void EndListen()
     {
         base.EndListen();
-        // GEListener.OnLocalPlayerPickItem -= ListenPickItem;
+        GEListener.OnLocalPlayerPickItem -= ListenPickItem;
     }
     private void ListenPickItem(Item item)
     {
@@ -344,6 +367,11 @@ public class CraftItemRequirement : Requirement
         ItemType = itemType;
         Condition = condition;
         Count = count;
+    }
+    public override void Reset()
+    {
+        base.Reset();
+        CountNow = 0;
     }
     public override void SaveDataInPlayer(TagCompound tag)
     {
@@ -374,7 +402,7 @@ public class CraftItemRequirement : Requirement
     protected override void EndListen()
     {
         base.EndListen();
-        // GEListener.OnLocalPlayerCreateItem -= ListenCraftItem;
+        GEListener.OnLocalPlayerCraftItem -= ListenCraftItem;
     }
     private void ListenCraftItem(Item item, RecipeItemCreationContext context)
     {
@@ -402,6 +430,13 @@ public class KillNPCRequirement : Requirement
         Condition = condition;
         Count = count;
     }
+
+    public override void Reset()
+    {
+        base.Reset();
+        CountNow = 0;
+    }
+
     public override void SaveDataInPlayer(TagCompound tag)
     {
         base.SaveDataInPlayer(tag);
@@ -412,6 +447,7 @@ public class KillNPCRequirement : Requirement
         base.LoadDataInPlayer(tag);
         tag.GetWithDefault("countNow", out CountNow);
     }
+
     protected override void BeginListen()
     {
         base.BeginListen();
@@ -421,9 +457,8 @@ public class KillNPCRequirement : Requirement
     protected override void EndListen()
     {
         base.EndListen();
-        // GEListener.OnLocalPlayerKillNPC -= ListenKillNPC;
+        GEListener.OnLocalPlayerKillNPC -= ListenKillNPC;
     }
-
     private void ListenKillNPC(NPC npc)
     {
         DoIf((CountNow += 1) >= Count, CompleteSafe);
