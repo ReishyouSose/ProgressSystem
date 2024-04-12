@@ -51,8 +51,9 @@ namespace ProgressSystem.UIEditor
                         TagCompound ges = indexs.GetCompound(index);
                         foreach (var (ge, _) in ges)
                         {
-                            TagCompound geData = ges.GetCompound(ge);
-                            datas[name][index].Add(GameEvent.HandleTag(ges.GetCompound(ge)));
+                            GameEvent ins = GEManager.Load(ges.GetCompound(ge));
+                            if (ins != null)
+                                datas[name][index].Add(new(ins));
                         }
                     }
                 }
@@ -515,7 +516,7 @@ namespace ProgressSystem.UIEditor
                     int i = 0;
                     foreach (UIGESlot slot in ges)
                     {
-                        group[(i++).ToString()] = slot.ge.SaveData();
+                        group[(i++).ToString()] = GEManager.Save(slot.ge);
                     }
                     mod[index] = group;
                 }
