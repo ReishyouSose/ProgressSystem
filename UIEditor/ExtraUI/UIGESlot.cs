@@ -33,7 +33,8 @@ namespace ProgressSystem.UIEditor.ExtraUI
         {
             Events.OnLeftDown += evt =>
             {
-                if (!dragging) dragging = true;
+                if (!dragging)
+                    dragging = true;
                 oldlocal = Main.MouseScreen;
                 GEEditor.GEPos.Remove(pos);
                 color = Color.White * 0.75f;
@@ -77,8 +78,10 @@ namespace ProgressSystem.UIEditor.ExtraUI
                         pos = adsorption.Value;
                     }
                     SetCenter(mouse - origin, false);
-                    if (Info.Left.Pixel < 0) Info.Left.Pixel = 0;
-                    if (Info.Top.Pixel < 0) Info.Top.Pixel = 0;
+                    if (Info.Left.Pixel < 0)
+                        Info.Left.Pixel = 0;
+                    if (Info.Top.Pixel < 0)
+                        Info.Top.Pixel = 0;
                     Calculation();
                 }
                 oldlocal = mouse;
