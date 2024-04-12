@@ -70,5 +70,25 @@
         {
             return new TimeRange(NightStart, DayStart);
         }
+        public static TimeRange Create(double timeMin, double timeMax)
+        {
+            return new TimeRange(timeMin, timeMax);
+        }
+        public override IEnumerable<ConstructInfoTable<GameEvent>> GetConstructInfoTables()
+        {
+            var table = new ConstructInfoTable<GameEvent>(t =>
+            {
+                var e = t.GetEnumerator();
+                double timeMin = e.Current.GetValue<double>();
+                e.MoveNext();
+                double timeMax = e.Current.GetValue<double>();
+                return Create(timeMin,timeMax);
+            }, nameof(TimeRange));
+            table.AddEntry(new(typeof(double), "timeMin"));
+            table.AddEntry(new(typeof(double), "timeMax"));
+            table.Close();
+            yield return table;
+            yield break;
+        }
     }
 }

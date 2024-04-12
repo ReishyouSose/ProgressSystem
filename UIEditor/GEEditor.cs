@@ -157,76 +157,81 @@ namespace ProgressSystem.UIEditor
             typeSelector.expandView.autoPos[0] = true;
             taskPanel.Register(typeSelector);
 
-            foreach (var (label, table) in GEM._constructInfoTables)
+            foreach (var ge in ModContent.GetContent<GameEvent>())
             {
-                UIText type = new(label.Split('.')[^1]);
-                type.SetSize(type.TextSize);
-                type.Events.OnMouseOver += evt => type.color = Color.Gold;
-                type.Events.OnMouseOut += evt => type.color = Color.White;
-                type.Events.OnLeftDown += evt =>
+                var tables = ge.GetConstructInfoTables();
+                foreach (var t in tables)
                 {
-                    var constructs = table;
-                    int y = 0;
-                    foreach (var constructData in constructs)
+                    string label = t.Name;
+                    UIText type = new(label is null ? "Anonymous" : label.Split('.')[^1]);
+                    type.SetSize(type.TextSize);
+                    type.Events.OnMouseOver += evt => type.color = Color.Gold;
+                    type.Events.OnMouseOut += evt => type.color = Color.White;
+                    type.Events.OnLeftDown += evt =>
                     {
-                        UIVnlPanel constructPanel = new(0, 0);
-                        dataInput.Register(constructPanel);
-                        constructPanel.Info.SetMargin(10);
-                        int innerY = 0;
-                        foreach (var info in constructData)
+                        var constructs = tables;
+                        int y = 0;
+                        foreach (var constructData in constructs)
                         {
-                            UIText name = new(info.Name);
-                            name.SetPos(0, innerY);
-                            name.SetSize(name.TextSize);
-                            constructPanel.Register(name);
-                        }
-                        constructPanel.SetSize(0, y, 1);
-                        y += constructPanel.Height + 10;
-
-                        UIText create = new("创建进度");
-                        create.SetSize(create.TextSize);
-                        create.SetPos(10, y);
-                        create.Events.OnMouseOver += evt => create.color = Color.Gold;
-                        create.Events.OnMouseOut += evt => create.color = Color.White;
-                        create.Events.OnLeftDown += evt =>
-                        {
-                            if (constructData.TryCreate(out GameEvent task))
+                            UIVnlPanel constructPanel = new(0, 0);
+                            dataInput.Register(constructPanel);
+                            constructPanel.Info.SetMargin(10);
+                            int innerY = 0;
+                            foreach (var info in constructData)
                             {
-                                UIGESlot ge = new(task);
-                                ge.Events.OnMouseOver += evt =>
-                                {
-                                    ev.canDrag = false;
-                                    eh.canDrag = false;
-                                };
-                                ge.Events.OnMouseOut += evt =>
-                                {
-                                    ev.canDrag = true;
-                                    eh.canDrag = true;
-                                };
-                                ge.Events.OnLeftDown +=  GESlotDragCheck;
-                                ge.Events.OnLeftUp += evt =>
-                                {
-                                    dragging = false;
-                                    draggingSelected = false;
-                                };
-                                ge.Events.OnUpdate += GESlotUpdate;
-                                {
-                                };
-                                Vector2 pos = Vector2.Zero;
-                                while (GEPos.Contains(pos))
-                                {
-                                    pos.X++;
-                                }
-                                ge.pos = pos;
-                                ge.SetPos(pos * 80);
-                                GEPos.Add(pos);
-                                eventView.AddElement(ge);
+                                UIText name = new(info.Name ?? "Anonymous");
+                                name.SetPos(0, innerY);
+                                name.SetSize(name.TextSize);
+                                constructPanel.Register(name);
                             }
-                        };
-                        dataInput.Register(create);
-                    }
-                };
-                typeSelector.AddElement(type);
+                            constructPanel.SetSize(0, y, 1);
+                            y += constructPanel.Height + 10;
+
+                            UIText create = new("创建进度");
+                            create.SetSize(create.TextSize);
+                            create.SetPos(10, y);
+                            create.Events.OnMouseOver += evt => create.color = Color.Gold;
+                            create.Events.OnMouseOut += evt => create.color = Color.White;
+                            create.Events.OnLeftDown += evt =>
+                            {
+                                if (constructData.TryCreate(out GameEvent task))
+                                {
+                                    UIGESlot ge = new(task);
+                                    ge.Events.OnMouseOver += evt =>
+                                    {
+                                        ev.canDrag = false;
+                                        eh.canDrag = false;
+                                    };
+                                    ge.Events.OnMouseOut += evt =>
+                                    {
+                                        ev.canDrag = true;
+                                        eh.canDrag = true;
+                                    };
+                                    ge.Events.OnLeftDown += GESlotDragCheck;
+                                    ge.Events.OnLeftUp += evt =>
+                                    {
+                                        dragging = false;
+                                        draggingSelected = false;
+                                    };
+                                    ge.Events.OnUpdate += GESlotUpdate;
+                                    {
+                                    };
+                                    Vector2 pos = Vector2.Zero;
+                                    while (GEPos.Contains(pos))
+                                    {
+                                        pos.X++;
+                                    }
+                                    ge.pos = pos;
+                                    ge.SetPos(pos * 80);
+                                    GEPos.Add(pos);
+                                    eventView.AddElement(ge);
+                                }
+                            };
+                            dataInput.Register(create);
+                        }
+                    };
+                    typeSelector.AddElement(type);
+                }
             }
             typeSelector.ChangeShowElement(typeSelector.expandView.InnerUIE[0] as UIText);
 

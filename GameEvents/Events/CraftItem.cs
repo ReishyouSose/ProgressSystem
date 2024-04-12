@@ -62,4 +62,20 @@ public class CraftItem : CountInt
             Increase(1);
         }
     }
+    public override IEnumerable<ConstructInfoTable<GameEvent>> GetConstructInfoTables()
+    {
+        var table = new ConstructInfoTable<GameEvent>(t =>
+        {
+            var e = t.GetEnumerator();
+            int type = e.Current.GetValue<int>();
+            e.MoveNext();
+            int target = e.Current.GetValue<int>();
+            return Create(type, target);
+        }, nameof(CraftItem));
+        table.AddEntry(new(typeof(int), "type"));
+        table.AddEntry(new(typeof(int), "target"));
+        table.Close();
+        yield return table;
+        yield break;
+    }
 }
