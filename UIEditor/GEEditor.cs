@@ -507,23 +507,68 @@ namespace ProgressSystem.UIEditor
         }
         private void SaveProgress()
         {
-            TagCompound data = [];
-            foreach (var (mods, indexs) in datas)
+            string root = Path.Combine(Main.SavePath, "Mods", ProgressSystem.Instance.Name);
+            Directory.CreateDirectory(root);
+            foreach ((string modName, Dictionary<string, HashSet<UIGESlot>> pages) in datas)
             {
-                TagCompound mod = [];
-                foreach (var (index, ges) in indexs)
+                Directory.CreateDirectory(Path.Combine(root, modName));
+                foreach ((string pageName, HashSet<UIGESlot> slots) in pages)
                 {
-                    TagCompound group = [];
-                    int i = 0;
-                    foreach (UIGESlot slot in ges)
+                    using FileStream stream = File.OpenWrite(Path.Combine(root, modName, pageName + ".dat"));
+                    TagCompound tag = new();
+                    List<TagCompound> subTags = [];
+                    foreach(var slot in  slots)
                     {
-                        group[(i++).ToString()] = GEManager.Save(slot.ge);
+                        if(slot.ge is null)
+                        {
+                            continue;
+                        }
+                        var subtag = GEManager.Save(slot.ge);
+                        if (subtag != null)
+                        {
+                            subTags.Add(subtag);
+                        }
                     }
-                    mod[index] = group;
+                    tag["data"] = subTags;
+                    TagIO.ToStream(tag, stream);
                 }
-                data[mods] = mod;
             }
-            TagIO.ToStream(data, ProgressSystem.Instance.GetFileStream("Datas.nbt", true));
+        }
+        private void LoadProgress()
+        {
+            string root = Path.Combine(Main.SavePath, "Mods", ProgressSystem.Instance.Name);
+            if(!Directory.Exists(root))
+            {
+                return;
+            }
+            string[] modDirs = Directory.GetDirectories(root);
+            foreach (var modDir in modDirs)
+            {
+                string modName = modDir.Split(Path.PathSeparator)[^1];
+                datas[modName] = [];
+                string[] pageFiles = Directory.GetFiles(modDir);
+                foreach(var pageFile in pageFiles)
+                {
+                    string pageName = Path.GetFileNameWithoutExtension(pageFile);
+                    datas[modName][pageName] = [];
+                    try
+                    {
+                        var tag = TagIO.FromStream(File.OpenRead(pageFile));
+                        tag.TryGet("data", out List<TagCompound> tags);
+                        foreach(var data in tags)
+                        {
+                            var ge = GEManager.Load(data);
+                            if(ge != null)
+                            {
+                                datas[modName][pageName].Add(new UIGESlot(ge));
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
         }
     }
 }
