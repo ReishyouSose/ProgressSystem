@@ -2527,6 +2527,7 @@ static public partial class TigerUtils
     public static T Instance<T>() => StaticInstance<T>.Value;
     public static void SetInstance<T>(T value) => StaticInstance<T>.Set(value);
     public static KeyValuePair<TKey, TValue> NewPair<TKey, TValue>(TKey key, TValue value) => new(key, value);
+    public static ValueHolder<T> NewHolder<T>(T value) => new(value);
     #endregion
 }
 
@@ -2549,9 +2550,11 @@ public static partial class TigerClasses
             return result;
         }
     }
-    public class ValueHolder<T>
+    public class ValueHolder<T>(T value)
     {
-        public T? value;
+        public T Value = value;
+        public static implicit operator T(ValueHolder<T> holder) => holder.Value;
+        public static implicit operator ValueHolder<T>(T value) => new(value);
     }
     /// <summary>
     /// Value that is defaulted when got
@@ -3181,12 +3184,12 @@ public static partial class TigerExtensions
             yield return (index++, t);
         }
     }
-    public static IEnumerable<TResult?> SelectWhere<TSource, TResult>(this IEnumerable<TSource> enumerable, Func<TSource, (bool succeeded, TResult? value)> selector)
+    public static IEnumerable<TResult> SelectWhere<TSource, TResult>(this IEnumerable<TSource> enumerable, Func<TSource, ValueHolder<TResult>?> selector)
     {
         foreach (TSource t in enumerable)
         {
-            var (succeeded, value) = selector(t);
-            if (succeeded)
+            var value = selector(t);
+            if (value != null)
             {
                 yield return value;
             }
@@ -4642,5 +4645,7 @@ public static partial class TigerExtensions
             return *(float*)&self;
         }
     }
+    public static TResult Transfer<TSource, TResult>(this TSource source, Func<TSource, TResult> transfer) => transfer(source);
+    public static void Do<T>(this T self, Action<T> action) => action(self);
     #endregion
 }

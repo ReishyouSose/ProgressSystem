@@ -2,6 +2,7 @@ using System.IO;
 
 namespace ProgressSystem.Core;
 
+// TODO: 把前后置的处理逻辑拿出来
 /// <summary>
 /// 成就
 /// </summary>
@@ -282,21 +283,8 @@ public class Achievement
     #endregion
 
     #region 开始
-    public bool Started;
     public void Reset() {
-        Started = false;
         Requirements.ForEach(r => r.Reset());
-    }
-    public void Start() {
-        if (Started) {
-            return;
-        }
-        Started = true;
-        Predecessors.ForeachDo(p => p.Start());
-        if (IsPredecessorsMet()) {
-            Unlock();
-        }
-        Requirements.ForEach(r => r.Start());
     }
     #endregion
 
@@ -351,10 +339,7 @@ public class Achievement
     public void SaveDataInWorld(TagCompound tag) {
         tag.SetWithDefault("Unlocked", Unlocked);
         tag.SetWithDefault("Completed", Completed);
-        var requirementsData = Requirements.Select(r => new TagCompound().WithAction(r.SaveDataInWorld)).ToArray();
-        if (requirementsData.Any(t => t.Count > 0)) {
-            tag["Requirements"] = requirementsData;
-        }
+        tag.SaveListData("Requirements", Requirements, (r, t) => r.SaveDataInWorld(t));
     }
     public void LoadDataInWorld(TagCompound tag) {
         if (tag.GetWithDefault<bool>("Unlocked")) {
@@ -363,24 +348,13 @@ public class Achievement
         if (tag.GetWithDefault<bool>("Completed")) {
             Complete();
         }
-        if (tag.TryGet("Requirements", out TagCompound[] requirementsData)) {
-            foreach (int i in Requirements.Count) {
-                Requirements[i].LoadDataInWorld(requirementsData.GetS(i, []));
-            }
-        }
+        tag.LoadListData("Requirements", Requirements, (r, t) => r.LoadDataInWorld(t));
     }
     public void SaveDataInPlayer(TagCompound tag) {
-        var requirementsData = Requirements.Select(r => new TagCompound().WithAction(r.SaveDataInPlayer)).ToArray();
-        if (requirementsData.Any(t => t.Count > 0)) {
-            tag["Requirements"] = requirementsData;
-        }
+        tag.SaveListData("Requirements", Requirements, (r, t) => r.SaveDataInPlayer(t));
     }
     public void LoadDataInPlayer(TagCompound tag) {
-        if (tag.TryGet("Requirements", out TagCompound[] requirementsData)) {
-            foreach (int i in Requirements.Count) {
-                Requirements[i].LoadDataInPlayer(requirementsData.GetS(i, []));
-            }
-        }
+        tag.LoadListData("Requirements", Requirements, (r, t) => r.LoadDataInPlayer(t));
     }
     #endregion
 
