@@ -31,6 +31,11 @@ namespace ProgressSystem.UIEditor
         public override void OnInitialization()
         {
             base.OnInitialization();
+            datas ??= new();
+            if (datas.Count == 0)
+            {
+                LoadProgress();
+            }
             if (Main.gameMenu)
                 return;
             Info.IsVisible = true;
