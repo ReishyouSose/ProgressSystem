@@ -1,9 +1,7 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using ProgressSystem.GameEvents;
-using ProgressSystem.GameEvents.Events;
 using ProgressSystem.UIEditor.ExtraUI;
-using System.Threading.Tasks;
 using Terraria.GameContent;
 
 namespace ProgressSystem.UIEditor
@@ -140,14 +138,27 @@ namespace ProgressSystem.UIEditor
             dataInput.SetSize(0, -30, 1, 1);
             taskPanel.Register(dataInput);
 
+            UIContainerPanel dataView = new()
+            {
+                spaceY = 5,
+            };
+            dataView.autoPos[0] = true;
+            dataView.SetSize(-30, 0, 1, 1);
+            dataInput.Register(dataView);
+
+            VerticalScrollbar dataVsroll = new(28, canDrag: false);
+            dataView.SetVerticalScrollbar(dataVsroll);
+            dataInput.Register(dataVsroll);
+
             UIDropDownList<UIText> typeSelector = new(taskPanel, dataInput, x =>
             {
                 UIText text = new(x.text);
                 text.SetPos(10, 5);
                 return text;
-            });
-            typeSelector.SetSize(0, 30, 1);
-            typeSelector.buttonXoffset = 10;
+            })
+            {
+                buttonXoffset = 10
+            };
 
             typeSelector.showArea.SetSize(0, 30, 1);
 
@@ -155,7 +166,6 @@ namespace ProgressSystem.UIEditor
             typeSelector.expandArea.SetSize(0, 150, 1);
 
             typeSelector.expandView.autoPos[0] = true;
-            taskPanel.Register(typeSelector);
 
             foreach (var ge in ModContent.GetContent<GameEvent>())
             {
@@ -234,8 +244,6 @@ namespace ProgressSystem.UIEditor
                 }
             }
             typeSelector.ChangeShowElement(typeSelector.expandView.InnerUIE[0] as UIText);
-
-            
         }
         public override void Update(GameTime gt)
         {
@@ -321,7 +329,8 @@ namespace ProgressSystem.UIEditor
                     frameSelect.Remove(ge);
                     ge.selected = false;
                 }
-                else ge.selected = frameSelect.Add(ge);
+                else
+                    ge.selected = frameSelect.Add(ge);
             }
             else if (frameSelect.Any())
             {
@@ -347,7 +356,8 @@ namespace ProgressSystem.UIEditor
                             frameSelect.Remove(ge);
                             ge.selected = false;
                         }
-                        else ge.selected = frameSelect.Add(ge);
+                        else
+                            ge.selected = frameSelect.Add(ge);
                         interacted.Add(ge);
                     }
                 }
