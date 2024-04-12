@@ -7,6 +7,7 @@ using MonoMod.RuntimeDetour;
 using System.Collections;
 using System.IO;
 using System.Reflection;
+using Terraria.ModLoader.Config;
 
 namespace ProgressSystem.TheUtils;
 
@@ -2525,6 +2526,7 @@ static public partial class TigerUtils
     }
     public static T Instance<T>() => StaticInstance<T>.Value;
     public static void SetInstance<T>(T value) => StaticInstance<T>.Set(value);
+    public static KeyValuePair<TKey, TValue> NewPair<TKey, TValue>(TKey key, TValue value) => new(key, value);
     #endregion
 }
 
@@ -4179,17 +4181,20 @@ public static partial class TigerExtensions
     public static T? GetF<T>(this object?[] array, int index) => (T?)array[index];
     public static void GetF<T>(this object?[] array, int index, out T? value) => value = (T?)array[index];
     #endregion
-    public static T? GetS<T>(this IList<T> list, int index, T? defaultValue = default) => index < 0 || index >= list.Count ? defaultValue : list[index];
-    public static void GetS<T>(this IList<T> list, int index, out T? value, T? defaultValue = default) => value = index < 0 || index >= list.Count ? defaultValue : list[index];
-    public static T? ElementAtS<T>(this IList<T> list, int index, T? defaultValue = default) => index < 0 || index >= list.Count ? defaultValue : list[index];
-    public static void ElementAsS<T>(this IList<T> list, int index, out T? value, T? defaultValue = default) => value = index < 0 || index >= list.Count ? defaultValue : list[index];
-    public static T GetSN<T>(this IList<T> list, int index, T defaultValue) => index < 0 || index >= list.Count ? defaultValue : list[index];
-    public static void GetSN<T>(this IList<T> list, int index, out T value, T defaultValue) => value = index < 0 || index >= list.Count ? defaultValue : list[index];
-    public static T ElementAtSN<T>(this IList<T> list, int index, T defaultValue) => index < 0 || index >= list.Count ? defaultValue : list[index];
-    public static void ElementAsSN<T>(this IList<T> list, int index, out T value, T defaultValue) => value = index < 0 || index >= list.Count ? defaultValue : list[index];
+    public static T? GetS<T>(this IList<T> list, int index) => index < 0 || index >= list.Count ? default : list[index];
+    public static void GetS<T>(this IList<T> list, int index, out T? value) => value = index < 0 || index >= list.Count ? default : list[index];
+    public static T? ElementAtS<T>(this IList<T> list, int index) => index < 0 || index >= list.Count ? default : list[index];
+    public static void ElementAsS<T>(this IList<T> list, int index, out T? value) => value = index < 0 || index >= list.Count ? default : list[index];
+    public static T GetS<T>(this IList<T> list, int index, T defaultValue) => index < 0 || index >= list.Count ? defaultValue : list[index];
+    public static void GetS<T>(this IList<T> list, int index, out T value, T defaultValue) => value = index < 0 || index >= list.Count ? defaultValue : list[index];
+    public static T ElementAtS<T>(this IList<T> list, int index, T defaultValue) => index < 0 || index >= list.Count ? defaultValue : list[index];
+    public static void ElementAsS<T>(this IList<T> list, int index, out T value, T defaultValue) => value = index < 0 || index >= list.Count ? defaultValue : list[index];
     #endregion
     #endregion
     #region 字典拓展
+    public static void Add<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, KeyValuePair<TKey, TValue> pair) where TKey : notnull {
+        dictionary.Add(pair.Key, pair.Value);
+    }
     public static void AddCount<T>(this Dictionary<T, int> dictionary, T item, int count = 1) where T : notnull
     {
         if (dictionary.ContainsKey(item))

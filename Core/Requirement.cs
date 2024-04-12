@@ -20,6 +20,16 @@ public abstract class Requirement
     }
     public virtual void Initialize() { }
     #endregion
+    #region 开始
+    public virtual void Reset() {
+
+    }
+    public virtual void Start() {
+        if (ListenType == ListenTypeEnum.OnStart) {
+            BeginListenSafe();
+        }
+    }
+    #endregion
     #region 多人类型
     public enum MultiplayerTypeEnum
     {
@@ -167,17 +177,17 @@ public abstract class Requirement
     /// </summary>
     public bool Repeatable;
     /// <summary>
-    /// 可重复完成且已完成时, 重置进度
+    /// 可重复完成且已完成时, 重复开始
     /// </summary>
-    public void ResetSafe()
+    public void RepeatSafe()
     {
         if (!Repeatable || !Completed)
         {
             return;
         }
-        Reset();
+        Repeat();
     }
-    protected virtual void Reset()
+    protected virtual void Repeat()
     {
         Completed = false;
         BeginListenSafe();
@@ -185,14 +195,15 @@ public abstract class Requirement
     #endregion
 }
 
+// WIP
 public abstract class RequirementList : Requirement
 {
-    public Requirement[] Requirements;
+    public List<Requirement> Requirements;
 
     public RequirementList(IEnumerable<Requirement> requirements)
     {
         Requirements = [.. requirements];
-        foreach (int i in Requirements.Length)
+        foreach (int i in Requirements.Count)
         {
             Requirements[i].OnComplete += () => ElementComplete(i);
         }
@@ -201,7 +212,7 @@ public abstract class RequirementList : Requirement
     public override void SaveDataInPlayer(TagCompound tag)
     {
         base.SaveDataInPlayer(tag);
-        var requirementsData = Requirements.Select(r => new TagCompound().WithAction(SaveDataInPlayer)).ToArray();
+        var requirementsData = Requirements.Select(r => new TagCompound().WithAction(r.SaveDataInPlayer)).ToArray();
         if (requirementsData.Any(t => t.Count > 0))
         {
             tag["Requirements"] = requirementsData;
@@ -212,16 +223,16 @@ public abstract class RequirementList : Requirement
         base.LoadDataInPlayer(tag);
         if (tag.TryGet("Requirements", out TagCompound[] requirementsData))
         {
-            foreach (int i in Requirements.Length)
+            foreach (int i in Requirements.Count)
             {
-                Requirements[i].LoadDataInPlayer(requirementsData.GetSN(i, []));
+                Requirements[i].LoadDataInPlayer(requirementsData.GetS(i, []));
             }
         }
     }
     public override void SaveDataInWorld(TagCompound tag)
     {
         base.SaveDataInWorld(tag);
-        var requirementsData = Requirements.Select(r => new TagCompound().WithAction(SaveDataInWorld)).ToArray();
+        var requirementsData = Requirements.Select(r => new TagCompound().WithAction(r.SaveDataInWorld)).ToArray();
         if (requirementsData.Any(t => t.Count > 0))
         {
             tag["Requirements"] = requirementsData;
@@ -232,9 +243,9 @@ public abstract class RequirementList : Requirement
         base.LoadDataInWorld(tag);
         if (tag.TryGet("Requirements", out TagCompound[] requirementsData))
         {
-            foreach (int i in Requirements.Length)
+            foreach (int i in Requirements.Count)
             {
-                Requirements[i].LoadDataInWorld(requirementsData.GetSN(i, []));
+                Requirements[i].LoadDataInWorld(requirementsData.GetS(i, []));
             }
         }
     }
