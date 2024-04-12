@@ -6,7 +6,7 @@ namespace ProgressSystem.Core;
 /// 成就页
 /// 代表一个显示多个成就的界面
 /// </summary>
-public class AchievementPage
+public sealed class AchievementPage
 {
     #region Vars
     public Mod Mod;
@@ -33,26 +33,84 @@ public class AchievementPage
     public bool Editable;
     #endregion
 
-    #region 重置
+    #region 重置与开始
+    public event Action? OnReset;
     public void Reset() {
+        State = StateEnum.Locked;
+        if (UnlockCondition == DefaultUnlockCondition)
+        {
+            State = StateEnum.Unlocked;
+        }
         Achievements.Values.ForeachDo(a => a.Reset());
+        OnReset?.Invoke();
+    }
+    public event Action? OnStart;
+    public void Start()
+    {
+        Achievements.Values.ForeachDo(a => a.Start());
+        Achievements.Values.ForeachDo(a => a.CheckState());
+        OnStart?.Invoke();
     }
     #endregion
 
-    #region 锁定
-    public bool Locked { get; protected set; }
-    public void Unlock()
+    #region 状态 (锁定 / 完成)
+    public enum StateEnum
     {
-        if (!Locked)
+        Locked,
+        Unlocked,
+        Completed
+    }
+    public StateEnum State;
+    /// <summary>
+    /// <br/>如果想自定义解锁条件则修改这个(如果不动这个的话会在<see cref="Reset"/>时自动解锁)
+    /// <br/>并且在合适的地方挂<see cref="TryUnlock"/> 或 <see cref="UnlockSafe"/> 的钩子
+    /// <br/>最好再在 <see cref="OnUnlock"/> 中卸掉钩子
+    /// <br/>如果只是简单的
+    /// </summary>
+    public Func<bool> UnlockCondition;
+    public static bool DefaultUnlockCondition() => true;
+    /// <summary>
+    /// 将解锁条件设置为所有的前置页已完成
+    /// </summary>
+    public void SetPredecessorsOfAllComplete(IEnumerable<AchievementPage> pages)
+    {
+        UnlockCondition = () => pages.All(p => p.State == StateEnum.Completed);
+        pages.ForeachDo(p => p.OnComplete += TryUnlock);
+        OnUnlock += () => pages.ForeachDo(p => p.OnComplete -= TryUnlock);
+    }
+    public void SetPredecessorsOfAnyComplete(IEnumerable<AchievementPage> pages)
+    {
+        UnlockCondition = () => pages.Any(p => p.State == StateEnum.Completed);
+        pages.ForeachDo(p => p.OnComplete += UnlockSafe);
+        OnUnlock += () => pages.ForeachDo(p => p.OnComplete -= TryUnlock);
+    }
+    public event Action? OnUnlock;
+    public void TryUnlock()
+    {
+        if (UnlockCondition())
+        {
+            UnlockSafe();
+        }
+    }
+    public void UnlockSafe()
+    {
+        if (State != StateEnum.Locked)
         {
             return;
         }
-        Locked = false;
+        State = StateEnum.Unlocked;
+        OnUnlock?.Invoke();
     }
-    #endregion
-
-    #region 完成
-    public bool Completed { get; protected set; }
+    public event Action? OnComplete;
+    public void CompleteSafe()
+    {
+        if (State != StateEnum.Unlocked)
+        {
+            return;
+        }
+        State = StateEnum.Completed;
+        OnComplete?.Invoke();
+    }
     #endregion
 
     #region 创建一个成就页
@@ -65,6 +123,7 @@ public class AchievementPage
     {
         Mod = mod;
         Name = name;
+        UnlockCondition = DefaultUnlockCondition;
     }
 
     /// <summary>
@@ -153,6 +212,41 @@ public class AchievementPage
         return Achievements[achievementFullName];
     }
 
+    /// <summary>
+    /// 获取一个成就, 若不存在则返回 <see langword="null"/>
+    /// </summary>
+    /// <param name="mod">此成就所在模组</param>
+    /// <param name="name">此成就的名字 (<see cref="Achievement.Name"/>)</param>
+    public Achievement? Get(Mod mod, string name)
+    {
+        return Achievements.Values.FirstOrDefault(a => a.Mod == mod && a.Name == name);
+    }
+    /// <summary>
+    /// 强制获取一个成就, 若不存在则报错
+    /// </summary>
+    /// <param name="mod">此成就所在模组</param>
+    /// <param name="name">此成就的名字 (<see cref="Achievement.Name"/>)</param>
+    public Achievement GetF(Mod mod, string name)
+    {
+        return Achievements.Values.First(a => a.Mod == mod && a.Name == name);
+    }
+    /// <summary>
+    /// 获取一个成就, 若不存在则返回 <see langword="null"/>
+    /// </summary>
+    /// <param name="name">此成就的名字 (<see cref="Achievement.Name"/>)</param>
+    public Achievement? GetByName(string name)
+    {
+        return Achievements.Values.FirstOrDefault(a => a.Name == name);
+    }
+    /// <summary>
+    /// 强制获取一个成就, 若不存在则报错
+    /// </summary>
+    /// <param name="name">此成就的名字 (<see cref="Achievement.Name"/>)</param>
+    public Achievement GetByNameF(string name)
+    {
+        return Achievements.Values.First(a => a.Name == name);
+    }
+
     #region 存取数据
     // TODO: 存取 Page 自身的数据
     public void SaveDataInWorld(TagCompound tag) {
@@ -162,6 +256,7 @@ public class AchievementPage
         tag.LoadDictionaryData("Achievements", Achievements, (a, t) => a.LoadDataInWorld(t));
     }
     public void SaveDataInPlayer(TagCompound tag) {
+        tag.SetWithDefaultN("State", State);
         tag.SaveDictionaryData("Achievements", Achievements, (a, t) => a.SaveDataInPlayer(t));
     }
     public void LoadDataInPlayer(TagCompound tag) {

@@ -5,13 +5,17 @@ namespace ProgressSystem.GameEvents
 {
     public class ConstructInfoTable<T> : IEnumerable<ConstructInfoTable<T>.Entry>
     {
+        public string Name { get; private set; }
+        public string? ExtraInfo { get; private set; }
         List<Entry> _entries;
         Func<ConstructInfoTable<T>, T> _createFunc;
         public bool Closed { get; private set; }
-        public ConstructInfoTable(Func<ConstructInfoTable<T>, T> createFunc)
+        public ConstructInfoTable(Func<ConstructInfoTable<T>, T> createFunc, string name = "Anonymous", string? extraInfo = null)
         {
             Type t = typeof(T);
             _createFunc = createFunc ?? throw new ArgumentNullException(nameof(createFunc));
+            Name = name;
+            ExtraInfo = extraInfo;
             _entries = [];
             Closed = false;
         }
@@ -75,7 +79,7 @@ namespace ProgressSystem.GameEvents
             table = Create(c);
             return true;
         }
-        public static ConstructInfoTable<T> Create(ConstructorInfo c)
+        public static ConstructInfoTable<T> Create(ConstructorInfo c, string? extraInfo = null)
         {
             ConstructInfoTable<T> table = new((t) =>
             {
@@ -85,7 +89,7 @@ namespace ProgressSystem.GameEvents
                     objs.Add(entry.GetValue());
                 }
                 return (T)c.Invoke(objs.ToArray());
-            });
+            }, $"Constructor of {c.DeclaringType?.FullName ?? "Anonymous"}", extraInfo);
             foreach (var p in c.GetParameters())
             {
                 table.AddEntry(new Entry(p.ParameterType, p.Name));
@@ -93,16 +97,43 @@ namespace ProgressSystem.GameEvents
             table.Close();
             return table;
         }
+        public static ConstructInfoTable<T> Create(MethodInfo method, string? extraInfo = null)
+        {
+            if (method.ReturnType != typeof(T) && !method.ReturnType.IsSubclassOf(typeof(T)))
+            {
+                throw new ArgumentException($"Method return type is not defined from {typeof(T).FullName}");
+            }
+            bool isStatic = method.IsStatic;
+            ConstructInfoTable<T> table = new((t) =>
+            {
+                List<object> objs = [];
+                foreach (var entry in t)
+                {
+                    objs.Add(entry.GetValue());
+                }
+                return (T)method.Invoke(isStatic ? null : objs[0], objs.ToArray()[(isStatic ? 0 : 1)..]);
+            }, method.IsSpecialName ? method.Name : "Anonymous", extraInfo);
+            foreach (var p in method.GetParameters())
+            {
+                table.AddEntry(new Entry(p.ParameterType, p.Name));
+            }
+            table.Close();
+            return table;
+        }
+        public static ConstructInfoTable<T> Create(Delegate @delegate, string? extraInfo = null)
+        {
+            return Create(@delegate.Method, extraInfo);
+        }
         public class Entry
         {
-            public readonly string Name;
+            public readonly string? Name;
             public readonly Type Type;
             /// <summary>
             /// 是否必填
             /// </summary>
             public readonly bool Important;
             private object _value;
-            public Entry(Type type, string name, bool important = true)
+            public Entry(Type type, string? name, bool important = true)
             {
                 Type = type;
                 Name = name;

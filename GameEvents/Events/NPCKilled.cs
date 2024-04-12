@@ -5,12 +5,14 @@ namespace ProgressSystem.GameEvents.Events;
 
 public class NPCKilled : CountInt
 {
+    public int Type { get;private set; }
     public int NetID { get; private set; }
-    public static NPCKilled Create(int netID, int target = 1)
+    public static NPCKilled Create(int type, int netID, int target = 1)
     {
         target = Math.Max(target, 1);
         NPCKilled @event = new()
         {
+            Type = type,
             NetID = netID,
             _target = target
         };
@@ -21,10 +23,10 @@ public class NPCKilled : CountInt
         GEListener.OnNPCKilled += @event.TryComplete;
         @event.OnCompleted += e => GEListener.OnNPCKilled -= @event.TryComplete;
     }
-    public static NPCKilled CreateAndSetUp(int netID, int target = 1)
+    public static NPCKilled CreateAndSetUp(int type, int netID, int target = 1)
     {
         target = Math.Max(target, 1);
-        NPCKilled @event = Create(netID, target);
+        NPCKilled @event = Create(type, netID, target);
         SetUp(@event);
         return @event;
     }
@@ -55,9 +57,28 @@ public class NPCKilled : CountInt
     }
     public void TryComplete(Player player, NPC npc)
     {
-        if (npc.netID == NetID)
+        if (npc.type == Type && npc.netID == NetID)
         {
             Increase(1);
         }
+    }
+    public override IEnumerable<ConstructInfoTable<GameEvent>> GetConstructInfoTables()
+    {
+        var table = new ConstructInfoTable<GameEvent>(t =>
+        {
+            var e = t.GetEnumerator();
+            int type = e.Current.GetValue<int>();
+            e.MoveNext();
+            int netID = e.Current.GetValue<int>();
+            e.MoveNext();
+            int target = e.Current.GetValue<int>();
+            return Create(type, target);
+        }, nameof(NPCKilled));
+        table.AddEntry(new(typeof(int), "type"));
+        table.AddEntry(new(typeof(int), "netID"));
+        table.AddEntry(new(typeof(int), "target"));
+        table.Close();
+        yield return table;
+        yield break;
     }
 }

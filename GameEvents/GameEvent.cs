@@ -18,19 +18,12 @@ public abstract class GameEvent : ILoadable
         IsCompleted = true;
         OnCompleted?.Invoke(this);
     }
-    public void Load(Mod mod)
+    public virtual IEnumerable<ConstructInfoTable<GameEvent>> GetConstructInfoTables()
     {
-        var cs = GetType().GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        string FullName = $"{mod.Name}.{GetType().FullName}";
-        var list = GEM._constructInfoTables[FullName] = [];
-        foreach (var c in cs)
-        {
-            var table = ConstructInfoTable<GameEvent>.Create(c);
-            list.Add(table);
-        }
-    }
-    public void Unload()
-    {
+        yield break;
     }
     public virtual (Texture2D, Rectangle?) DrawData() => (null, null);
+
+    public virtual void Load(Mod mod) { }
+    public virtual void Unload() { }
 }

@@ -41,10 +41,9 @@ public class AchievementManager : ModSystem
     /// </summary>
     public static Dictionary<string, AchievementPage> Pages { get; set; } = [];
 
-    public override void PostUpdatePlayers()
+    public override void PostSetupContent()
     {
-        base.PostUpdatePlayers();
-
+        Pages.Values.ForeachDo(p => p.Achievements.Values.ForeachDo(a => a.InitializePredecessorsSafe()));
     }
     public override void SaveWorldData(TagCompound tag)
     {
@@ -61,13 +60,28 @@ public class AchievementManager : ModSystem
         // 在 SaveWorldData 后执行
         Reset();
     }
+    /// <summary>
+    /// 重置所有的成就数据
+    /// </summary>
     public static void Reset() {
         Pages.Values.ForeachDo(p => p.Reset());
+    }
+    /// <summary>
+    /// 在 <see cref="ModPlayer.OnEnterWorld"/> 中调用
+    /// 此时玩家的和世界的数据都已加载完毕
+    /// </summary>
+    public static void Start()
+    {
+        Pages.Values.ForeachDo(p => p.Start());
     }
 }
 
 public class AchievementPlayerManager : ModPlayer
 {
+    public override void OnEnterWorld()
+    {
+        AchievementManager.Start();
+    }
     /// <summary>
     /// 同<see cref="AchievementManager.Pages"/>
     /// </summary>

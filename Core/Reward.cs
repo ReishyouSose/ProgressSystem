@@ -1,5 +1,6 @@
 ﻿namespace ProgressSystem.Core;
 
+// TODO
 public abstract class Reward
 {
     /// <summary>

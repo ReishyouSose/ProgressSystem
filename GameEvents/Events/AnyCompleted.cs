@@ -2,20 +2,37 @@
 
 public class AnyCompleted : GameEvent
 {
-    GameEvent[] pre;
+    GameEvent[] _events;
     public AnyCompleted(params GameEvent[] events)
     {
-        pre = events;
-        foreach (GameEvent e in pre)
+        _events = events;
+        foreach (GameEvent e in _events)
         {
             e.OnCompleted += CheckAnyCompleted;
         }
     }
     private void CheckAnyCompleted(GameEvent obj)
     {
-        if (pre.Any(e => e.IsCompleted))
+        if (_events.Any(e => e.IsCompleted))
         {
             Complete();
         }
+    }
+    public static AnyCompleted Create(params GameEvent[] innerEvents)
+    {
+        return new AnyCompleted(innerEvents);
+    }
+    public override IEnumerable<ConstructInfoTable<GameEvent>> GetConstructInfoTables()
+    {
+        var table = new ConstructInfoTable<GameEvent>(t =>
+        {
+            var e = t.GetEnumerator();
+            GameEvent[] events = e.Current.GetValue<GameEvent[]>();
+            return new AnyCompleted(events);
+        }, nameof(AnyCompleted));
+        table.AddEntry(new(typeof(GameEvent[]), "events"));
+        table.Close();
+        yield return table;
+        yield break;
     }
 }

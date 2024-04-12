@@ -1,4 +1,5 @@
-﻿namespace ProgressSystem.GameEvents.Events;
+﻿
+namespace ProgressSystem.GameEvents.Events;
 public class BuyItem : CountInt
 {
     public int Type { get; private set; }
@@ -48,6 +49,22 @@ public class BuyItem : CountInt
         {
             Increase(1);
         }
+    }
+    public override IEnumerable<ConstructInfoTable<GameEvent>> GetConstructInfoTables()
+    {
+        var table = new ConstructInfoTable<GameEvent>(t =>
+        {
+            var e = t.GetEnumerator();
+            int type = e.Current.GetValue<int>();
+            e.MoveNext();
+            int target = e.Current.GetValue<int>();
+            return Create(type, target);
+        }, nameof(BuyItem));
+        table.AddEntry(new(typeof(int), "type"));
+        table.AddEntry(new(typeof(int), "target"));
+        table.Close();
+        yield return table;
+        yield break;
     }
 }
 
