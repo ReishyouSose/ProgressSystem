@@ -37,9 +37,10 @@ namespace ProgressSystem.UIEditor
             RemoveAll();
 
             datas = [];
-            using Stream stream = ProgressSystem.Instance.GetFileStream("Datas.nbt");
-            if (stream != null)
+            Mod mod = ProgressSystem.Instance;
+            if (mod.HasAsset("Datas.nbt"))
             {
+                using Stream stream = mod.GetFileStream("Datas.nbt");
                 TagCompound mods = TagIO.FromStream(stream);
                 foreach (var (name, _) in mods)
                 {
