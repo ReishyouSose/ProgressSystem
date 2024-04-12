@@ -7,7 +7,6 @@
 /// </summary>
 public class AchievementManager : ModSystem
 {
-    public override bool IsLoadingEnabled(Mod mod) => false;
     #region Test
     public override void OnModLoad()
     {
@@ -26,7 +25,7 @@ public class AchievementManager : ModSystem
             requirements: [new HouseRequirement()],
             rewards: [new ItemReward(ItemID.Wood, 100)]));
         page.Add(new(ModInstance, page, "Slime",
-            requirements: [new KillNPCRequirement(NPCID.GreenSlime)],
+            requirements: [new KillNPCRequirement(NPCID.BlueSlime)],
             rewards: [new ItemReward(ItemID.Gel, 30)]));
         page.Add(new(ModInstance, page, "Torch", predecessorNames: ["Slime", "Wood"],
             requirements: [new CraftItemRequirement(ItemID.Torch)],
@@ -84,6 +83,10 @@ public class AchievementPlayerManager : ModPlayer
 {
     public override void OnEnterWorld()
     {
+        if (loadedData != null)
+        {
+            LoadDataOnEnterWorld(loadedData);
+        }
         AchievementManager.Start();
     }
     /// <summary>
@@ -95,9 +98,14 @@ public class AchievementPlayerManager : ModPlayer
     {
         tag.SaveDictionaryData("Pages", Pages, (p, t) => p.SaveDataInPlayer(t));
     }
-    public override void LoadData(TagCompound tag)
+    public static void LoadDataOnEnterWorld(TagCompound tag)
     {
         tag.LoadDictionaryData("Pages", Pages, (p, t) => p.LoadDataInPlayer(t));
     }
+    public override void LoadData(TagCompound tag)
+    {
+        loadedData = tag;
+    }
+    private TagCompound? loadedData;
 }
 

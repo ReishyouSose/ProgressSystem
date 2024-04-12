@@ -256,10 +256,14 @@ public sealed class AchievementPage
         tag.LoadDictionaryData("Achievements", Achievements, (a, t) => a.LoadDataInWorld(t));
     }
     public void SaveDataInPlayer(TagCompound tag) {
-        tag.SetWithDefaultN("State", State);
+        tag.SetWithDefault("State", State.ToString(), StateEnum.Locked.ToString());
         tag.SaveDictionaryData("Achievements", Achievements, (a, t) => a.SaveDataInPlayer(t));
     }
     public void LoadDataInPlayer(TagCompound tag) {
+        if (Enum.TryParse(tag.GetWithDefault("State", StateEnum.Locked.ToString()), out StateEnum state))
+        {
+            State = state;
+        }
         tag.LoadDictionaryData("Achievements", Achievements, (a, t) => a.LoadDataInPlayer(t));
     }
     #endregion

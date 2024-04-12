@@ -672,7 +672,7 @@ public static partial class TigerExtensions
     public static void SaveListData<T>(this TagCompound tag, string key, IList<T> list, Func<T, TagCompound?> toTag)
     {
         bool needSave = false;
-        var data = list.Select(e => toTag(e).WithAction(t => needSave.AssignIf(t?.Count > 0, true))).ToArray();
+        var data = list.Select(e => toTag(e).WithAction(t => needSave.AssignIf(t?.Count > 0, true))).ToList();
         if (needSave)
         {
             tag[key] = data;
@@ -680,11 +680,11 @@ public static partial class TigerExtensions
     }
     public static void LoadListData<T>(this TagCompound tag, string key, IList<T> list, Action<T, TagCompound> fromTag)
     {
-        if (!tag.TryGet(key, out TagCompound?[] listData))
+        if (!tag.TryGet(key, out List<TagCompound?> listData))
         {
             return;
         }
-        foreach (int i in Math.Min(list.Count, listData.Length))
+        foreach (int i in Math.Min(list.Count, listData.Count))
         {
             var ld = listData[i];
             if (ld != null)

@@ -134,7 +134,7 @@ public abstract class Requirement
     public bool Listening { get; protected set; }
     public void BeginListenSafe()
     {
-        if (Listening || ListenType == ListenTypeEnum.None)
+        if (Listening || ListenType == ListenTypeEnum.None || Completed)
         {
             return;
         }
@@ -285,10 +285,21 @@ public class SomeOfRequirements(IEnumerable<Requirement> requirements, int count
     }
 }
 
+// TODO
 /// <summary>
 /// 需要玩家在成就页面自行提交
 /// </summary>
-public class SubmitRequirement : Requirement { }
+public class SubmitRequirement : Requirement {
+    public SubmitRequirement()
+    {
+        Completed = true;
+    }
+    public override void Reset()
+    {
+        base.Reset();
+        Completed = true;
+    }
+}
 
 /// <summary>
 /// 需要玩家捡到某个物品
@@ -347,6 +358,10 @@ public class PickItemRequirement : Requirement
     }
     private void ListenPickItem(Item item)
     {
+        if (ItemType > 0 && item.type != ItemType || Condition?.Invoke(item) == false)
+        {
+            return;
+        }
         DoIf((CountNow += item.stack) >= Count, CompleteSafe);
     }
 }
@@ -406,6 +421,10 @@ public class CraftItemRequirement : Requirement
     }
     private void ListenCraftItem(Item item, RecipeItemCreationContext context)
     {
+        if (ItemType > 0 && item.type != ItemType || Condition?.Invoke(item) == false)
+        {
+            return;
+        }
         DoIf((CountNow += item.stack) >= Count, CompleteSafe);
     }
 }
@@ -416,6 +435,7 @@ public class CraftItemRequirement : Requirement
 /// </summary>
 public class HouseRequirement : Requirement { }
 
+// TODO: NPC NetID
 public class KillNPCRequirement : Requirement
 {
     public int NPCType;
@@ -461,6 +481,10 @@ public class KillNPCRequirement : Requirement
     }
     private void ListenKillNPC(NPC npc)
     {
+        if (NPCType > 0 && npc.type != NPCType || Condition?.Invoke(npc) == false)
+        {
+            return;
+        }
         DoIf((CountNow += 1) >= Count, CompleteSafe);
     }
 }

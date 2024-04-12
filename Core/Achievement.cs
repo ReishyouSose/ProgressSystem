@@ -129,8 +129,12 @@ public sealed class Achievement
             return;
         }
         var predecessor = isFullName ? Page.Get(predecessorName) : Page.GetByName(predecessorName);
-        predecessor?.successors.Add(this);
-        predecessors.AddIfNotNull(predecessor);
+        if (predecessor == null)
+        {
+            return;
+        }
+        predecessor.successors.Add(this);
+        predecessors.Add(predecessor);
     }
     /// <summary>
     /// 移除一个前置
@@ -337,8 +341,9 @@ public sealed class Achievement
             return;
         }
         State = StateEnum.Unlocked;
-        OnUnlock?.Invoke();
         Requirements.ForEach(r => DoIf(r.ListenType == Requirement.ListenTypeEnum.OnUnlocked, r.BeginListenSafe));
+        CheckStateChanged(StateEnum.Locked, StateEnum.Unlocked);
+        OnUnlock?.Invoke();
     }
     public void TryUnlock()
     {
@@ -357,7 +362,9 @@ public sealed class Achievement
         }
         State = StateEnum.Completed;
         // !!!!!!!! Test
-        Main.NewText($"成就{DisplayName}完成!");
+        // Main.NewText($"成就{DisplayName.Value}完成!");
+        Requirements.ForEach(r => r.EndListenSafe());
+        CheckStateChanged(StateEnum.Unlocked, StateEnum.Completed);
         OnComplete?.Invoke();
     }
     public void TryComplete()
@@ -375,6 +382,7 @@ public sealed class Achievement
             return;
         }
         State = StateEnum.Closed;
+        CheckStateChanged(StateEnum.Completed, StateEnum.Closed);
         OnClose?.Invoke();
     }
     public void TryClose()
@@ -399,7 +407,10 @@ public sealed class Achievement
     public event OnCheckStateChangedDelegate? OnCheckStateChanged;
     public void CheckStateChanged(StateEnum oldState, StateEnum newState)
     {
-        Successors.ForeachDo(s => s.CheckState());
+        if (newState is StateEnum.Completed or StateEnum.Closed)
+        {
+            Successors.ForeachDo(s => s.CheckState());
+        }
         OnCheckStateChanged?.Invoke(oldState, newState);
     }
     #endregion
@@ -408,20 +419,23 @@ public sealed class Achievement
     // todo: 成就本身与奖励相关的数据存取
     public void SaveDataInWorld(TagCompound tag)
     {
-        tag.SetWithDefaultN("State", State);
         tag.SaveListData("Requirements", Requirements, (r, t) => r.SaveDataInWorld(t));
     }
     public void LoadDataInWorld(TagCompound tag)
     {
-        tag.GetWithDefault("State", out State);
         tag.LoadListData("Requirements", Requirements, (r, t) => r.LoadDataInWorld(t));
     }
     public void SaveDataInPlayer(TagCompound tag)
     {
+        tag.SetWithDefault("State", State.ToString(), StateEnum.Locked.ToString());
         tag.SaveListData("Requirements", Requirements, (r, t) => r.SaveDataInPlayer(t));
     }
     public void LoadDataInPlayer(TagCompound tag)
     {
+        if (Enum.TryParse(tag.GetWithDefault("State", StateEnum.Locked.ToString()), out StateEnum state))
+        {
+            State = state;
+        }
         tag.LoadListData("Requirements", Requirements, (r, t) => r.LoadDataInPlayer(t));
     }
     #endregion

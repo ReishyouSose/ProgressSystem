@@ -105,6 +105,7 @@ public static class GEListener
             OnLocalPlayerConsumeItem?.Invoke(item);
         }
     }
+    // !!!!! 当玩家碰到物品但捡不起来时会反复调用
     internal static void ListenPickItem(Player player, Item item)
     {
         OnPickItem?.Invoke(player, item);
