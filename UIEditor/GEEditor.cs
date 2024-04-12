@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Input;
 using ProgressSystem.GameEvents;
 using ProgressSystem.UIEditor.ExtraUI;
+using System.IO;
 using Terraria.GameContent;
 
 namespace ProgressSystem.UIEditor
@@ -21,11 +22,41 @@ namespace ProgressSystem.UIEditor
         private static UIGECollision collision;
         private static bool LeftShift;
         private static bool LeftCtrl;
+        private string EditMod;
+        private bool trySave;
+        /// <summary>
+        /// InternalModName, GroupIndex, GE
+        /// </summary>
+        private Dictionary<string, Dictionary<string, HashSet<UIGESlot>>> datas;
         public override void OnInitialization()
         {
             base.OnInitialization();
+            if (Main.gameMenu)
+                return;
             Info.IsVisible = true;
             RemoveAll();
+
+            datas = [];
+            using Stream stream = ProgressSystem.Instance.GetFileStream("Datas.nbt");
+            if (stream != null)
+            {
+                TagCompound mods = TagIO.FromStream(stream);
+                foreach (var (name, _) in mods)
+                {
+                    datas[name] = [];
+                    TagCompound indexs = mods.GetCompound(name);
+                    foreach (var (index, _) in indexs)
+                    {
+                        datas[name][index] = [];
+                        TagCompound ges = indexs.GetCompound(index);
+                        foreach (var (ge, _) in ges)
+                        {
+                            TagCompound geData = ges.GetCompound(ge);
+                            datas[name][index].Add(GameEvent.HandleTag(ges.GetCompound(ge)));
+                        }
+                    }
+                }
+            }
 
             GEPos = [];
             tempSelect = [];
@@ -52,9 +83,97 @@ namespace ProgressSystem.UIEditor
 
             UIVnlPanel eventPanel = new(0, 0);
             eventPanel.Info.SetMargin(10);
-            eventPanel.SetPos(130, 0);
+            eventPanel.SetPos(130, 40);
             eventPanel.SetSize(-130, 0, 1, 1, false);
             bg.Register(eventPanel);
+
+            UIDropDownList<UIText> indexList = new(bg, eventPanel, x =>
+            {
+                UIText text = new(x.text);
+                text.SetPos(10, 5);
+                return text;
+            });
+
+            indexList.showArea.SetPos(130, 0);
+            indexList.showArea.SetSize(200, 30);
+
+            indexList.expandArea.SetPos(130, 30);
+            indexList.expandArea.SetSize(200, 100);
+
+            indexList.expandView.autoPos[0] = true;
+
+            UIVnlPanel newProgressPanel = new(300, 110);
+            newProgressPanel.SetCenter(0, 0, 0.5f, 0.5f);
+            newProgressPanel.Info.IsVisible = false;
+            newProgressPanel.Info.SetMargin(10);
+            Register(newProgressPanel);
+
+            UIVnlPanel inputBg = new(200, 30);
+            inputBg.Info.Left.Percent = 0.5f;
+            newProgressPanel.Register(inputBg);
+
+            UIText report = new("不可为空");
+            report.SetSize(report.TextSize);
+            report.Info.Left.Percent = 0.5f;
+            report.Info.Top.Pixel = 30;
+            newProgressPanel.Register(report);
+
+            UIInputBox indexInputer = new("输入进度组名称");
+            indexInputer.SetPos(10, 5);
+            indexInputer.OnInputText += evt =>
+            {
+                string text = indexInputer.Text;
+                if (text.Any())
+                {
+                    if (datas.TryGetValue(EditMod, out var mod))
+                    {
+                        if (mod.ContainsKey(text))
+                        {
+                            report.ChangeText("名称重复");
+                            report.color = Color.Red;
+                        }
+                        else
+                        {
+                            report.ChangeText("名称可用");
+                            report.color = Color.Green;
+                        }
+                    }
+                }
+                else
+                {
+                    report.ChangeText("不可为空");
+                    report.color = Color.Red;
+                }
+            };
+            inputBg.Register(indexInputer);
+
+            UIText submit = new("创建");
+            submit.SetSize(submit.TextSize);
+            submit.SetCenter(0, 60, 0.3f);
+            submit.Events.OnLeftDown += evt =>
+            {
+                if (report.color == Color.Green)
+                {
+                    datas[EditMod][indexInputer.Text] = [];
+                    SaveProgress();
+                }
+            };
+            newProgressPanel.Register(submit);
+
+            UIText cancel = new("取消");
+            cancel.SetSize(cancel.TextSize);
+            cancel.SetCenter(0, 60, 0.7f);
+            newProgressPanel.Register(cancel);
+
+            UIText newProgress = new("新建进度表");
+            newProgress.SetPos(groupFilter.Width + indexList.showArea.Width + 20, 0);
+            newProgress.SetSize(newProgress.TextSize + new Vector2(10, 5));
+            newProgress.Events.OnLeftDown += evt =>
+            {
+
+                bg.LockInteract(false);
+            };
+            bg.Register(newProgress);
 
             eventView = new();
             eventView.SetSize(-20, -20, 1, 1);
@@ -245,6 +364,14 @@ namespace ProgressSystem.UIEditor
             KeyboardState state = Keyboard.GetState();
             LeftShift = state.IsKeyDown(Keys.LeftShift);
             LeftCtrl = state.IsKeyDown(Keys.LeftControl);
+            bool pressS = state.IsKeyDown(Keys.S);
+            if (!pressS)
+                trySave = false;
+            if (!trySave && LeftCtrl && pressS)
+            {
+                SaveProgress();
+                trySave = true;
+            }
             if (dragging || collision != null)
             {
                 Point target = Main.MouseScreen.ToPoint();
@@ -370,6 +497,26 @@ namespace ProgressSystem.UIEditor
                     }
                 }
             }
+        }
+        private void SaveProgress()
+        {
+            TagCompound data = [];
+            foreach (var (mods, indexs) in datas)
+            {
+                TagCompound mod = [];
+                foreach (var (index, ges) in indexs)
+                {
+                    TagCompound group = [];
+                    int i = 0;
+                    foreach (UIGESlot slot in ges)
+                    {
+                        group[(i++).ToString()] = slot.ge.SaveData();
+                    }
+                    mod[index] = group;
+                }
+                data[mods] = mod;
+            }
+            TagIO.ToStream(data, ProgressSystem.Instance.GetFileStream("Datas.nbt", true));
         }
     }
 }
