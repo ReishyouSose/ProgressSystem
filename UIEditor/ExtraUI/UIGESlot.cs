@@ -11,17 +11,18 @@ namespace ProgressSystem.UIEditor.ExtraUI
         public GameEvent ge;
         private bool dragging;
         private Vector2 oldlocal;
-        public Texture2D Icon;
+        private readonly Texture2D Icon;
+        private readonly Rectangle? frame;
         /// <summary>
         /// 吸附位置
         /// </summary>
         private Vector2? adsorption;
         public Vector2 pos;
         public bool selected;
-        public UIGESlot(GameEvent ge = null, Texture2D tex = null) : base(AssetLoader.Slot)
+        public UIGESlot(GameEvent ge = null) : base(AssetLoader.Slot)
         {
             this.ge = ge;
-            Icon = tex;
+            (Icon, frame) = ge.DrawData();
         }
         public override void OnInitialization()
         {
@@ -97,7 +98,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
             Rectangle hitbox = HitBox();
             if (Icon != null)
             {
-                sb.SimpleDraw(Icon, hitbox.Center(), null, Icon.Size() / 2f, color: color);
+                sb.SimpleDraw(Icon, hitbox.Center(), frame, Icon.Size() / 2f * (frame?.Size().AutoScale() ?? 1), color: color);
             }
             if (adsorption != null)
             {

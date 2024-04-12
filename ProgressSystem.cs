@@ -17,11 +17,11 @@ namespace ProgressSystem;
 
 public class ProgressSystem : Mod
 {
-    public static ProgressSystem Instance { get; private set; } = null!;
+    internal static ProgressSystem Instance { get; private set; }
     public override void Load()
     {
+        /* RUIManager.mod =*/
         Instance = this;
-        RUIManager.mod = this;
         AddContent<RUIManager>();
     }
 }

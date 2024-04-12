@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Input;
 using ProgressSystem.GameEvents;
 using ProgressSystem.GameEvents.Events;
 using ProgressSystem.UIEditor.ExtraUI;
+using System.Threading.Tasks;
 using Terraria.GameContent;
 
 namespace ProgressSystem.UIEditor
@@ -22,7 +23,6 @@ namespace ProgressSystem.UIEditor
         private static UIGECollision collision;
         private static bool LeftShift;
         private static bool LeftCtrl;
-        private static IEnumerable<Type> geIns;
         public override void OnInitialization()
         {
             base.OnInitialization();
@@ -112,7 +112,7 @@ namespace ProgressSystem.UIEditor
                 eventView.AddElement(vline);
             }
 
-            UIVnlPanel taskPanel = new(300, 200);
+            UIVnlPanel taskPanel = new(300, 300);
             taskPanel.canDrag = true;
             taskPanel.SetCenter(150, 0, 0, 0.5f);
             taskPanel.Info.SetMargin(10);
@@ -140,130 +140,97 @@ namespace ProgressSystem.UIEditor
             dataInput.SetSize(0, -30, 1, 1);
             taskPanel.Register(dataInput);
 
-            UIDropDownList<UIText> typeSelector = new(dataInput, x => new(x.text));
-            typeSelector.SetSize(0, 30, 1);
-            typeSelector.Events.OnUpdate += evt =>
+            UIDropDownList<UIText> typeSelector = new(taskPanel, dataInput, x =>
             {
-                //Main.NewText(evt.Info.IsMouseHover);
-            };
+                UIText text = new(x.text);
+                text.SetPos(10, 5);
+                return text;
+            });
+            typeSelector.SetSize(0, 30, 1);
+            typeSelector.buttonXoffset = 10;
 
             typeSelector.showArea.SetSize(0, 30, 1);
-            typeSelector.showArea.Info.LeftMargin.Pixel = 10;
-            typeSelector.showArea.Info.TopMargin.Pixel = 5;
 
             typeSelector.expandArea.SetPos(0, 30);
-            typeSelector.expandArea.SetSize(0, 100, 1);
+            typeSelector.expandArea.SetSize(0, 150, 1);
 
             typeSelector.expandView.autoPos[0] = true;
             taskPanel.Register(typeSelector);
 
-            geIns ??= from c in ProgressSystem.Instance.GetType().Assembly.GetTypes()
-                      where !c.IsAbstract && c.IsSubclassOf(typeof(GameEvent))
-                      select c;
-
-            foreach (var ins in geIns)
+            foreach (var (label, table) in GEM._constructInfoTables)
             {
-                UIText type = new(ins.Name);
+                UIText type = new(label.Split('.')[^1]);
                 type.SetSize(type.TextSize);
                 type.Events.OnMouseOver += evt => type.color = Color.Gold;
                 type.Events.OnMouseOut += evt => type.color = Color.White;
-                type.DrawRec[0] = Color.White;
-                type.DrawRec[2] = Color.Red;
+                type.Events.OnLeftDown += evt =>
+                {
+                    var constructs = table;
+                    int y = 0;
+                    foreach (var constructData in constructs)
+                    {
+                        UIVnlPanel constructPanel = new(0, 0);
+                        dataInput.Register(constructPanel);
+                        constructPanel.Info.SetMargin(10);
+                        int innerY = 0;
+                        foreach (var info in constructData)
+                        {
+                            UIText name = new(info.Name);
+                            name.SetPos(0, innerY);
+                            name.SetSize(name.TextSize);
+                            constructPanel.Register(name);
+                        }
+                        constructPanel.SetSize(0, y, 1);
+                        y += constructPanel.Height + 10;
+
+                        UIText create = new("创建进度");
+                        create.SetSize(create.TextSize);
+                        create.SetPos(10, y);
+                        create.Events.OnMouseOver += evt => create.color = Color.Gold;
+                        create.Events.OnMouseOut += evt => create.color = Color.White;
+                        create.Events.OnLeftDown += evt =>
+                        {
+                            if (constructData.TryCreate(out GameEvent task))
+                            {
+                                UIGESlot ge = new(task);
+                                ge.Events.OnMouseOver += evt =>
+                                {
+                                    ev.canDrag = false;
+                                    eh.canDrag = false;
+                                };
+                                ge.Events.OnMouseOut += evt =>
+                                {
+                                    ev.canDrag = true;
+                                    eh.canDrag = true;
+                                };
+                                ge.Events.OnLeftDown +=  GESlotDragCheck;
+                                ge.Events.OnLeftUp += evt =>
+                                {
+                                    dragging = false;
+                                    draggingSelected = false;
+                                };
+                                ge.Events.OnUpdate += GESlotUpdate;
+                                {
+                                };
+                                Vector2 pos = Vector2.Zero;
+                                while (GEPos.Contains(pos))
+                                {
+                                    pos.X++;
+                                }
+                                ge.pos = pos;
+                                ge.SetPos(pos * 80);
+                                GEPos.Add(pos);
+                                eventView.AddElement(ge);
+                            }
+                        };
+                        dataInput.Register(create);
+                    }
+                };
                 typeSelector.AddElement(type);
             }
             typeSelector.ChangeShowElement(typeSelector.expandView.InnerUIE[0] as UIText);
 
-            UIText create = new("创建制造物品任务");
-            create.SetSize(create.TextSize);
-            create.SetPos(10, 10);
-            create.Events.OnMouseOver += evt => create.color = Color.Gold;
-            create.Events.OnMouseOut += evt => create.color = Color.White;
-            create.Events.OnLeftDown += evt =>
-            {
-                int id =/* itemSlot.ContainedItem?.type ?? -1*/-1;
-                if (id <= 0) return;
-                CraftItem task = CraftItem.CreateAndSetUp(id);
-                Main.instance.LoadItem(id);
-                UIGESlot ge = new(task, TextureAssets.Item[id].Value);
-                ge.Events.OnMouseOver += evt =>
-                {
-                    ev.canDrag = false;
-                    eh.canDrag = false;
-                };
-                ge.Events.OnMouseOut += evt =>
-                {
-                    ev.canDrag = true;
-                    eh.canDrag = true;
-                };
-                ge.Events.OnLeftDown += evt =>
-                {
-                    if (LeftCtrl)
-                    {
-                        if (frameSelect.Contains(ge))
-                        {
-                            frameSelect.Remove(ge);
-                            ge.selected = false;
-                        }
-                        else ge.selected = frameSelect.Add(ge);
-                    }
-                    else if (frameSelect.Any())
-                    {
-                        draggingSelected = true;
-                        Point mouse = (Main.MouseScreen - eventView.ChildrenElements[0]
-                        .HitBox(false).TopLeft()).ToPoint();
-                        selectedStart = new(mouse.X / 80, mouse.Y / 80);
-                    }
-                    dragging = true;
-                };
-                ge.Events.OnLeftUp += evt =>
-                {
-                    dragging = false;
-                    draggingSelected = false;
-                };
-                ge.Events.OnUpdate += evt =>
-                {
-                    if (collision != null)
-                    {
-                        bool intersects = ge.HitBox().Intersects(collision.selector);
-                        if (LeftShift)
-                        {
-                            if (!interacted.Contains(ge) && intersects)
-                            {
-                                if (frameSelect.Contains(ge))
-                                {
-                                    frameSelect.Remove(ge);
-                                    ge.selected = false;
-                                }
-                                else ge.selected = frameSelect.Add(ge);
-                                interacted.Add(ge);
-                            }
-                        }
-                        else
-                        {
-                            if (intersects)
-                            {
-                                tempSelect.Add(ge);
-                                ge.selected = true;
-                            }
-                            else
-                            {
-                                tempSelect.Remove(ge);
-                                ge.selected = false;
-                            }
-                        }
-                    }
-                };
-                Vector2 pos = Vector2.Zero;
-                while (GEPos.Contains(pos))
-                {
-                    pos.X++;
-                }
-                ge.pos = pos;
-                ge.SetPos(pos * 80);
-                GEPos.Add(pos);
-                eventView.AddElement(ge);
-            };
-            dataInput.Register(create);
+            
         }
         public override void Update(GameTime gt)
         {
@@ -339,6 +306,60 @@ namespace ProgressSystem.UIEditor
                 }
             }
         }
-
+        private void GESlotDragCheck(BaseUIElement uie)
+        {
+            UIGESlot ge = uie as UIGESlot;
+            if (LeftCtrl)
+            {
+                if (frameSelect.Contains(ge))
+                {
+                    frameSelect.Remove(ge);
+                    ge.selected = false;
+                }
+                else ge.selected = frameSelect.Add(ge);
+            }
+            else if (frameSelect.Any())
+            {
+                draggingSelected = true;
+                Point mouse = (Main.MouseScreen - eventView.ChildrenElements[0]
+                .HitBox(false).TopLeft()).ToPoint();
+                selectedStart = new(mouse.X / 80, mouse.Y / 80);
+            }
+            dragging = true;
+        }
+        private void GESlotUpdate(BaseUIElement uie)
+        {
+            UIGESlot ge = uie as UIGESlot;
+            if (collision != null)
+            {
+                bool intersects = ge.HitBox().Intersects(collision.selector);
+                if (LeftShift)
+                {
+                    if (!interacted.Contains(ge) && intersects)
+                    {
+                        if (frameSelect.Contains(ge))
+                        {
+                            frameSelect.Remove(ge);
+                            ge.selected = false;
+                        }
+                        else ge.selected = frameSelect.Add(ge);
+                        interacted.Add(ge);
+                    }
+                }
+                else
+                {
+                    if (intersects)
+                    {
+                        tempSelect.Add(ge);
+                        ge.selected = true;
+                    }
+                    else
+                    {
+                        tempSelect.Remove(ge);
+                        ge.selected = false;
+                    }
+                }
+            }
+        }
     }
 }

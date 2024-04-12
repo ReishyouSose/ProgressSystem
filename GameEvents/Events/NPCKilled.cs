@@ -1,4 +1,7 @@
-﻿namespace ProgressSystem.GameEvents.Events;
+﻿using Microsoft.Xna.Framework.Graphics;
+using Terraria.GameContent;
+
+namespace ProgressSystem.GameEvents.Events;
 
 public class NPCKilled : CountInt
 {
@@ -42,6 +45,13 @@ public class NPCKilled : CountInt
         tag[nameof(IsCompleted)] = IsCompleted;
         tag[nameof(NetID)] = NetID;
         base.Save(tag);
+    }
+    public override (Texture2D, Rectangle?) DrawData()
+    {
+        Main.instance.LoadNPC(NetID);
+        Texture2D tex = TextureAssets.Npc[ContentSamples.NpcsByNetId[NetID].type].Value;
+        int frame = Main.npcFrameCount[NetID];
+        return (tex, new Rectangle(0, 0, tex.Width, tex.Height / frame));
     }
     public void TryComplete(Player player, NPC npc)
     {

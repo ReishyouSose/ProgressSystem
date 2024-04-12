@@ -53,13 +53,7 @@ namespace ProgressSystem.GameEvents
         {
             return GetEnumerator();
         }
-        public bool AllEntryMeet
-        {
-            get
-            {
-                return _entries.All(e => e.IsMet);
-            }
-        }
+        public bool AllEntryMeet => _entries.All(e => e.IsMet);
         public ConstructInfoTable<T> Clone()
         {
             var table = new ConstructInfoTable<T>(_createFunc);

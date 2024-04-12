@@ -1,4 +1,7 @@
-﻿namespace ProgressSystem.GameEvents.Events;
+﻿using Microsoft.Xna.Framework.Graphics;
+using Terraria.GameContent;
+
+namespace ProgressSystem.GameEvents.Events;
 
 public class CraftItem : CountInt
 {
@@ -44,6 +47,13 @@ public class CraftItem : CountInt
         tag[nameof(IsCompleted)] = IsCompleted;
         tag[nameof(Type)] = Type;
         base.Save(tag);
+    }
+    public override (Texture2D, Rectangle?) DrawData()
+    {
+        Main.instance.LoadItem(Type);
+        Texture2D tex = TextureAssets.Item[Type].Value;
+        int frame = Main.itemFrame[Type];
+        return (tex, new Rectangle(0, 0, tex.Width, tex.Height / frame));
     }
     public void TryComplete(Player player, Item item, RecipeItemCreationContext context)
     {
