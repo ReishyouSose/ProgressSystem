@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using ProgressSystem.GameEvents;
+using System.IO;
 
 namespace ProgressSystem.Core;
 
@@ -12,22 +13,17 @@ public abstract class Requirement
     public Texture2DGetter Texture;
     #region 构造函数与初始化
     public Requirement() { }
-    public Requirement(ListenTypeEnum listenType, MultiplayerTypeEnum multiplayerType = MultiplayerTypeEnum.LocalPlayer, bool repeatable = false)
+    public Requirement(ListenTypeEnum listenType, MultiplayerTypeEnum multiplayerType = MultiplayerTypeEnum.LocalPlayer)
     {
         ListenType = listenType;
         MultiplayerType = multiplayerType;
-        Repeatable = repeatable;
     }
     public virtual void Initialize() { }
     #endregion
-    #region 开始
+    #region 重置
     public virtual void Reset() {
-
-    }
-    public virtual void Start() {
-        if (ListenType == ListenTypeEnum.OnStart) {
-            BeginListenSafe();
-        }
+        EndListenSafe();
+        Completed = false;
     }
     #endregion
     #region 多人类型
@@ -169,28 +165,6 @@ public abstract class Requirement
         Completed = true;
         OnComplete?.Invoke();
         EndListenSafe();
-    }
-    #endregion
-    #region 是否可重复完成
-    /// <summary>
-    /// 是否可重复完成
-    /// </summary>
-    public bool Repeatable;
-    /// <summary>
-    /// 可重复完成且已完成时, 重复开始
-    /// </summary>
-    public void RepeatSafe()
-    {
-        if (!Repeatable || !Completed)
-        {
-            return;
-        }
-        Repeat();
-    }
-    protected virtual void Repeat()
-    {
-        Completed = false;
-        BeginListenSafe();
     }
     #endregion
 }
@@ -340,7 +314,7 @@ public class PickItemRequirement : Requirement
     protected override void BeginListen()
     {
         base.BeginListen();
-        // GEListener.OnLocalPlayerPickItem += ListenPickItem;
+        GEListener.OnLocalPlayerPickItem += ListenPickItem;
         DoIf(CountNow >= Count, CompleteSafe);
     }
     protected override void EndListen()
@@ -394,7 +368,7 @@ public class CraftItemRequirement : Requirement
     protected override void BeginListen()
     {
         base.BeginListen();
-        // GEListener.OnLocalPlayerCreateItem += ListenCraftItem;
+        GEListener.OnLocalPlayerCraftItem += ListenCraftItem;
         DoIf(CountNow >= Count, CompleteSafe);
     }
     protected override void EndListen()
@@ -402,9 +376,8 @@ public class CraftItemRequirement : Requirement
         base.EndListen();
         // GEListener.OnLocalPlayerCreateItem -= ListenCraftItem;
     }
-    private void ListenCraftItem(Item item, ItemCreationContext context)
+    private void ListenCraftItem(Item item, RecipeItemCreationContext context)
     {
-        // TODO: 检测创建类型是否为制造
         DoIf((CountNow += item.stack) >= Count, CompleteSafe);
     }
 }
@@ -442,7 +415,7 @@ public class KillNPCRequirement : Requirement
     protected override void BeginListen()
     {
         base.BeginListen();
-        // GEListener.OnLocalPlayerKillNPC += ListenKillNPC;
+        GEListener.OnLocalPlayerKillNPC += ListenKillNPC;
         DoIf(CountNow >= Count, CompleteSafe);
     }
     protected override void EndListen()

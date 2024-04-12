@@ -33,18 +33,9 @@ public class AchievementPage
     public bool Editable;
     #endregion
 
-    #region 开始
-    public bool Started { get; protected set; }
+    #region 重置
     public void Reset() {
-        Started = false;
         Achievements.Values.ForeachDo(a => a.Reset());
-    }
-    public void Start() {
-        if (Started) {
-            return;
-        }
-        Started = true;
-        Achievements.Values.ForeachDo(a => a.Start());
     }
     #endregion
 
@@ -165,24 +156,16 @@ public class AchievementPage
     #region 存取数据
     // TODO: 存取 Page 自身的数据
     public void SaveDataInWorld(TagCompound tag) {
-        TagCompound achievementsData = [..Achievements.Select(p => NewPair(p.Key, (object)new TagCompound().WithAction(p.Value.SaveDataInWorld)))];
-        tag["Achievements"] = achievementsData;
+        tag.SaveDictionaryData("Achievements", Achievements, (a, t) => a.SaveDataInWorld(t));
     }
     public void LoadDataInWorld(TagCompound tag) {
-        if (tag.TryGet<TagCompound>("Achievements", out var achievementsData)) {
-            foreach (var key in Achievements.Keys) {
-                Achievements[key].LoadDataInWorld(achievementsData.GetWithDefault<TagCompound>(key, []));
-            }
-        }
+        tag.LoadDictionaryData("Achievements", Achievements, (a, t) => a.LoadDataInWorld(t));
     }
     public void SaveDataInPlayer(TagCompound tag) {
-        TagCompound achievementsData = [..Achievements.Select(p => NewPair(p.Key, (object)new TagCompound().WithAction(p.Value.SaveDataInPlayer)))];
-        tag["Achievements"] = achievementsData;
+        tag.SaveDictionaryData("Achievements", Achievements, (a, t) => a.SaveDataInPlayer(t));
     }
     public void LoadDataInPlayer(TagCompound tag) {
-        if (tag.TryGet<TagCompound>("Achievements", out var achievementsData)) {
-            Achievements.Values.ForeachDo(a => a.LoadDataInPlayer(achievementsData.GetWithDefault<TagCompound>(a.FullName, [])));
-        }
+        tag.LoadDictionaryData("Achievements", Achievements, (a, t) => a.LoadDataInPlayer(t));
     }
     #endregion
 

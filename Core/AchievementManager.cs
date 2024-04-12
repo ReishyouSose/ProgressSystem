@@ -48,14 +48,21 @@ public class AchievementManager : ModSystem
     }
     public override void SaveWorldData(TagCompound tag)
     {
-        TagCompound pagesData = [..Pages.Select(p => NewPair(p.Key, (object)new TagCompound().WithAction(p.Value.SaveDataInWorld)))];
-        tag["Pages"] = pagesData;
+        tag.SaveDictionaryData("Pages", Pages, (p, t) => p.SaveDataInWorld(t));
     }
     public override void LoadWorldData(TagCompound tag)
     {
-        if (tag.TryGet("Page", out TagCompound pagesData)) {
-            Pages.Values.ForeachDo(p => p.LoadDataInWorld(pagesData.GetWithDefault<TagCompound>(p.FullName, [])));
-        }
+        tag.LoadDictionaryData("Pages", Pages, (p, t) => p.LoadDataInWorld(t));
+    }
+    public override void OnWorldLoad() {
+        // 在 LoadWorldData 前执行
+    }
+    public override void OnWorldUnload() {
+        // 在 SaveWorldData 后执行
+        Reset();
+    }
+    public static void Reset() {
+        Pages.Values.ForeachDo(p => p.Reset());
     }
 }
 
@@ -65,21 +72,14 @@ public class AchievementPlayerManager : ModPlayer
     /// 同<see cref="AchievementManager.Pages"/>
     /// </summary>
     public static Dictionary<string, AchievementPage> Pages { get => AchievementManager.Pages; set => AchievementManager.Pages = value; }
-    public override void OnEnterWorld()
-    {
-        Pages.Values.ForeachDo(p => p.Reset());
-        Pages.Values.ForeachDo(p => p.Start());
-    }
+
     public override void SaveData(TagCompound tag)
     {
-        TagCompound pagesData = [..Pages.Select(p => NewPair(p.Key, (object)new TagCompound().WithAction(p.Value.SaveDataInPlayer)))];
-        tag["Pages"] = pagesData;
+        tag.SaveDictionaryData("Pages", Pages, (p, t) => p.SaveDataInPlayer(t));
     }
     public override void LoadData(TagCompound tag)
     {
-        if (tag.TryGet("Page", out TagCompound pagesData)) {
-            Pages.Values.ForeachDo(p => p.LoadDataInPlayer(pagesData.GetWithDefault<TagCompound>(p.FullName, [])));
-        }
+        tag.LoadDictionaryData("Pages", Pages, (p, t) => p.LoadDataInPlayer(t));
     }
 }
 

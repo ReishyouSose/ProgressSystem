@@ -8,8 +8,3 @@ dotnet_diagnostic.CA2211.severity = none
 
 # 新行首选项
 insert_final_newline = true
-
-#### .NET 编码约定 ####
-
-# 新行首选项
-csharp_new_line_before_open_brace = none
