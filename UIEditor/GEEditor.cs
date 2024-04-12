@@ -1,9 +1,7 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using ProgressSystem.GameEvents;
-using ProgressSystem.GameEvents.Events;
 using ProgressSystem.UIEditor.ExtraUI;
-using System.Threading.Tasks;
 using Terraria.GameContent;
 
 namespace ProgressSystem.UIEditor
@@ -140,14 +138,27 @@ namespace ProgressSystem.UIEditor
             dataInput.SetSize(0, -30, 1, 1);
             taskPanel.Register(dataInput);
 
+            UIContainerPanel dataView = new()
+            {
+                spaceY = 5,
+            };
+            dataView.autoPos[0] = true;
+            dataView.SetSize(-30, 0, 1, 1);
+            dataInput.Register(dataView);
+
+            VerticalScrollbar dataVsroll = new(28, canDrag: false);
+            dataView.SetVerticalScrollbar(dataVsroll);
+            dataInput.Register(dataVsroll);
+
             UIDropDownList<UIText> typeSelector = new(taskPanel, dataInput, x =>
             {
                 UIText text = new(x.text);
                 text.SetPos(10, 5);
                 return text;
-            });
-            typeSelector.SetSize(0, 30, 1);
-            typeSelector.buttonXoffset = 10;
+            })
+            {
+                buttonXoffset = 10
+            };
 
             typeSelector.showArea.SetSize(0, 30, 1);
 
@@ -155,7 +166,6 @@ namespace ProgressSystem.UIEditor
             typeSelector.expandArea.SetSize(0, 150, 1);
 
             typeSelector.expandView.autoPos[0] = true;
-            taskPanel.Register(typeSelector);
 
             foreach (var (label, table) in GEM._constructInfoTables)
             {
@@ -165,12 +175,12 @@ namespace ProgressSystem.UIEditor
                 type.Events.OnMouseOut += evt => type.color = Color.White;
                 type.Events.OnLeftDown += evt =>
                 {
+                    dataView.ClearAllElements();
                     var constructs = table;
-                    int y = 0;
                     foreach (var constructData in constructs)
                     {
                         UIVnlPanel constructPanel = new(0, 0);
-                        dataInput.Register(constructPanel);
+                        dataView.AddElement(constructPanel);
                         constructPanel.Info.SetMargin(10);
                         int innerY = 0;
                         foreach (var info in constructData)
@@ -179,13 +189,12 @@ namespace ProgressSystem.UIEditor
                             name.SetPos(0, innerY);
                             name.SetSize(name.TextSize);
                             constructPanel.Register(name);
+                            innerY += 28;
                         }
-                        constructPanel.SetSize(0, y, 1);
-                        y += constructPanel.Height + 10;
 
                         UIText create = new("创建进度");
                         create.SetSize(create.TextSize);
-                        create.SetPos(10, y);
+                        create.SetPos(10, innerY);
                         create.Events.OnMouseOver += evt => create.color = Color.Gold;
                         create.Events.OnMouseOut += evt => create.color = Color.White;
                         create.Events.OnLeftDown += evt =>
@@ -203,7 +212,7 @@ namespace ProgressSystem.UIEditor
                                     ev.canDrag = true;
                                     eh.canDrag = true;
                                 };
-                                ge.Events.OnLeftDown +=  GESlotDragCheck;
+                                ge.Events.OnLeftDown += GESlotDragCheck;
                                 ge.Events.OnLeftUp += evt =>
                                 {
                                     dragging = false;
@@ -223,14 +232,13 @@ namespace ProgressSystem.UIEditor
                                 eventView.AddElement(ge);
                             }
                         };
-                        dataInput.Register(create);
+                        constructPanel.Register(create);
+                        constructPanel.SetSize(0, innerY + 28, 1);
                     }
                 };
                 typeSelector.AddElement(type);
             }
             typeSelector.ChangeShowElement(typeSelector.expandView.InnerUIE[0] as UIText);
-
-            
         }
         public override void Update(GameTime gt)
         {
@@ -316,7 +324,8 @@ namespace ProgressSystem.UIEditor
                     frameSelect.Remove(ge);
                     ge.selected = false;
                 }
-                else ge.selected = frameSelect.Add(ge);
+                else
+                    ge.selected = frameSelect.Add(ge);
             }
             else if (frameSelect.Any())
             {
@@ -342,7 +351,8 @@ namespace ProgressSystem.UIEditor
                             frameSelect.Remove(ge);
                             ge.selected = false;
                         }
-                        else ge.selected = frameSelect.Add(ge);
+                        else
+                            ge.selected = frameSelect.Add(ge);
                         interacted.Add(ge);
                     }
                 }

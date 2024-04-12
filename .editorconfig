@@ -1,15 +1,4 @@
-# c# 文件
-[*.cs]
+﻿[*.cs]
 
-# CA2211: 非常量字段应当不可见
-dotnet_diagnostic.CA2211.severity = none
-
-#### Core EditorConfig 选项 ####
-
-# 新行首选项
-insert_final_newline = true
-
-#### .NET 编码约定 ####
-
-# 新行首选项
-csharp_new_line_before_open_brace = none
+# CS8604: 引用类型参数可能为 null。
+dotnet_diagnostic.CS8604.severity = none
