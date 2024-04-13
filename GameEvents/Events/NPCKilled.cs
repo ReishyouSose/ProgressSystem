@@ -5,7 +5,7 @@ namespace ProgressSystem.GameEvents.Events;
 
 public class NPCKilled : CountInt
 {
-    public int Type { get;private set; }
+    public int Type { get; private set; }
     public int NetID { get; private set; }
     public static NPCKilled Create(int type, int netID, int target = 1)
     {
@@ -52,7 +52,7 @@ public class NPCKilled : CountInt
     {
         Main.instance.LoadNPC(NetID);
         Texture2D tex = TextureAssets.Npc[ContentSamples.NpcsByNetId[NetID].type].Value;
-        int frame = Main.npcFrameCount[NetID];
+        int frame = Math.Max(Main.npcFrameCount[Type], 1);
         return (tex, new Rectangle(0, 0, tex.Width, tex.Height / frame));
     }
     public void TryComplete(Player player, NPC npc)
