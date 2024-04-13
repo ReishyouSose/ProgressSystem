@@ -143,14 +143,16 @@ namespace ProgressSystem.GameEvents
             public EntryT GetValue<EntryT>() => (EntryT)_value;
             public bool SetValue(object value)
             {
-                var v = Convert.ChangeType(value, Type);
-                if (v != null)
+                try
                 {
-                    _value = v;
+                    _value = Convert.ChangeType(value, Type);
                     HasValue = true;
                     return true;
                 }
-                return false;
+                catch
+                {
+                    return false;
+                }
             }
             /// <summary>
             /// 是否至少填入一次合法参数

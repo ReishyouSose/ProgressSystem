@@ -59,6 +59,7 @@ public class ConsumeItem : CountInt
         var table = new ConstructInfoTable<GameEvent>(t =>
         {
             var e = t.GetEnumerator();
+            e.MoveNext();
             int type = e.Current.GetValue<int>();
             e.MoveNext();
             int target = e.Current.GetValue<int>();

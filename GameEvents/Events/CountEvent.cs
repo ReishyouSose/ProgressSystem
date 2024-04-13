@@ -81,6 +81,7 @@
             var table = new ConstructInfoTable<GameEvent>(t =>
             {
                 var e = t.GetEnumerator();
+                e.MoveNext();
                 float target = e.Current.GetValue<float>();
                 return Create(target);
             }, nameof(CountFloat));

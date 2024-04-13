@@ -23,6 +23,7 @@ public class AllCompleted : GameEvent
         var table = new ConstructInfoTable<GameEvent>(t =>
         {
             var e = t.GetEnumerator();
+            e.MoveNext();
             GameEvent[] events = e.Current.GetValue<GameEvent[]>();
             return new AllCompleted(events);
         }, nameof(AllCompleted));
