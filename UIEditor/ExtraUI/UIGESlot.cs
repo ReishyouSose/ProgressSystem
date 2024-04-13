@@ -19,10 +19,11 @@ namespace ProgressSystem.UIEditor.ExtraUI
         private Vector2? adsorption;
         public Vector2 pos;
         public bool selected;
-        public UIGESlot(GameEvent ge = null) : base(AssetLoader.Slot)
+        public UIGESlot(GameEvent ge = null, Vector2? pos = null) : base(AssetLoader.Slot)
         {
             this.ge = ge;
             (Icon, frame) = ge.DrawData();
+            if (pos != null) this.pos = pos.Value;
         }
         public override void OnInitialization()
         {
@@ -44,7 +45,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
                 dragging = false;
                 if (adsorption != null)
                 {
-                    SetPos(adsorption.Value * 80);
+                    SetPos(pos * 80);
                     GEEditor.GEPos.Add(pos);
                     adsorption = null;
                 }

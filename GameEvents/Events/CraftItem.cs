@@ -52,7 +52,7 @@ public class CraftItem : CountInt
     {
         Main.instance.LoadItem(Type);
         Texture2D tex = TextureAssets.Item[Type].Value;
-        int frame = Main.itemFrame[Type];
+        int frame = Math.Max(Main.itemFrame[Type], 1);
         return (tex, new Rectangle(0, 0, tex.Width, tex.Height / frame));
     }
     public void TryComplete(Player player, Item item, RecipeItemCreationContext context)
