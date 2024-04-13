@@ -23,7 +23,11 @@ namespace ProgressSystem.UIEditor.ExtraUI
         {
             this.ge = ge;
             (Icon, frame) = ge.DrawData();
-            if (pos != null) this.pos = pos.Value;
+            if (pos != null)
+            {
+                this.pos = pos.Value;
+                SetPos(this.pos * 80);
+            }
         }
         public override void OnInitialization()
         {
@@ -52,11 +56,6 @@ namespace ProgressSystem.UIEditor.ExtraUI
                 color = Color.White;
             };
             Events.OnLeftDoubleClick += evt => dragging = false;
-            Events.OnRightDoubleClick += evt =>
-            {
-                ParentElement.Remove(this);
-                GEEditor.GEPos.Remove(pos);
-            };
         }
 
         public override void Update(GameTime gt)

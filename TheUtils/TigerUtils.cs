@@ -7,7 +7,6 @@ using MonoMod.RuntimeDetour;
 using System.Collections;
 using System.IO;
 using System.Reflection;
-using Terraria.ModLoader.Config;
 
 namespace ProgressSystem.TheUtils;
 
@@ -3578,7 +3577,7 @@ public static partial class TigerExtensions
     /// <returns>是否删除了元素</returns>
     public static bool Remove<T>(this IList<T> list, Func<T, bool> predicate)
     {
-        for (int i = list.Count; i >= 0; --i)
+        for (int i = list.Count - 1; i >= 0; --i)
         {
             if (predicate(list[i]))
             {
@@ -4195,7 +4194,8 @@ public static partial class TigerExtensions
     #endregion
     #endregion
     #region 字典拓展
-    public static void Add<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, KeyValuePair<TKey, TValue> pair) where TKey : notnull {
+    public static void Add<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, KeyValuePair<TKey, TValue> pair) where TKey : notnull
+    {
         dictionary.Add(pair.Key, pair.Value);
     }
     public static void AddCount<T>(this Dictionary<T, int> dictionary, T item, int count = 1) where T : notnull

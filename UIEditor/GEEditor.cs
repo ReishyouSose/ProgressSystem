@@ -4,7 +4,9 @@ using ProgressSystem.GameEvents;
 using ProgressSystem.UIEditor.ExtraUI;
 using RUIModule;
 using System.IO;
+using System.Text;
 using Terraria.GameContent;
+using Terraria.UI.Chat;
 
 namespace ProgressSystem.UIEditor
 {
@@ -53,7 +55,7 @@ namespace ProgressSystem.UIEditor
         /// <summary>
         /// InternalModName, GroupIndex, GE
         /// </summary>
-        private Dictionary<string, Dictionary<string, HashSet<UIGESlot>>> datas;
+        private Dictionary<string, Dictionary<string, Dictionary<GameEvent, Vector2>>> datas;
         public override void OnInitialization()
         {
             base.OnInitialization();
@@ -67,6 +69,8 @@ namespace ProgressSystem.UIEditor
             Info.IsVisible = true;
             RemoveAll();
 
+            EditMod = "";
+            EditPage = "";
             GEPos = [];
             tempSelect = [];
             frameSelect = [];
@@ -79,11 +83,14 @@ namespace ProgressSystem.UIEditor
             Register(bg);
 
             UIVnlPanel groupFilter = new(0, 0);
-            groupFilter.SetSize(120, 0, 0, 1, false);
+            groupFilter.SetSize(100, 0, 0, 1);
             groupFilter.Info.SetMargin(10);
             bg.Register(groupFilter);
 
             UIContainerPanel groupView = new();
+            groupView.SetSize(0, 0, 1, 1);
+            groupView.autoPos[0] = true;
+            groupView.spaceY = 10;
             groupFilter.Register(groupView);
 
             VerticalScrollbar gv = new(100, canDrag: false);
@@ -92,8 +99,8 @@ namespace ProgressSystem.UIEditor
 
             UIVnlPanel eventPanel = new(0, 0);
             eventPanel.Info.SetMargin(10);
-            eventPanel.SetPos(130, 40);
-            eventPanel.SetSize(-130, -40, 1, 1, false);
+            eventPanel.SetPos(110, 40);
+            eventPanel.SetSize(-110, -40, 1, 1, false);
             bg.Register(eventPanel);
 
             UIDropDownList<UIText> indexList = new(bg, eventPanel, x =>
@@ -104,10 +111,10 @@ namespace ProgressSystem.UIEditor
             })
             { buttonXoffset = 10 };
 
-            indexList.showArea.SetPos(130, 0);
+            indexList.showArea.SetPos(110, 0);
             indexList.showArea.SetSize(200, 30);
 
-            indexList.expandArea.SetPos(130, 30);
+            indexList.expandArea.SetPos(110, 30);
             indexList.expandArea.SetSize(200, 100);
 
             indexList.expandView.autoPos[0] = true;
@@ -115,46 +122,46 @@ namespace ProgressSystem.UIEditor
             bool first = false;
             foreach (Mod mod in ModLoader.Mods)
             {
+                if (!mod.HasAsset("icon")) continue;
                 string modName = mod.Name;
-                UIImage modSlot = new(RUIHelper.T2D(modName + "/icon"));
-                modSlot.SetSize(100, 100);
+                UIImage modSlot = new(RUIHelper.T2D(modName + "/icon")) { hoverText = mod.DisplayName };
+                modSlot.DrawRec[2] = Color.Red;
                 modSlot.Events.OnLeftDown += evt =>
                 {
-                    indexList.RemoveAll();
+                    indexList.ClearAllElements();
                     EditMod = modName;
+                    ClearTemp();
                     if (datas.TryGetValue(modName, out var modPages))
                     {
-                        UIText firstText = null;
+                        bool firstPage = false;
                         foreach (var (page, ges) in modPages)
                         {
                             UIText pageName = new(page);
                             pageName.SetSize(pageName.TextSize);
                             pageName.Events.OnMouseOver += evt => pageName.color = Color.Gold;
                             pageName.Events.OnMouseOut += evt => pageName.color = Color.White;
-                            pageName.Events.OnLeftDown += evt =>
-                            {
-                                EditPage = pageName.text;
-                                eventView.InnerUIE.RemoveAll(MatchGESlot);
-                                GEPos.Clear();
-                                foreach (UIGESlot ge in datas[EditMod][EditPage])
-                                {
-                                    GEPos.Add(ge.pos);
-                                    eventView.Register(ge);
-                                }
-                            };
+                            pageName.Events.OnLeftDown += evt => LoadGEs(pageName.text);
                             indexList.AddElement(pageName);
-                            firstText ??= pageName;
+                            if (!firstPage)
+                            {
+                                indexList.ChangeShowElement(pageName);
+                                EditPage = page;
+                                firstPage = true;
+                            }
                         }
-                        indexList.ChangeShowElement(firstText);
-                        firstText.Events.LeftDown(firstText);
                     }
                 };
                 groupView.AddElement(modSlot);
-                if (first)
+                if (!first)
                 {
                     modSlot.Events.LeftDown(modSlot);
-                    var firstIndex = indexList.expandView.InnerUIE[0];
-                    firstIndex.Events.LeftDown(firstIndex);
+                    var innerUIE = indexList.expandView.InnerUIE;
+                    if (innerUIE.Any())
+                    {
+                        var firstIndex = innerUIE[0];
+                        firstIndex.Events.LeftDown(firstIndex);
+                        first = true;
+                    }
                 }
             }
 
@@ -164,7 +171,7 @@ namespace ProgressSystem.UIEditor
             newProgressPanel.Info.SetMargin(10);
             Register(newProgressPanel);
 
-            UIVnlPanel inputBg = new(200, 30, color: Color.White);
+            UIVnlPanel inputBg = new(200, 30);
             inputBg.SetCenter(0, 0, 0.5f, 0.25f);
             newProgressPanel.Register(inputBg);
 
@@ -195,6 +202,11 @@ namespace ProgressSystem.UIEditor
                             report.color = Color.Green;
                         }
                     }
+                    else
+                    {
+                        report.ChangeText("名称可用");
+                        report.color = Color.Green;
+                    }
                 }
                 else
                 {
@@ -204,18 +216,33 @@ namespace ProgressSystem.UIEditor
             };
             inputBg.Register(indexInputer);
 
+            UIClose clearText = new();
+            clearText.Events.OnLeftDown += evt => indexInputer.ClearText();
+            clearText.SetCenter(-10, 0, 1, 0.5f);
+            inputBg.Register(clearText);
+
             UIText submit = new("创建");
             submit.SetSize(submit.TextSize);
             submit.SetCenter(0, 0, 0.3f, 0.75f);
+            submit.Events.OnMouseOver += evt => submit.color = Color.Gold;
+            submit.Events.OnMouseOut += evt => submit.color = Color.White;
             submit.Events.OnLeftDown += evt =>
             {
                 if (report.color == Color.Green)
                 {
-                    datas[EditMod] ??= [];
+                    if (!datas.ContainsKey(EditMod)) datas[EditMod] = [];
                     EditPage = indexInputer.Text;
                     datas[EditMod][EditPage] = [];
                     bg.LockInteract(true);
                     newProgressPanel.Info.IsVisible = false;
+                    UIText pageName = new(EditPage);
+                    pageName.SetSize(pageName.TextSize);
+                    pageName.Events.OnMouseOver += evt => pageName.color = Color.Gold;
+                    pageName.Events.OnMouseOut += evt => pageName.color = Color.White;
+                    pageName.Events.OnLeftDown += evt => LoadGEs(pageName.text);
+                    indexList.AddElement(pageName);
+                    indexList.ChangeShowElement(pageName);
+                    ClearTemp();
                     SaveProgress();
                 }
             };
@@ -224,6 +251,8 @@ namespace ProgressSystem.UIEditor
             UIText cancel = new("取消");
             cancel.SetSize(cancel.TextSize);
             cancel.SetCenter(0, 0, 0.7f, 0.75f);
+            cancel.Events.OnMouseOver += evt => cancel.color = Color.Gold;
+            cancel.Events.OnMouseOut += evt => cancel.color = Color.White;
             cancel.Events.OnLeftDown += evt =>
             {
                 bg.LockInteract(true);
@@ -233,16 +262,43 @@ namespace ProgressSystem.UIEditor
 
             UIText newProgress = new("新建进度表");
             newProgress.SetPos(groupFilter.Width + indexList.showArea.Width + 20, 5);
-            newProgress.SetSize(newProgress.TextSize + new Vector2(10, 5));
+            newProgress.SetSize(newProgress.TextSize);
+            newProgress.Events.OnMouseOver += evt => newProgress.color = Color.Gold;
+            newProgress.Events.OnMouseOut += evt => newProgress.color = Color.White;
             newProgress.Events.OnLeftDown += evt =>
             {
                 indexInputer.ClearText();
                 newProgressPanel.Info.IsVisible = true;
                 bg.LockInteract(false);
             };
-            newProgress.Events.OnMouseOver += evt => newProgress.color = Color.Gold;
-            newProgress.Events.OnMouseOut += evt => newProgress.color = Color.White;
             bg.Register(newProgress);
+
+            UIText deleteProgress = new("删除进度表");
+            deleteProgress.SetPos(groupFilter.Width + indexList.showArea.Width + newProgress.Width + 30, 5);
+            deleteProgress.SetSize(deleteProgress.TextSize);
+            deleteProgress.Events.OnMouseOver += evt => deleteProgress.color = Color.Gold;
+            deleteProgress.Events.OnMouseOut += evt => deleteProgress.color = Color.White;
+            deleteProgress.Events.OnLeftDown += evt =>
+            {
+                if (datas.TryGetValue(EditMod, out var pages) && pages.ContainsKey(EditPage))
+                {
+                    var inner = indexList.expandView.InnerUIE;
+                    inner.Remove(x => x is UIText index && index.text == EditPage);
+                    datas[EditMod].Remove(EditPage);
+                    if (inner.Any())
+                    {
+                        UIText firstIndex = inner[0] as UIText;
+                        indexList.ChangeShowElement(firstIndex);
+                        firstIndex.Events.LeftDown(firstIndex);
+                    }
+                    else
+                    {
+                        indexList.showArea.RemoveAll();
+                    }
+                    ClearTemp();
+                }
+            };
+            bg.Register(deleteProgress);
 
             eventView = new();
             eventView.SetSize(-20, -20, 1, 1);
@@ -303,7 +359,8 @@ namespace ProgressSystem.UIEditor
             taskPanel.Info.SetMargin(10);
             Register(taskPanel);
 
-            /*UIItemSlot itemSlot = new();
+            UIItemSlot itemSlot = new();
+            itemSlot.SetCenter(taskPanel.Width + 26, 0, 0, 0.5f);
             itemSlot.Events.OnLeftDown += evt =>
             {
                 if (itemSlot.ContainedItem.type <= 0)
@@ -318,17 +375,27 @@ namespace ProgressSystem.UIEditor
                     itemSlot.ContainedItem.SetDefaults();
                 }
             };
-            taskPanel.Register(itemSlot);*/
+            itemSlot.ReDraw = sb =>
+            {
+                itemSlot.DrawSelf(sb);
+                Item item = itemSlot.ContainedItem;
+                StringBuilder text = new();
+                text.Append("物品ID：" + item.type);
+                text.AppendLine();
+                text.Append("对应物块ID：" + item.createTile);
+                text.AppendLine();
+                text.Append("对应BuffID：" + item.buffType);
+                ChatManager.DrawColorCodedStringWithShadow(sb, FontAssets.MouseText.Value, text.ToString(),
+                    itemSlot.HitBox().BottomLeft() + Vector2.UnitY * 5, Color.White, 0, Vector2.Zero, Vector2.One);
+            };
+            Register(itemSlot);
 
             UIVnlPanel dataInput = new(0, 0);
             dataInput.SetPos(0, 30);
             dataInput.SetSize(0, -30, 1, 1);
             taskPanel.Register(dataInput);
 
-            UIContainerPanel dataView = new()
-            {
-                spaceY = 5,
-            };
+            UIContainerPanel dataView = new() { spaceY = 5 };
             dataView.autoPos[0] = true;
             dataView.SetSize(-30, 0, 1, 1);
             dataInput.Register(dataView);
@@ -384,12 +451,12 @@ namespace ProgressSystem.UIEditor
                                 constructPanel.Register(legal);
                                 innerY += 28;
 
-                                UIVnlPanel valueInputBg = new(0, 28, color: Color.White);
+                                UIVnlPanel valueInputBg = new(0, 28);
                                 valueInputBg.Info.Width.Percent = 1;
                                 valueInputBg.SetPos(0, innerY);
                                 constructPanel.Register(valueInputBg);
 
-                                UIInputBox valueInputer = new("类型为" + info.Type.Name, color: Color.Black);
+                                UIInputBox valueInputer = new("类型为" + info.Type.Name);
                                 valueInputer.SetSize(-40, 0, 1, 1);
                                 valueInputer.OnInputText += text =>
                                 {
@@ -406,7 +473,7 @@ namespace ProgressSystem.UIEditor
                                 clear.SetCenter(-10, 0, 1, 0.5f);
                                 clear.Events.OnLeftDown += evt => valueInputer.ClearText();
                                 valueInputBg.Register(clear);
-                                innerY += 28;
+                                innerY += 48;
                             }
 
                             UIText create = new("创建进度");
@@ -434,17 +501,22 @@ namespace ProgressSystem.UIEditor
                                     {
                                         dragging = false;
                                         draggingSelected = false;
+                                        datas[EditMod][EditPage][task] = ge.pos;
                                     };
                                     ge.Events.OnUpdate += GESlotUpdate;
-                                    Vector2 pos = Vector2.Zero;
-                                    while (GEPos.Contains(pos))
+                                    ge.Events.OnRightDoubleClick += evt =>
                                     {
-                                        pos.X++;
-                                    }
+                                        datas[EditMod][EditPage].Remove(task);
+                                        GEPos.Remove(ge.pos);
+                                        eventView.InnerUIE.Remove(ge);
+                                    };
+                                    Vector2 pos = Vector2.Zero;
+                                    while (GEPos.Contains(pos)) pos.X++;
                                     ge.pos = pos;
                                     ge.SetPos(pos * 80);
                                     GEPos.Add(pos);
                                     eventView.AddElement(ge);
+                                    datas[EditMod][EditPage].Add(task, pos);
                                 }
                             };
                             constructPanel.Register(create);
@@ -454,7 +526,10 @@ namespace ProgressSystem.UIEditor
                     typeSelector.AddElement(type);
                 }
             }
-            typeSelector.ChangeShowElement(typeSelector.expandView.InnerUIE[0] as UIText);
+            var inner = typeSelector.expandView.InnerUIE;
+            UIText firstConstruct = inner[0] as UIText;
+            typeSelector.ChangeShowElement(firstConstruct);
+            firstConstruct.Events.LeftDown(firstConstruct);
         }
         public override void Update(GameTime gt)
         {
@@ -599,24 +674,19 @@ namespace ProgressSystem.UIEditor
         {
             string root = Path.Combine(Main.SavePath, "Mods", ProgressSystem.Instance.Name);
             Directory.CreateDirectory(root);
-            foreach ((string modName, Dictionary<string, HashSet<UIGESlot>> pages) in datas)
+            foreach ((string modName, Dictionary<string, Dictionary<GameEvent, Vector2>> pages) in datas)
             {
                 Directory.CreateDirectory(Path.Combine(root, modName));
-                foreach ((string pageName, HashSet<UIGESlot> slots) in pages)
+                foreach ((string pageName, Dictionary<GameEvent, Vector2> ges) in pages)
                 {
                     using FileStream stream = File.OpenWrite(Path.Combine(root, modName, pageName + ".dat"));
                     TagCompound tag = [];
                     List<TagCompound> subTags = [];
-                    foreach (var slot in slots)
+                    foreach (var (ge, pos) in ges)
                     {
-                        if (slot.ge is null)
-                        {
-                            continue;
-                        }
-                        var subtag = GEManager.Save(slot.ge);
+                        var subtag = GEManager.Save(ge);
                         if (subtag != null)
                         {
-                            Vector2 pos = slot.pos;
                             subtag["posX"] = pos.X;
                             subtag["posY"] = pos.Y;
                             subTags.Add(subtag);
@@ -626,6 +696,7 @@ namespace ProgressSystem.UIEditor
                     TagIO.ToStream(tag, stream);
                 }
             }
+            Main.NewText("保存成功");
         }
         private void LoadProgress()
         {
@@ -654,7 +725,7 @@ namespace ProgressSystem.UIEditor
                             if (ge != null)
                             {
                                 Vector2 pos = new(data.GetFloat("posX"), data.GetFloat("posY"));
-                                datas[modName][pageName].Add(new UIGESlot(ge, pos));
+                                datas[modName][pageName].Add(ge, pos);
                             }
                         }
                     }
@@ -665,5 +736,27 @@ namespace ProgressSystem.UIEditor
             }
         }
         private static bool MatchGESlot(BaseUIElement uie) => uie is UIGESlot;
+        private void ClearTemp()
+        {
+            GEPos.Clear();
+            tempSelect.Clear();
+            frameSelect.Clear();
+            interacted.Clear();
+            eventView?.InnerUIE.RemoveAll(MatchGESlot);
+            eventView?.Vscroll.ForceSetPixel(0);
+            eventView?.Hscroll.ForceSetPixel(0);
+        }
+        private void LoadGEs(string pageName)
+        {
+            EditPage = pageName;
+            ClearTemp();
+            foreach (var (ge, pos) in datas[EditMod][EditPage])
+            {
+                GEPos.Add(pos);
+                UIGESlot slot = new(ge, pos);
+                slot.SetPos(pos * 80);
+                eventView.AddElement(slot);
+            }
+        }
     }
 }
