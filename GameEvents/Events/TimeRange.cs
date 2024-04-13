@@ -79,6 +79,7 @@
             var table = new ConstructInfoTable<GameEvent>(t =>
             {
                 var e = t.GetEnumerator();
+                e.MoveNext();
                 double timeMin = e.Current.GetValue<double>();
                 e.MoveNext();
                 double timeMax = e.Current.GetValue<double>();

@@ -26,6 +26,7 @@
             var table = new ConstructInfoTable<GameEvent>(t =>
             {
                 var e = t.GetEnumerator();
+                e.MoveNext();
                 GameEvent[] innerEvents = e.Current.GetValue<GameEvent[]>();
                 return new GEUIWrapper(innerEvents);
             }, nameof(GEUIWrapper));
