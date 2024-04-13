@@ -7,40 +7,38 @@ namespace ProgressSystem.Core;
 /// </summary>
 public sealed class Achievement
 {
-    #region 不会轻易改变的 字段 / 属性
+    #region 不会在正常游玩时改变的 字段 / 属性
     /// <summary>
     /// 自己所归属的成就页
     /// </summary>
-    public AchievementPage Page;
+    public AchievementPage Page = null!;
 
     /// <summary>
     /// 添加此成就的模组
     /// </summary>
-    public Mod Mod;
+    public Mod Mod = null!;
 
     /// <summary>
     /// 内部名
     /// </summary>
-    public string Name;
+    public string Name = null!;
 
     /// <summary>
-    /// 全名, 默认为模组名与内部名, 在同一成就页内不允许有相同全名的成就
+    /// 全名, 在同一成就页内不允许有相同全名的成就
     /// </summary>
-    public string FullName => FullNameOverride ?? string.Join('.', Mod.Name, Name);
-    public string? FullNameOverride;
+    public string FullName => string.Join('.', Mod.Name, Name);
 
     /// <summary>
     /// 包含页名的全名, 可作为标识符, 全局唯一
     /// </summary>
     public string FullNameWithPage => $"{Page.FullName}.{FullName}";
-    #endregion
 
     #region 本地化文本和图片的储存路径
-    public string? LocalizedKeyOverride;
-    public string LocalizedKey => LocalizedKeyOverride ?? string.Join('.', Page.FullName, Name);
+    public string LocalizedKey = null!;
 
-    public string? TexturePathOverride;
-    public string TexturePath => TexturePathOverride ?? string.Join('/', Page.Name, Name);
+    public string TexturePath = null!;
+    #endregion
+
     #endregion
 
     #region 给 UI 提供的
@@ -73,7 +71,7 @@ public sealed class Achievement
     /// </summary>
     public Texture2DGetter Texture
     {
-        get => !_texture.IsNone ? _texture : _texture = $"{Mod.Name}/Achievements/Textures/{TexturePath}";
+        get => !_texture.IsNone ? _texture : _texture = $"{Mod.Name}/Assets/Textures/Achievements/{TexturePath}";
         set => _texture = value;
     }
 
@@ -86,7 +84,7 @@ public sealed class Achievement
     /// 在 UI 上的默认排列, 当为空时 UI 上的默认排列则自动给出
     /// 当在 UI 上设置了此成就的位置时此项失效
     /// </summary>
-    public Vector2? PositionOverride;
+    public Vector2? DefaultPosition;
     #endregion
 
     #region 前后置相关
@@ -187,13 +185,9 @@ public sealed class Achievement
     /// </summary>
     public int? PredecessorCountNeeded;
 
-    public Func<bool>? IsPredecessorsMetOverride;
-    public bool IsPredecessorsMet()
+    public Func<bool> IsPredecessorsMet;
+    public bool DefaultIsPredecessorsMet()
     {
-        if (IsPredecessorsMetOverride != null)
-        {
-            return IsPredecessorsMetOverride();
-        }
         int count = Predecessors.Count;
         int needed = (PredecessorCountNeeded ?? count).WithMax(count);
         if (needed <= 0)
@@ -203,40 +197,23 @@ public sealed class Achievement
         int sum = Predecessors.Sum(p => p.State.IsCompleted().ToInt());
         return sum >= needed;
     }
-    public Func<bool> CloseCondition;
-    public bool DefaultCloseCondition()
-    {
-        return PredecessorCountNeeded < 0 && Predecessors.Sum(p => p.State.IsCompleted().ToInt()) >= -PredecessorCountNeeded;
-    }
     #endregion
 
     #region 条件
     /// <summary>
     /// 条件
     /// </summary>
-    public List<Requirement> Requirements;
-    public Func<bool>? IsRequirementsMetOverride;
-    /// <summary>
-    /// 条件是否满足
-    /// </summary>
-    /// <returns>默认返回是否所有条件都分别满足</returns>
-    public bool IsRequirementsMet()
-    {
-        if (IsRequirementsMetOverride != null)
-        {
-            return IsRequirementsMetOverride();
-        }
-        return Requirements.All(r => r.Completed);
-    }
+    public RequirementList Requirements = null!;
     #endregion
 
     #region 奖励
     /// <summary>
     /// 奖励
     /// </summary>
-    public List<Reward> Rewards;
+    public RewardList Rewards = null!;
 
-    public event Action? OnGetAllReward;
+    public delegate void OnGetAllRewardDelegate(bool allReceived);
+    public event OnGetAllRewardDelegate? OnGetAllReward;
     /// <summary>
     /// 一键获得所有奖励
     /// </summary>
@@ -244,18 +221,33 @@ public sealed class Achievement
     public bool GetAllReward()
     {
         bool result = true;
-        Rewards.ForEach(r => result &= r.Receive());
-        OnGetAllReward?.Invoke();
+        Rewards.ForeachDo(r => result &= r.Receive());
+        OnGetAllReward?.Invoke(result);
         return result;
     }
     #endregion
 
-    #region 构造函数
+    #region 初始化
+    static Achievement()
+    {
+        // 在成就页解锁时尝试解锁成就
+        AchievementPage.OnUnlockStatic += p => p.Achievements.Values.ForeachDo(a => a.TryComplete());
+        // 在条件完成时尝试完成成就
+        Requirement.OnCompleteStatic += r => r.Achievement.TryComplete();
+        // 在成就解锁时尝试完成成就
+        OnUnlockStatic += a => a.TryComplete();
+        // 在成就完成时尝试关闭成就, 然后检查后置的状态 (这两步不能颠倒)
+        OnCompleteStatic += a =>
+        {
+            a.TryClose();
+            a.Successors.ForeachDo(s => s.CheckState());
+        };
+    }
     /// <summary>
-    /// 构造函数
+    /// 创建一个成就, 若页内有同名成就则报错
     /// </summary>
-    /// <param name="mod">所属模组, 用于查找对应资源</param>
     /// <param name="page">属于哪一页</param>
+    /// <param name="mod">所属模组, 用于查找对应资源, 注意不是 <paramref name="page"/> 的模组, 而是添加此成就的模组</param>
     /// <param name="name">内部名, 同一成就页内不允许有相同内部名的成就</param>
     /// <param name="predecessorNames">
     /// <br/>前置的名字(需要在同一页)
@@ -269,7 +261,7 @@ public sealed class Achievement
     /// <param name="displayName">显示的名字, 默认通过对应 Mod 的 Achievements.[ModName].[PageName].[AcievementName].DisplayName 获取</param>
     /// <param name="tooltip">鼠标移上去时显示的提示, 默认通过对应 Mod 的 Achievements.[ModName].[PageName].[AcievementName].Tooltip 获取</param>
     /// <param name="description">详细说明, 默认通过对应 Mod 的 Achievements.[ModName].[PageName].[AcievementName].Description 获取</param>
-    public Achievement(Mod mod, AchievementPage page, string name,
+    public static Achievement Create(AchievementPage page, Mod mod, string name,
         List<string>? predecessorNames = null,
         bool isPredecessorFullName = false,
         List<Requirement>? requirements = null,
@@ -280,46 +272,68 @@ public sealed class Achievement
         Texture2DGetter texture = default,
         Vector2? defaultPosition = null)
     {
-        Mod = mod;
-        Page = page;
-        Name = name;
-        SetPredecessorNames(predecessorNames, isPredecessorFullName);
-        Requirements = requirements ?? [];
-        Requirements.ForEach(r => r.OnComplete += TryComplete);
-        Rewards = rewards ?? [];
-        _displayName = displayName;
-        _tooltip = tooltip;
-        _description = description;
-        _texture = texture;
-        PositionOverride = defaultPosition;
+        Achievement achievement = new();
+        achievement.Mod = mod;
+        achievement.Page = page;
+        achievement.Name = name;
+        achievement.LocalizedKey = string.Join('.', page.FullName, name);
+        achievement.TexturePath = string.Join('/', page.Name, name);
+
+        achievement.SetPredecessorNames(predecessorNames, isPredecessorFullName);
+        achievement.Requirements = new(achievement, requirements);
+        achievement.Rewards = new(achievement, rewards);
+
+        achievement.DisplayName = displayName;
+        achievement.Tooltip = tooltip;
+        achievement.Description = description;
+        achievement.Texture = texture;
+        achievement.DefaultPosition = defaultPosition;
+
+        page.AddF(achievement);
+        return achievement;
+    }
+
+    private Achievement()
+    {
         ReachedStableState = DefaultReachedStableState;
         CloseCondition = DefaultCloseCondition;
+        IsPredecessorsMet = DefaultIsPredecessorsMet;
+        UnlockCondition = DefaultUnlockCondition;
+        CompleteCondition = DefaultCompleteCondition;
+    }
+
+    public void PostInitialize()
+    {
+        InitializePredecessorsSafe();
+        _ = DisplayName;
+        _ = Tooltip;
+        _ = Description;
+        _ = Texture;
     }
     #endregion
 
     #region 重置与开始
+    public static event Action<Achievement>? OnResetStatic;
     public event Action? OnReset;
     public void Reset()
     {
         State = StateEnum.Locked;
-        Requirements.ForEach(r => r.Reset());
+        Requirements.ForeachDo(r => r.Reset());
+        OnResetStatic?.Invoke(this);
         OnReset?.Invoke();
     }
+    public static event Action<Achievement>? OnStartStatic;
     public event Action? OnStart;
     public void Start()
     {
-        Requirements.ForEach(r => r.Start());
+        CheckState();
+        Requirements.ForeachDo(r => r.Start());
+        OnStartStatic?.Invoke(this);
         OnStart?.Invoke();
     }
     #endregion
 
     #region 状态 (完成 / 解锁)
-    #region 弃用的 (还可以用, 但不建议使用)
-    [Obsolete($"使用{nameof(State)}")]
-    public bool Completed { get => State == StateEnum.Completed; private set { State.AssignIf(value, StateEnum.Completed); } }
-    [Obsolete($"使用{nameof(State)}")]
-    public bool Unlocked { get => State == StateEnum.Unlocked; private set { State.AssignIf(value, StateEnum.Unlocked); } }
-    #endregion
     public enum StateEnum
     {
         Locked,
@@ -327,12 +341,19 @@ public sealed class Achievement
         Completed,
         Closed
     }
-    public StateEnum State;
+    public StateEnum State { get; private set; }
     public Func<bool> ReachedStableState;
     public bool DefaultReachedStableState()
     {
         return PredecessorCountNeeded < 0 ? State.IsClosed() : State.IsCompleted();
     }
+
+    public Func<bool> UnlockCondition;
+    public bool DefaultUnlockCondition()
+    {
+        return Page.State != AchievementPage.StateEnum.Locked && IsPredecessorsMet();
+    }
+    public static event Action<Achievement>? OnUnlockStatic;
     public event Action? OnUnlock;
     public void UnlockSafe()
     {
@@ -341,8 +362,7 @@ public sealed class Achievement
             return;
         }
         State = StateEnum.Unlocked;
-        Requirements.ForEach(r => DoIf(r.ListenType == Requirement.ListenTypeEnum.OnUnlocked, r.BeginListenSafe));
-        CheckStateChanged(StateEnum.Locked, StateEnum.Unlocked);
+        OnUnlockStatic?.Invoke(this);
         OnUnlock?.Invoke();
     }
     public void TryUnlock()
@@ -353,6 +373,10 @@ public sealed class Achievement
         }
         
     }
+
+    public Func<bool> CompleteCondition;
+    public bool DefaultCompleteCondition() => Requirements.All(r => r.Completed);
+    public static event Action<Achievement>? OnCompleteStatic;
     public event Action? OnComplete;
     public void CompleteSafe()
     {
@@ -362,18 +386,24 @@ public sealed class Achievement
         }
         State = StateEnum.Completed;
         // !!!!!!!! Test
-        // Main.NewText($"成就{DisplayName.Value}完成!");
-        Requirements.ForEach(r => r.EndListenSafe());
-        CheckStateChanged(StateEnum.Unlocked, StateEnum.Completed);
+        Main.NewText($"成就{DisplayName.Value}完成!");
+        OnCompleteStatic?.Invoke(this);
         OnComplete?.Invoke();
     }
     public void TryComplete()
     {
-        if (State.IsUnlocked() && IsRequirementsMet())
+        if (State.IsUnlocked() && CompleteCondition())
         {
             CompleteSafe();
         }
     }
+    
+    public Func<bool> CloseCondition;
+    public bool DefaultCloseCondition()
+    {
+        return PredecessorCountNeeded < 0 && Predecessors.Sum(p => p.State.IsCompleted().ToInt()) >= -PredecessorCountNeeded;
+    }
+    public static event Action<Achievement>? OnCloseStatic;
     public event Action? OnClose;
     public void CloseSafe()
     {
@@ -382,7 +412,7 @@ public sealed class Achievement
             return;
         }
         State = StateEnum.Closed;
-        CheckStateChanged(StateEnum.Completed, StateEnum.Closed);
+        OnCloseStatic?.Invoke(this);
         OnClose?.Invoke();
     }
     public void TryClose()
@@ -393,7 +423,6 @@ public sealed class Achievement
         }
     }
 
-    public delegate void OnCheckStateChangedDelegate(StateEnum oldState, StateEnum newState);
     public void CheckState()
     {
         if (ReachedStableState())
@@ -403,15 +432,6 @@ public sealed class Achievement
         TryUnlock();
         TryComplete();
         TryClose();
-    }
-    public event OnCheckStateChangedDelegate? OnCheckStateChanged;
-    public void CheckStateChanged(StateEnum oldState, StateEnum newState)
-    {
-        if (newState is StateEnum.Completed or StateEnum.Closed)
-        {
-            Successors.ForeachDo(s => s.CheckState());
-        }
-        OnCheckStateChanged?.Invoke(oldState, newState);
     }
     #endregion
 
@@ -444,16 +464,30 @@ public sealed class Achievement
     // todo: 成就本身与奖励相关的网络同步
     public void NetSend(BinaryWriter writer)
     {
-        Requirements.ForEach(r => r.NetSend(writer));
+        Requirements.ForeachDo(r => r.NetSend(writer));
     }
     public void NetReceive(BinaryReader reader)
     {
-        Requirements.ForEach(r => r.NetReceive(reader));
+        Requirements.ForeachDo(r => r.NetReceive(reader));
     }
     #endregion
+
+    public override string ToString()
+    {
+        var requirementsString = string.Join(",\n    ", Requirements.Select(r => r.ToString()));
+        var rewardsString = string.Join(",\n    ", Rewards.Select(r => r.ToString()));
+        var predecessorsString = string.Join(",\n    ", Predecessors.Select(r => r.FullName));
+        return $"""
+            {FullName}: {State}, {nameof(Predecessors)}: [{predecessorsString}], {nameof(Requirements)}: [
+                {requirementsString}
+            ], {nameof(Rewards)}: [
+                {rewardsString}
+            ]
+            """;
+    }
 }
 
-public static class StateEnumExtensions
+public static class AchievementStateEnumExtensions
 {
     public static bool IsLocked(this Achievement.StateEnum self) => self == Achievement.StateEnum.Locked;
     public static bool IsUnlocked(this Achievement.StateEnum self) => self == Achievement.StateEnum.Unlocked;

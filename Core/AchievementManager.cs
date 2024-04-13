@@ -1,4 +1,6 @@
-﻿namespace ProgressSystem.Core;
+﻿using System.Reflection;
+
+namespace ProgressSystem.Core;
 
 // DOING...
 
@@ -11,47 +13,59 @@ public class AchievementManager : ModSystem
     public override void OnModLoad()
     {
         var page = AchievementPage.Create(ModInstance, "Achievements");
-        page.Add(new(ModInstance, page, "First", requirements: [new SubmitRequirement()], rewards: [new ItemReward(ItemID.SilverCoin, 20)]));
-        page.Add(new(ModInstance, page, "Workbench", predecessorNames: ["Wood"],
+        Achievement.Create(page, ModInstance, "First", requirements: [new SubmitRequirement()], rewards: [new ItemReward(ItemID.SilverCoin, 20)]);
+        Achievement.Create(page, ModInstance, "Workbench", predecessorNames: ["Wood"],
             requirements: [new CraftItemRequirement(ItemID.WorkBench)],
-            rewards: [new ItemReward(ItemID.Wood, 100)]));
-        page.Add(new(ModInstance, page, "WoodTools", predecessorNames: ["Workbench"],
+            rewards: [new ItemReward(ItemID.Wood, 100)]);
+        Achievement.Create(page, ModInstance, "WoodTools", predecessorNames: ["Workbench"],
             requirements: [
                 new CraftItemRequirement(ItemID.WoodenSword),
                 new CraftItemRequirement(ItemID.WoodHelmet),
                 new CraftItemRequirement(ItemID.WoodBreastplate)],
-            rewards: [new ItemReward(ItemID.IronskinPotion, 5)]));
-        page.Add(new(ModInstance, page, "House", predecessorNames: ["Workbench", "Torch"],
+            rewards: [new ItemReward(ItemID.IronskinPotion, 5)]);
+        Achievement.Create(page, ModInstance, "House", predecessorNames: ["Workbench", "Torch"],
             requirements: [new HouseRequirement()],
-            rewards: [new ItemReward(ItemID.Wood, 100)]));
-        page.Add(new(ModInstance, page, "Slime",
+            rewards: [new ItemReward(ItemID.Wood, 100)]);
+        Achievement.Create(page, ModInstance, "Slime",
             requirements: [new KillNPCRequirement(NPCID.BlueSlime)],
-            rewards: [new ItemReward(ItemID.Gel, 30)]));
-        page.Add(new(ModInstance, page, "Torch", predecessorNames: ["Slime", "Wood"],
+            rewards: [new ItemReward(ItemID.Gel, 30)]);
+        Achievement.Create(page, ModInstance, "Torch", predecessorNames: ["Slime", "Wood"],
             requirements: [new CraftItemRequirement(ItemID.Torch)],
-            rewards: [new ItemReward(ItemID.Torch, 100)]));
-        page.Add(new(ModInstance, page, "Wood", predecessorNames: ["First"],
+            rewards: [new ItemReward(ItemID.Torch, 100)]);
+        Achievement.Create(page, ModInstance, "Wood", predecessorNames: ["First"],
             requirements: [new PickItemRequirement(ItemID.Wood)],
-            rewards: [new ItemReward(ItemID.Apple)]));
+            rewards: [new ItemReward(ItemID.Apple)]);
     }
     #endregion
 
     /// <summary>
     /// 存有所有的成就页, 键为<see cref="AchievementPage.FullName"/>
     /// </summary>
-    public static Dictionary<string, AchievementPage> Pages { get; set; } = [];
-
-    public override void PostSetupContent()
+    public static IReadOnlyDictionary<string, AchievementPage> Pages => pages;
+    private static readonly Dictionary<string, AchievementPage> pages = [];
+    public static IReadOnlyDictionary<Mod, Dictionary<string, AchievementPage>> PagesByMod => pagesByMod;
+    private static readonly Dictionary<Mod, Dictionary<string, AchievementPage>> pagesByMod = [];
+    internal static void AddPage(AchievementPage page)
     {
-        Pages.Values.ForeachDo(p => p.Achievements.Values.ForeachDo(a => a.InitializePredecessorsSafe()));
+        pages.Add(page.FullName, page);
+        if (!pagesByMod.ContainsKey(page.Mod))
+        {
+            pagesByMod.Add(page.Mod, []);
+        }
+        pagesByMod[page.Mod].Add(page.Name, page);
+    }
+
+    public static void PostInitialize()
+    {
+        Pages.Values.ForeachDo(p => p.Achievements.Values.ForeachDo(a => a.PostInitialize()));
     }
     public override void SaveWorldData(TagCompound tag)
     {
-        tag.SaveDictionaryData("Pages", Pages, (p, t) => p.SaveDataInWorld(t));
+        tag.SaveDictionaryData("Pages", pages, (p, t) => p.SaveDataInWorld(t));
     }
     public override void LoadWorldData(TagCompound tag)
     {
-        tag.LoadDictionaryData("Pages", Pages, (p, t) => p.LoadDataInWorld(t));
+        tag.LoadDictionaryData("Pages", pages, (p, t) => p.LoadDataInWorld(t));
     }
     public override void OnWorldLoad()
     {
@@ -77,6 +91,30 @@ public class AchievementManager : ModSystem
     {
         Pages.Values.ForeachDo(p => p.Start());
     }
+    /// <summary>
+    /// 在游戏中调用, 重置所有成就的进度
+    /// </summary>
+    public static void Restart()
+    {
+        Reset();
+        Start();
+    }
+
+    #region 钩子
+    public override void Load()
+    {
+        HookInPostInitialize();
+    }
+    static void HookInPostInitialize()
+    {
+        MonoModHooks.Add(typeof(ItemLoader).GetMethod("FinishSetup", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static), OnItemLoaderFinishSetup);
+    }
+    static void OnItemLoaderFinishSetup(Action orig)
+    {
+        orig();
+        PostInitialize();
+    }
+    #endregion
 }
 
 public class AchievementPlayerManager : ModPlayer
@@ -92,15 +130,15 @@ public class AchievementPlayerManager : ModPlayer
     /// <summary>
     /// 同<see cref="AchievementManager.Pages"/>
     /// </summary>
-    public static Dictionary<string, AchievementPage> Pages { get => AchievementManager.Pages; set => AchievementManager.Pages = value; }
+    private static IReadOnlyDictionary<string, AchievementPage> Pages => AchievementManager.Pages;
 
     public override void SaveData(TagCompound tag)
     {
-        tag.SaveDictionaryData("Pages", Pages, (p, t) => p.SaveDataInPlayer(t));
+        tag.SaveReadOnlyDictionaryData("Pages", Pages, (p, t) => p.SaveDataInPlayer(t));
     }
     public static void LoadDataOnEnterWorld(TagCompound tag)
     {
-        tag.LoadDictionaryData("Pages", Pages, (p, t) => p.LoadDataInPlayer(t));
+        tag.LoadReadOnlyDictionaryData("Pages", Pages, (p, t) => p.LoadDataInPlayer(t));
     }
     public override void LoadData(TagCompound tag)
     {

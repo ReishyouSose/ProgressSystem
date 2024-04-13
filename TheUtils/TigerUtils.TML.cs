@@ -226,9 +226,9 @@ public static partial class TigerUtils
         }
         public static class ConfigManager
         {
-            public static ValueDG<Type> Type = new(() => typeof(Terraria.ModLoader.Config.ConfigManager));
-            public static ValueDG<MethodInfo> Save = new(() => Type.Value.GetMethod("Save", bfns)!);
-            public static ValueDG<Action<Terraria.ModLoader.Config.ModConfig>> Save_Func = new(Save.Value.CreateDelegate<Action<Terraria.ModLoader.Config.ModConfig>>);
+            public static readonly ValueDG<Type> Type = new(() => typeof(Terraria.ModLoader.Config.ConfigManager));
+            public static readonly ValueDG<MethodInfo> Save = new(() => Type.Value.GetMethod("Save", bfns)!);
+            public static readonly ValueDG<Action<Terraria.ModLoader.Config.ModConfig>> Save_Func = new(Save.Value.CreateDelegate<Action<Terraria.ModLoader.Config.ModConfig>>);
         }
     }
     public static T TMLInstance<T>() where T : class => ContentInstance<T>.Instance;
@@ -665,6 +665,37 @@ public static partial class TigerExtensions
             }
         }
     }
+    public static void SaveReadOnlyDictionaryData<T>(this TagCompound tag, string key, IReadOnlyDictionary<string, T> dictionary, Action<T, TagCompound> toTag)
+    {
+        tag.SaveReadOnlyDictionaryData(key, dictionary, t => new TagCompound().WithAction(tag => toTag(t, tag)));
+    }
+    public static void SaveReadOnlyDictionaryData<T>(this TagCompound tag, string key, IReadOnlyDictionary<string, T> dictionary, Func<T, TagCompound?> toTag)
+    {
+        TagCompound data = [.. dictionary.SelectWhere(
+            p => toTag(p.Value).Transfer(
+                t => t?.Count > 0 ?
+                NewHolder(NewPair(p.Key, (object)t)) :
+                null)
+        )];
+        if (data.Count > 0)
+        {
+            tag[key] = data;
+        }
+    }
+    public static void LoadReadOnlyDictionaryData<T>(this TagCompound tag, string key, IReadOnlyDictionary<string, T> dictionary, Action<T, TagCompound> fromTag)
+    {
+        if (!tag.TryGet(key, out TagCompound dictValue))
+        {
+            return;
+        }
+        foreach (var (k, v) in dictValue)
+        {
+            if (dictionary.TryGetValue(k, out var val))
+            {
+                fromTag(val, (TagCompound)v);
+            }
+        }
+    }
     public static void SaveListData<T>(this TagCompound tag, string key, IList<T> list, Action<T, TagCompound> toTag)
     {
         tag.SaveListData(key, list, e => new TagCompound().WithAction(t => toTag(e, t)));
@@ -1035,7 +1066,7 @@ public static partial class TigerExtensions
     #endregion
     #endregion
     #region Random
-    public static Func<UnifiedRandom> DefaultUnifiedRandomGetter = () => Main.rand;
+    public static Func<UnifiedRandom> DefaultUnifiedRandomGetter { get; set; } = () => Main.rand;
     /// <summary>
     /// <br/>需确保<paramref name="enumerable"/>不会变化长度
     /// <br/>若可能会变化, 请调用<see cref="RandomS{T}(IEnumerable{T}, UnifiedRandom)"/>
