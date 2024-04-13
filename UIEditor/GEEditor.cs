@@ -31,7 +31,7 @@ namespace ProgressSystem.UIEditor
         public override void OnInitialization()
         {
             base.OnInitialization();
-            datas ??= new();
+            datas ??= [];
             if (datas.Count == 0)
             {
                 LoadProgress();
@@ -40,32 +40,6 @@ namespace ProgressSystem.UIEditor
                 return;
             Info.IsVisible = true;
             RemoveAll();
-
-            Mod mod = ProgressSystem.Instance;
-            EditMod = mod.Name;
-            datas = [];
-            datas.Add(EditMod, []);
-            if (mod.HasAsset("Datas.nbt"))
-            {
-                using Stream stream = mod.GetFileStream("Datas.nbt");
-                TagCompound mods = TagIO.FromStream(stream);
-                foreach (var (name, _) in mods)
-                {
-                    datas[name] = [];
-                    TagCompound indexs = mods.GetCompound(name);
-                    foreach (var (index, _) in indexs)
-                    {
-                        datas[name][index] = [];
-                        TagCompound ges = indexs.GetCompound(index);
-                        foreach (var (ge, _) in ges)
-                        {
-                            GameEvent ins = GEManager.Load(ges.GetCompound(ge));
-                            if (ins != null)
-                                datas[name][index].Add(new(ins));
-                        }
-                    }
-                }
-            }
 
             GEPos = [];
             tempSelect = [];
@@ -118,7 +92,7 @@ namespace ProgressSystem.UIEditor
             newProgressPanel.Info.SetMargin(10);
             Register(newProgressPanel);
 
-            UIVnlPanel inputBg = new(200, 30);
+            UIVnlPanel inputBg = new(200, 30, color: Color.White);
             inputBg.SetCenter(0, 0, 0.5f, 0.25f);
             newProgressPanel.Register(inputBg);
 
@@ -130,13 +104,12 @@ namespace ProgressSystem.UIEditor
             report.SetCenter(0, 0, 0.5f, 0.5f);
             newProgressPanel.Register(report);
 
-            UIInputBox indexInputer = new("输入进度组名称", default, Color.White);
+            UIInputBox indexInputer = new("输入进度组名称");
             indexInputer.SetSize(0, 0, 1, 1);
             /*indexInputer.Info.Left.Pixel += 10;
             indexInputer.Info.Top.Pixel += 5;*/
-            indexInputer.OnInputText += evt =>
+            indexInputer.OnInputText += text =>
             {
-                string text = indexInputer.Text;
                 if (text.Any())
                 {
                     if (datas.TryGetValue(EditMod, out var mod))
@@ -254,8 +227,7 @@ namespace ProgressSystem.UIEditor
                 eventView.AddElement(vline);
             }
 
-            UIVnlPanel taskPanel = new(300, 300);
-            taskPanel.canDrag = true;
+            UIVnlPanel taskPanel = new(300, 300) { canDrag = true };
             taskPanel.SetCenter(150, 0, 0, 0.5f);
             taskPanel.Info.SetMargin(10);
             Register(taskPanel);
@@ -300,9 +272,7 @@ namespace ProgressSystem.UIEditor
                 text.SetPos(10, 5);
                 return text;
             })
-            {
-                buttonXoffset = 10
-            };
+            { buttonXoffset = 10 };
 
             typeSelector.showArea.SetSize(0, 30, 1);
 
@@ -324,11 +294,12 @@ namespace ProgressSystem.UIEditor
                     type.Events.OnLeftDown += evt =>
                     {
                         var constructs = tables;
+                        dataView.ClearAllElements();
                         foreach (var constructData in constructs)
                         {
                             UIVnlPanel constructPanel = new(0, 0);
-                            dataView.AddElement(constructPanel);
                             constructPanel.Info.SetMargin(10);
+                            dataView.AddElement(constructPanel);
                             int innerY = 0;
                             foreach (var info in constructData)
                             {
@@ -336,6 +307,34 @@ namespace ProgressSystem.UIEditor
                                 name.SetPos(0, innerY);
                                 name.SetSize(name.TextSize);
                                 constructPanel.Register(name);
+
+                                UIText legal = new(info.Important ? "可以为空" : "不可为空");
+                                legal.SetPos(name.TextSize.X + 10, innerY);
+                                constructPanel.Register(legal);
+                                innerY += 28;
+
+                                UIVnlPanel valueInputBg = new(0, 28, color: Color.White);
+                                valueInputBg.Info.Width.Percent = 1;
+                                valueInputBg.SetPos(0, innerY);
+                                constructPanel.Register(valueInputBg);
+
+                                UIInputBox valueInputer = new("类型为" + info.Type.Name, color: Color.Black);
+                                valueInputer.SetSize(0, 0, 1, 1);
+                                valueInputer.OnInputText += text =>
+                                {
+                                    if (text.Any())
+                                    {
+                                        info.SetValue(text);
+                                        legal.ChangeText(info.IsMet ? ("合法值：" + info.GetValue()) : "不合法");
+                                    }
+                                    else legal.ChangeText(info.Important ? "可以为空" : "不可为空");
+                                };
+                                valueInputBg.Register(valueInputer);
+
+                                UIClose clear = new();
+                                clear.SetCenter(-10, 0, 1, 0.5f);
+                                clear.Events.OnLeftDown += evt => valueInputer.ClearText();
+                                valueInputBg.Register(clear);
                                 innerY += 28;
                             }
 
@@ -537,9 +536,9 @@ namespace ProgressSystem.UIEditor
                     using FileStream stream = File.OpenWrite(Path.Combine(root, modName, pageName + ".dat"));
                     TagCompound tag = new();
                     List<TagCompound> subTags = [];
-                    foreach(var slot in  slots)
+                    foreach (var slot in slots)
                     {
-                        if(slot.ge is null)
+                        if (slot.ge is null)
                         {
                             continue;
                         }
@@ -557,7 +556,7 @@ namespace ProgressSystem.UIEditor
         private void LoadProgress()
         {
             string root = Path.Combine(Main.SavePath, "Mods", ProgressSystem.Instance.Name);
-            if(!Directory.Exists(root))
+            if (!Directory.Exists(root))
             {
                 return;
             }
@@ -567,7 +566,7 @@ namespace ProgressSystem.UIEditor
                 string modName = modDir.Split(Path.PathSeparator)[^1];
                 datas[modName] = [];
                 string[] pageFiles = Directory.GetFiles(modDir);
-                foreach(var pageFile in pageFiles)
+                foreach (var pageFile in pageFiles)
                 {
                     string pageName = Path.GetFileNameWithoutExtension(pageFile);
                     datas[modName][pageName] = [];
@@ -575,10 +574,10 @@ namespace ProgressSystem.UIEditor
                     {
                         var tag = TagIO.FromStream(File.OpenRead(pageFile));
                         tag.TryGet("data", out List<TagCompound> tags);
-                        foreach(var data in tags)
+                        foreach (var data in tags)
                         {
                             var ge = GEManager.Load(data);
-                            if(ge != null)
+                            if (ge != null)
                             {
                                 datas[modName][pageName].Add(new UIGESlot(ge));
                             }
