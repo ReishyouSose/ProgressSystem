@@ -1,4 +1,5 @@
-﻿using ProgressSystem.GameEvents;
+﻿using Humanizer;
+using ProgressSystem.GameEvents;
 using System.IO;
 
 namespace ProgressSystem.Core;
@@ -8,30 +9,75 @@ namespace ProgressSystem.Core;
 /// </summary>
 public abstract class Requirement
 {
+    public Achievement Achievement = null!;
     public TextGetter DisplayName;
     public TextGetter TooltipName;
     public Texture2DGetter Texture;
+    protected virtual object?[] DisplayNameArgs => [];
+    protected virtual object?[] TooltipNameArgs => [];
     #region 构造函数与初始化
-    public Requirement() { }
-    public Requirement(ListenTypeEnum listenType, MultiplayerTypeEnum multiplayerType = MultiplayerTypeEnum.LocalPlayer)
+    static Requirement()
+    {
+        // 在成就页解锁时尝试开始监听
+        AchievementPage.OnUnlockStatic += p =>
+            p.Achievements.Values.ForeachDo(a =>
+                a.Requirements.ForeachDo(r =>
+                    r.TryBeginListen()));
+        // 在成就解锁时尝试开始监听
+        Achievement.OnUnlockStatic += a =>
+            a.Requirements.ForeachDo(r =>
+                r.TryBeginListen());
+        // 在开始时尝试开始监听写在了 Start() 中
+
+        // 在成就完成时结束监听
+        Achievement.OnCompleteStatic += a =>
+        {
+            foreach (var requirement in a.Requirements)
+            {
+                requirement.EndListenSafe();
+            }
+        };
+    }
+    public Requirement(ListenTypeEnum listenType = ListenTypeEnum.None, MultiplayerTypeEnum multiplayerType = MultiplayerTypeEnum.LocalPlayer)
     {
         ListenType = listenType;
         MultiplayerType = multiplayerType;
+        Reset();
     }
-    public virtual void Initialize() { }
+    /// <summary>
+    /// 初始化, 在被加入 <see cref="RequirementList"/> 时被调用
+    /// </summary>
+    public virtual void Initialize(Achievement achievement) {
+        Achievement = achievement;
+        // TODO
+        if (DisplayName.IsNone)
+        {
+            TooltipName = achievement.Mod.GetLocalization($"Requirements.{GetType().Name}.DisplayName".FormatWith(DisplayNameArgs));
+        }
+        if (DisplayName.IsNone)
+        {
+            TooltipName = achievement.Mod.GetLocalization($"Requirements.{GetType().Name}.Tooltip".FormatWith(TooltipNameArgs));
+        }
+        if (Texture.IsNone)
+        {
+            Texture = $"{achievement.Mod.Name}/Assets/Textures/Requirements/{GetType().Name}";
+        }
+    }
     #endregion
     #region 重置与开始
+    /// <summary>
+    /// 重置
+    /// 初始化时也会被调用
+    /// </summary>
     public virtual void Reset()
     {
         EndListenSafe();
         Completed = false;
     }
+
     public virtual void Start()
     {
-        if (ListenType == ListenTypeEnum.OnStart)
-        {
-            BeginListenSafe();
-        }
+        TryBeginListen();
     }
     #endregion
     #region 多人类型
@@ -115,9 +161,9 @@ public abstract class Requirement
         /// </summary>
         None,
         /// <summary>
-        /// 在前置完成时开始监听
+        /// 在成就解锁时开始监听
         /// </summary>
-        OnUnlocked,
+        OnAchievementUnlocked,
         /// <summary>
         /// 在成就页解锁时开始监听
         /// </summary>
@@ -132,9 +178,29 @@ public abstract class Requirement
     /// </summary>
     public ListenTypeEnum ListenType;
     public bool Listening { get; protected set; }
+    public void TryBeginListen()
+    {
+        if (Listening || Completed)
+        {
+            return;
+        }
+        if (ListenType == ListenTypeEnum.None)
+        {
+            return;
+        }
+        if (ListenType == ListenTypeEnum.OnAchievementUnlocked && !Achievement.State.IsUnlocked())
+        {
+            return;
+        }
+        if (ListenType == ListenTypeEnum.OnPageUnlocked && Achievement.Page.State == AchievementPage.StateEnum.Locked)
+        {
+            return;
+        }
+        BeginListenSafe();
+    }
     public void BeginListenSafe()
     {
-        if (Listening || ListenType == ListenTypeEnum.None || Completed)
+        if (Listening)
         {
             return;
         }
@@ -159,7 +225,13 @@ public abstract class Requirement
     #endregion
     #region 完成状况
     public bool Completed { get; protected set; }
-    public Action? OnComplete;
+    public event Action? OnComplete;
+    public static event Action<Requirement>? OnCompleteStatic;
+    protected void DoOnComplete()
+    {
+        OnComplete?.Invoke();
+        OnCompleteStatic?.Invoke(this);
+    }
     public void CompleteSafe()
     {
         if (Completed)
@@ -172,16 +244,30 @@ public abstract class Requirement
     {
         Completed = true;
         EndListenSafe();
-        OnComplete?.Invoke();
+        DoOnComplete();
     }
     #endregion
+
+    public override string ToString()
+    {
+        return $"{GetType().Name}: {nameof(Completed)}: {Completed}, {nameof(Listening)}: {Listening}";
+    }
 }
 
-public abstract class RequirementList : Requirement
+public class EmptyRequirement : Requirement
+{
+    public override void Reset()
+    {
+        base.Reset();
+        Completed = true;
+    }
+}
+
+public abstract class RequirementCombination : Requirement
 {
     public List<Requirement> Requirements;
 
-    public RequirementList(IEnumerable<Requirement> requirements)
+    public RequirementCombination(IEnumerable<Requirement> requirements)
     {
         Requirements = [.. requirements];
         foreach (int i in Requirements.Count)
@@ -256,7 +342,7 @@ public abstract class RequirementList : Requirement
     protected abstract void ElementComplete(int elementIndex);
     #endregion
 }
-public class AllOfRequirements(IEnumerable<Requirement> requirements) : RequirementList(requirements)
+public class AllOfRequirements(IEnumerable<Requirement> requirements) : RequirementCombination(requirements)
 {
     protected override void ElementComplete(int elementIndex)
     {
@@ -266,14 +352,14 @@ public class AllOfRequirements(IEnumerable<Requirement> requirements) : Requirem
         }
     }
 }
-public class AnyOfRequirements(IEnumerable<Requirement> requirements) : RequirementList(requirements)
+public class AnyOfRequirements(IEnumerable<Requirement> requirements) : RequirementCombination(requirements)
 {
     protected override void ElementComplete(int elementIndex)
     {
         CompleteSafe();
     }
 }
-public class SomeOfRequirements(IEnumerable<Requirement> requirements, int count) : RequirementList(requirements)
+public class SomeOfRequirements(IEnumerable<Requirement> requirements, int count) : RequirementCombination(requirements)
 {
     public int Count = count;
     protected override void ElementComplete(int elementIndex)

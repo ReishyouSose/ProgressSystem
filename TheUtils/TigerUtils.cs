@@ -1072,12 +1072,16 @@ static public partial class TigerUtils
         => new((int)(x - anchorX * width), (int)(y - anchorY * height), (int)width, (int)height);
     #endregion
     #region 流程简化
-#pragma warning disable IDE0060 // 删除未使用的参数
     #region Do
     /// <summary>
     /// 什么也不做, 返回false
     /// </summary>
-    public static bool Do(object? expression) => false;
+    public static bool Do(object? expression)
+    {
+        _ = expression;
+        return false;
+    }
+
     /// <summary>
     /// 执行<paramref name="action"/>
     /// </summary>
@@ -1289,27 +1293,41 @@ static public partial class TigerUtils
     /// 什么也不做
     /// </summary>
     /// <returns>false</returns>
-    public static bool Dos(params object?[] objs) => false;
+    public static bool Dos(params object?[] objs)
+    {
+        _ = objs;
+        return false;
+    }
+
     /// <summary>
     /// 若其中有Action, 则自动执行
     /// </summary>
     /// <returns>false</returns>
     public static bool DosS(params object[] objs) => objs.ForeachDoB(o => o is Action action && Do(action));
     public static bool DosA(params Action[] actions) => actions.ForeachDo(a => a.Invoke());
-    public static TRight GetRight<TLeft, TRight>(TLeft left, TRight right) => right;
+    public static TRight GetRight<TLeft, TRight>(TLeft left, TRight right)
+    {
+        _ = left;
+        return right;
+    }
+
     public static T GetRight<T>(Action left, T right)
     {
         left();
         return right;
     }
-    public static TLeft GetLeft<TLeft, TRight>(TLeft left, TRight right) => left;
+    public static TLeft GetLeft<TLeft, TRight>(TLeft left, TRight right)
+    {
+        _ = right;
+        return left;
+    }
+
     public static T GetLeft<T>(T left, Action right)
     {
         T result = left;
         right();
         return result;
     }
-#pragma warning restore IDE0060 // 删除未使用的参数
     #region 流程控制 - 条件
     #region DoIf & GetIf
     /// <summary>

@@ -16,8 +16,10 @@ public sealed class AchievementPage
     /// </summary>
     public string Name;
 
-    public string? FullNameOverride;
-    public string FullName => FullNameOverride ?? string.Join('.', Mod.Name, Name);
+    /// <summary>
+    /// 全名, 全局唯一, 可作为标识符
+    /// </summary>
+    public string FullName => string.Join('.', Mod.Name, Name);
 
     /// <summary>
     /// 成就页包含的所有成就<br/>
@@ -34,21 +36,23 @@ public sealed class AchievementPage
     #endregion
 
     #region 重置与开始
+    public static event Action<AchievementPage>? OnResetStatic;
     public event Action? OnReset;
+    /// <summary>
+    /// 在初始化时就会调用一次
+    /// </summary>
     public void Reset() {
-        State = StateEnum.Locked;
-        if (UnlockCondition == DefaultUnlockCondition)
-        {
-            State = StateEnum.Unlocked;
-        }
         Achievements.Values.ForeachDo(a => a.Reset());
+        OnResetStatic?.Invoke(this);
         OnReset?.Invoke();
     }
+    public static event Action<AchievementPage>? OnStartStatic;
     public event Action? OnStart;
     public void Start()
     {
+        CheckState();
         Achievements.Values.ForeachDo(a => a.Start());
-        Achievements.Values.ForeachDo(a => a.CheckState());
+        OnStartStatic?.Invoke(this);
         OnStart?.Invoke();
     }
     #endregion
@@ -60,34 +64,69 @@ public sealed class AchievementPage
         Unlocked,
         Completed
     }
-    public StateEnum State;
+    public StateEnum State { get; private set; }
+
+    public void CheckState()
+    {
+        if (State == StateEnum.Completed)
+        {
+            return;
+        }
+        TryUnlock();
+        TryComplete();
+    }
+
+    #region 解锁条件
     /// <summary>
-    /// <br/>如果想自定义解锁条件则修改这个(如果不动这个的话会在<see cref="Reset"/>时自动解锁)
+    /// <br/>如果想自定义解锁条件则修改这个并调用<see cref="InitializeStateToUnlock"/>
     /// <br/>并且在合适的地方挂<see cref="TryUnlock"/> 或 <see cref="UnlockSafe"/> 的钩子
     /// <br/>最好再在 <see cref="OnUnlock"/> 中卸掉钩子
-    /// <br/>如果只是简单的
+    /// <br/>可以看看 <see cref="SetPredecessorComplete"/> 等方法作为示例, 也可直接调用
     /// </summary>
     public Func<bool> UnlockCondition;
     public static bool DefaultUnlockCondition() => true;
+    public void InitializeStateToUnlock()
+    {
+        State = StateEnum.Unlocked;
+        OnReset += () => State = StateEnum.Unlocked;
+    }
+
     /// <summary>
     /// 将解锁条件设置为所有的前置页已完成
     /// </summary>
     public void SetPredecessorsOfAllComplete(IEnumerable<AchievementPage> pages)
     {
+        InitializeStateToUnlock();
         UnlockCondition = () => pages.All(p => p.State == StateEnum.Completed);
         pages.ForeachDo(p => p.OnComplete += TryUnlock);
         OnUnlock += () => pages.ForeachDo(p => p.OnComplete -= TryUnlock);
     }
+    /// <summary>
+    /// 将解锁条件设置为任意的前置页已完成
+    /// </summary>
     public void SetPredecessorsOfAnyComplete(IEnumerable<AchievementPage> pages)
     {
+        InitializeStateToUnlock();
         UnlockCondition = () => pages.Any(p => p.State == StateEnum.Completed);
         pages.ForeachDo(p => p.OnComplete += UnlockSafe);
         OnUnlock += () => pages.ForeachDo(p => p.OnComplete -= TryUnlock);
     }
+    /// <summary>
+    /// 将解锁条件设置为前置页已完成
+    /// </summary>
+    public void SetPredecessorComplete(AchievementPage page)
+    {
+        InitializeStateToUnlock();
+        UnlockCondition = () => page.State == StateEnum.Completed;
+        page.OnComplete += TryUnlock;
+        OnUnlock += () => page.OnComplete -= TryUnlock;
+    }
+    #endregion
+    public static event Action<AchievementPage>? OnUnlockStatic;
     public event Action? OnUnlock;
     public void TryUnlock()
     {
-        if (UnlockCondition())
+        if (State == StateEnum.Locked && UnlockCondition())
         {
             UnlockSafe();
         }
@@ -99,9 +138,30 @@ public sealed class AchievementPage
             return;
         }
         State = StateEnum.Unlocked;
+        OnUnlockStatic?.Invoke(this);
         OnUnlock?.Invoke();
     }
+
+    #region 完成条件
+    /// <summary>
+    /// <br/>设置这个以自定义完成条件
+    /// <br/>默认的完成条件为页内的所有成就达到完成或关闭的状态
+    /// <br/>默认会在每个成就完成时检测成就页的完成情况
+    /// <br/>如果完成条件不仅与成就的完成状况有关
+    /// <br/>则需要额外在对应的地方挂上<see cref="TryComplete"/>
+    /// </summary>
+    public Func<bool> CompleteCondition;
+    public bool DefaultCompleteCondition() => Achievements.Values.All(a => a.State.IsCompleted() || a.State.IsClosed());
+    #endregion
+    public static event Action<AchievementPage>? OnCompleteStatic;
     public event Action? OnComplete;
+    public void TryComplete()
+    {
+        if (State == StateEnum.Unlocked && CompleteCondition())
+        {
+            CompleteSafe();
+        }
+    }
     public void CompleteSafe()
     {
         if (State != StateEnum.Unlocked)
@@ -109,11 +169,19 @@ public sealed class AchievementPage
             return;
         }
         State = StateEnum.Completed;
+        OnCompleteStatic?.Invoke(this);
         OnComplete?.Invoke();
     }
     #endregion
 
-    #region 创建一个成就页
+    #region 初始化与创建一个成就页
+    static AchievementPage()
+    {
+        // 在成就完成时尝试完成成就页
+        Achievement.OnCompleteStatic += a => a.Page.TryComplete();
+
+        OnUnlockStatic += p => p.TryComplete();
+    }
     /// <summary>
     /// 私有的构造方法
     /// </summary>
@@ -124,6 +192,8 @@ public sealed class AchievementPage
         Mod = mod;
         Name = name;
         UnlockCondition = DefaultUnlockCondition;
+        CompleteCondition = DefaultCompleteCondition;
+        Reset();
     }
 
     /// <summary>
@@ -140,43 +210,12 @@ public sealed class AchievementPage
             return AchievementManager.Pages[fullName];
         }
         AchievementPage result = new(mod, name);
-        AchievementManager.Pages.Add(fullName, result);
+        AchievementManager.AddPage(result);
         return result;
-    }
-    public static AchievementPage Create(Mod mod, string name, string customFullName)
-    {
-        if (AchievementManager.Pages.ContainsKey(customFullName))
-        {
-            return AchievementManager.Pages[customFullName];
-        }
-        AchievementPage result = new(mod, name) { FullNameOverride = customFullName };
-        AchievementManager.Pages.Add(customFullName, result);
-        return result;
-    }
-
-    /// <summary>
-    /// 强制创建一个成就页
-    /// </summary>
-    /// <param name="mod">添加此成就页的模组</param>
-    /// <param name="name">此成就页的内部名</param>
-    /// <returns>创建的成就页, 若已有同名页则替换它</returns>
-    public static AchievementPage ForceCreate(Mod mod, string name)
-    {
-        return AchievementManager.Pages[string.Join('.', mod.Name, name)] = new(mod, name);
-    }
-
-    /// <summary>
-    /// 强制创建一个成就页
-    /// </summary>
-    /// <param name="mod">添加此成就页的模组</param>
-    /// <param name="name">此成就页的内部名</param>
-    /// <returns>创建的成就页, 若已有同名页则替换它</returns>
-    public static AchievementPage ForceCreate(Mod mod, string name, string customFullName)
-    {
-        return AchievementManager.Pages[customFullName] = new AchievementPage(mod, name) { FullNameOverride = customFullName };
     }
     #endregion
 
+    #region 添加及获取成就
     /// <summary>
     /// 向此成就页添加一个成就
     /// </summary>
@@ -190,6 +229,25 @@ public sealed class AchievementPage
         }
         Achievements.Add(achievement.FullName, achievement);
         return true;
+    }
+    /// <summary>
+    /// 强制向此成就页添加一个成就, 若有同名成就则报错
+    /// </summary>
+    /// <param name="achievement">要添加的成就</param>
+    /// <returns>是否成功添加(当此成就页内有同名成就时失败)</returns>
+    public void AddF(Achievement achievement)
+    {
+        Achievements.Add(achievement.FullName, achievement);
+    }
+    /// <summary>
+    /// 向此成就页添加一个成就
+    /// </summary>
+    /// <param name="achievement">要添加的成就</param>
+    /// <returns>自身</returns>
+    public AchievementPage AddL(Achievement achievement)
+    {
+        Add(achievement);
+        return this;
     }
 
     /// <summary>
@@ -246,6 +304,7 @@ public sealed class AchievementPage
     {
         return Achievements.Values.First(a => a.Name == name);
     }
+    #endregion
 
     #region 存取数据
     // TODO: 存取 Page 自身的数据
@@ -277,4 +336,9 @@ public sealed class AchievementPage
         Achievements.Values.ForeachDo(a => a.NetReceive(reader));
     }
     #endregion
+
+    public override string ToString()
+    {
+        return $"{FullName}: {State}";
+    }
 }
