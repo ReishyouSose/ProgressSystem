@@ -1,4 +1,5 @@
-﻿using Terraria.ObjectData;
+﻿using ProgressSystem.GameEvents.Events;
+using Terraria.ObjectData;
 
 namespace ProgressSystem.GameEvents;
 
@@ -7,33 +8,51 @@ namespace ProgressSystem.GameEvents;
 /// </summary>
 public static class GEListener
 {
-    public delegate void OnNPCKilledDelegate  (Player? player, NPC npc);
-    public delegate void OnCreateItemDelegate (Player player, Item item, RecipeItemCreationContext context);
-    public delegate void OnTileBreakDelegate  (Player player, int x, int y, Tile tile);
-    public delegate void OnBuyItemDelegate    (Player player, NPC vendor, Item[] shopInventory, Item item);
+    public delegate void OnNPCKilledDelegate(Player? player, NPC npc);
+    public delegate void OnCreateItemDelegate(Player player, Item item, RecipeItemCreationContext context);
+    public delegate void OnTileBreakDelegate(Player player, int x, int y, Tile tile);
+    public delegate void OnBuyItemDelegate(Player player, NPC vendor, Item[] shopInventory, Item item);
     public delegate void OnConsumeItemDelegate(Player player, Item item);
-    public delegate void OnPickItemDelegate   (Player player, Item item);
-    public static event OnNPCKilledDelegate  ? OnNPCKilled;
-    public static event OnCreateItemDelegate ? OnCreateItem;
-    public static event OnTileBreakDelegate  ? OnTileBreak;
-    public static event OnBuyItemDelegate    ? OnBuyItem;
-    public static event OnConsumeItemDelegate? OnConsumeItem;
-    public static event OnPickItemDelegate   ? OnPickItem;
-    
-    public delegate void OnLocalPlayerKillNPCDelegate    (NPC npc);
-    public delegate void OnLocalPlayerCreateItemDelegate (Item item, ItemCreationContext context);
-    public delegate void OnLocalPlayerCraftItemDelegate  (Item item, RecipeItemCreationContext context);
-    public delegate void OnLocalPlayerBreakTileDelegate  (int x, int y, Tile tile);
-    public delegate void OnLocalPlayerBuyItemDelegate    (NPC vendor, Item[] shopInventory, Item item);
+    public delegate void OnPickItemDelegate(Player player, Item item);
+    public delegate void OnLocalPlayerKillNPCDelegate(NPC npc);
+    public delegate void OnDamageStatisticsDelegate(Player player, int damage);
+
+    public static event OnNPCKilledDelegate? 
+        OnNPCKilled;
+    public static event OnCreateItemDelegate? 
+        OnCreateItem;
+    public static event OnTileBreakDelegate? 
+        OnTileBreak;
+    public static event OnBuyItemDelegate? 
+        OnBuyItem;
+    public static event OnConsumeItemDelegate? 
+        OnConsumeItem;
+    public static event OnPickItemDelegate? 
+        OnPickItem;
+    public static event OnDamageStatisticsDelegate?
+        OnDamageStatistics;
+
+    public delegate void OnLocalPlayerCreateItemDelegate(Item item, ItemCreationContext context);
+    public delegate void OnLocalPlayerCraftItemDelegate(Item item, RecipeItemCreationContext context);
+    public delegate void OnLocalPlayerBreakTileDelegate(int x, int y, Tile tile);
+    public delegate void OnLocalPlayerBuyItemDelegate(NPC vendor, Item[] shopInventory, Item item);
     public delegate void OnLocalPlayerConsumeItemDelegate(Item item);
-    public delegate void OnLocalPlayerPickItemDelegate   (Item item);
-    public static event OnLocalPlayerKillNPCDelegate    ? OnLocalPlayerKillNPC;
-    public static event OnLocalPlayerCreateItemDelegate ? OnLocalPlayerCreateItem;
-    public static event OnLocalPlayerCraftItemDelegate  ? OnLocalPlayerCraftItem;
-    public static event OnLocalPlayerBreakTileDelegate  ? OnLocalPlayerBreakTile;
-    public static event OnLocalPlayerBuyItemDelegate    ? OnLocalPlayerBuyItem;
-    public static event OnLocalPlayerConsumeItemDelegate? OnLocalPlayerConsumeItem;
-    public static event OnLocalPlayerPickItemDelegate   ? OnLocalPlayerPickItem;
+    public delegate void OnLocalPlayerPickItemDelegate(Item item);
+
+    public static event OnLocalPlayerKillNPCDelegate? 
+        OnLocalPlayerKillNPC;
+    public static event OnLocalPlayerCreateItemDelegate? 
+        OnLocalPlayerCreateItem;
+    public static event OnLocalPlayerCraftItemDelegate? 
+        OnLocalPlayerCraftItem;
+    public static event OnLocalPlayerBreakTileDelegate? 
+        OnLocalPlayerBreakTile;
+    public static event OnLocalPlayerBuyItemDelegate? 
+        OnLocalPlayerBuyItem;
+    public static event OnLocalPlayerConsumeItemDelegate? 
+        OnLocalPlayerConsumeItem;
+    public static event OnLocalPlayerPickItemDelegate? 
+        OnLocalPlayerPickItem;
 
     /// <summary>
     /// Set this hook in <see cref="GlobalNPC.HitEffect(NPC, NPC.HitInfo)"/> when <see cref="NPC.life"/> less than 1 if in server 
@@ -44,7 +63,8 @@ public static class GEListener
     {
         Player? player = Main.player.IndexInRange(npc.lastInteraction) ? Main.player[npc.lastInteraction] : null;
         OnNPCKilled?.Invoke(player, npc);
-        if (npc.lastInteraction == Main.myPlayer) {
+        if (npc.lastInteraction == Main.myPlayer)
+        {
             OnLocalPlayerKillNPC?.Invoke(npc);
         }
     }
@@ -55,11 +75,12 @@ public static class GEListener
     internal static void ListenCreateItem(Item item, ItemCreationContext context)
     {
         OnLocalPlayerCreateItem?.Invoke(item, context);
-        if (context is RecipeItemCreationContext craftContext) {
+        if (context is RecipeItemCreationContext craftContext)
+        {
             OnCreateItem?.Invoke(Main.LocalPlayer, item, craftContext);
             OnLocalPlayerCraftItem?.Invoke(item, craftContext);
         }
-        
+
     }
     internal static void ListenTileBreak(Player player, int x, int y, Tile tile)
     {
@@ -67,7 +88,8 @@ public static class GEListener
         if (data is null)
         {
             OnTileBreak?.Invoke(player, x, y, tile);
-            if (player.whoAmI == Main.myPlayer) {
+            if (player.whoAmI == Main.myPlayer)
+            {
                 OnLocalPlayerBreakTile?.Invoke(x, y, tile);
             }
         }
@@ -86,7 +108,8 @@ public static class GEListener
                 return;
             }
             OnTileBreak?.Invoke(player, x, y, tile);
-            if (player.whoAmI == Main.myPlayer) {
+            if (player.whoAmI == Main.myPlayer)
+            {
                 OnLocalPlayerBreakTile?.Invoke(x, y, tile);
             }
         }
@@ -94,14 +117,16 @@ public static class GEListener
     internal static void ListenBuyItem(Player player, NPC vendor, Item[] shopInventory, Item item)
     {
         OnBuyItem?.Invoke(player, vendor, shopInventory, item);
-        if (player.whoAmI == Main.myPlayer) {
+        if (player.whoAmI == Main.myPlayer)
+        {
             OnLocalPlayerBuyItem?.Invoke(vendor, shopInventory, item);
         }
     }
     internal static void ListenConsumeItem(Player player, Item item)
     {
         OnConsumeItem?.Invoke(player, item);
-        if (player.whoAmI == Main.myPlayer) {
+        if (player.whoAmI == Main.myPlayer)
+        {
             OnLocalPlayerConsumeItem?.Invoke(item);
         }
     }
@@ -109,8 +134,13 @@ public static class GEListener
     internal static void ListenPickItem(Player player, Item item)
     {
         OnPickItem?.Invoke(player, item);
-        if (player.whoAmI == Main.myPlayer) {
+        if (player.whoAmI == Main.myPlayer)
+        {
             OnLocalPlayerPickItem?.Invoke(item);
         }
+    }
+    internal static void ListenDamage(Player player, int damage)
+    {
+        OnDamageStatistics?.Invoke(player, damage);
     }
 }
