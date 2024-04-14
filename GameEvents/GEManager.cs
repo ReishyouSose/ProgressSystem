@@ -52,7 +52,7 @@ public static class GEManager
                 }
             }
         }
-        catch
+        catch(Exception e)
         {
             ge = null;
         }

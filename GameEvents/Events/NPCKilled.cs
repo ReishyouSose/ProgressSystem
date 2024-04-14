@@ -74,7 +74,7 @@ public class NPCKilled : CountInt
     public override void Save(TagCompound tag)
     {
         tag[nameof(IsCompleted)] = IsCompleted;
-        tag[nameof(Type)] = Type >= NPCID.Count ? NPCLoader.GetNPC(Type).FullName : Type;
+        tag[nameof(Type)] = Type >= NPCID.Count ? NPCLoader.GetNPC(Type).FullName : Type.ToString();
         tag[nameof(NetID)] = NetID;
         base.Save(tag);
     }

@@ -76,7 +76,7 @@ public class ConsumeItem : CountInt
     public override void Save(TagCompound tag)
     {
         tag[nameof(IsCompleted)] = IsCompleted;
-        tag[nameof(Type)] = Type >= ItemID.Count ? ItemLoader.GetItem(Type).FullName : Type;
+        tag[nameof(Type)] = Type >= ItemID.Count ? ItemLoader.GetItem(Type).FullName : Type.ToString();
         base.Save(tag);
     }
     public override IEnumerable<ConstructInfoTable<GameEvent>> GetConstructInfoTables()

@@ -55,7 +55,7 @@ public class TileBreak : CountInt
     public override void Save(TagCompound tag)
     {
         tag[nameof(IsCompleted)] = IsCompleted;
-        tag[nameof(Type)] = Type >= TileID.Count ? TileLoader.GetTile(Type).FullName : Type;
+        tag[nameof(Type)] = Type >= TileID.Count ? TileLoader.GetTile(Type).FullName : Type.ToString();
         base.Save(tag);
     }
     public void TryComplete(Player player, int x, int y, Tile tile)

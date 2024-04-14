@@ -525,6 +525,15 @@ namespace ProgressSystem.UIEditor
                                     ge.SetPos(pos * 80);
                                     GEPos.Add(pos);
                                     eventView.AddElement(ge);
+                                    datas ??= [];
+                                    if(!datas.ContainsKey(EditMod))
+                                    {
+                                        datas[EditMod] = [];
+                                    }
+                                    if (!datas[EditMod].ContainsKey(EditPage))
+                                    {
+                                        datas[EditMod][EditPage] = [];
+                                    }
                                     datas[EditMod][EditPage].Add(task, pos);
                                 }
                             };
@@ -698,6 +707,8 @@ namespace ProgressSystem.UIEditor
                 }
             }
         }
+
+        static string CurrentSaveVersion = "1.0.0.0";
         private void SaveProgress()
         {
             string root = Path.Combine(Main.SavePath, "Mods", ProgressSystem.Instance.Name);
@@ -708,6 +719,8 @@ namespace ProgressSystem.UIEditor
                 foreach ((string pageName, Dictionary<GameEvent, Vector2> ges) in pages)
                 {
                     using FileStream stream = File.OpenWrite(Path.Combine(root, modName, pageName + ".dat"));
+                    using BinaryWriter writer = new(stream);
+                    writer.Write(CurrentSaveVersion);
                     TagCompound tag = [];
                     List<TagCompound> subTags = [];
                     foreach (var (ge, pos) in ges)
@@ -736,7 +749,7 @@ namespace ProgressSystem.UIEditor
             string[] modDirs = Directory.GetDirectories(root);
             foreach (var modDir in modDirs)
             {
-                string modName = modDir.Split(Path.PathSeparator)[^1];
+                string modName = Path.GetFileName(modDir);
                 datas[modName] = [];
                 string[] pageFiles = Directory.GetFiles(modDir);
                 foreach (var pageFile in pageFiles)
@@ -745,21 +758,35 @@ namespace ProgressSystem.UIEditor
                     datas[modName][pageName] = [];
                     try
                     {
-                        var tag = TagIO.FromStream(File.OpenRead(pageFile));
-                        tag.TryGet("data", out List<TagCompound> tags);
-                        foreach (var data in tags)
+                        using FileStream stream = File.OpenRead(pageFile);
+                        using BinaryReader reader = new(stream);
+                        string fileSaveVersion = reader.ReadString();
+                        switch(fileSaveVersion)
                         {
-                            var ge = GEManager.Load(data);
-                            if (ge != null)
-                            {
-                                Vector2 pos = new(data.GetFloat("posX"), data.GetFloat("posY"));
-                                datas[modName][pageName].Add(ge, pos);
-                            }
+                            case "1.0.0.0":
+                                {
+                                    LoadPage_1_0_0_0(stream, modName, pageName);
+                                    break;
+                                }
                         }
                     }
                     catch
                     {
                     }
+                }
+            }
+        }
+        void LoadPage_1_0_0_0(Stream stream, string modName, string pageName)
+        {
+            var tag = TagIO.FromStream(stream);
+            tag.TryGet("data", out List<TagCompound> tags);
+            foreach (var data in tags)
+            {
+                var ge = GEManager.Load(data);
+                if (ge != null)
+                {
+                    Vector2 pos = new(data.GetFloat("posX"), data.GetFloat("posY"));
+                    datas[modName][pageName].Add(ge, pos);
                 }
             }
         }
