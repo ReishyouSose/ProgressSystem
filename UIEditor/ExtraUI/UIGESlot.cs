@@ -34,6 +34,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
         /// </summary>
         public bool preSetting;
         public HashSet<UIRequireLine> postGE;
+        public IReadOnlySet<GameEvent> PostGE => postGE.Select(x => x.end.ge).ToHashSet();
         public UIGESlot(GameEvent ge = null, Vector2? pos = null) : base(AssetLoader.Slot)
         {
             this.ge = ge;

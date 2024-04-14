@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using ProgressSystem.Core.Requirements;
+using System.Reflection;
 
 namespace ProgressSystem.Core;
 

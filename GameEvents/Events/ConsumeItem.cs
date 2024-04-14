@@ -27,8 +27,14 @@ public class ConsumeItem : CountInt
         SetUp(@event);
         return @event;
     }
-
-    public override void Load(TagCompound tag)
+    public void TryComplete(Player player, Item item)
+    {
+        if (item.type == Type)
+        {
+            Increase(1);
+        }
+    }
+    /*public override void Load(TagCompound tag)
     {
         if (tag.TryGet(nameof(IsCompleted), out bool isCompleted))
         {
@@ -39,7 +45,7 @@ public class ConsumeItem : CountInt
             Type = type;
         }
         base.Load(tag);
-    }
+    }*/
 
     public override void Load(TagCompound tag)
     {

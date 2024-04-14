@@ -127,7 +127,6 @@ namespace ProgressSystem.UIEditor
                 if (!mod.HasAsset("icon")) continue;
                 string modName = mod.Name;
                 UIImage modSlot = new(RUIHelper.T2D(modName + "/icon")) { hoverText = mod.DisplayName };
-                modSlot.DrawRec[2] = Color.Red;
                 modSlot.Events.OnLeftDown += evt =>
                 {
                     indexList.ClearAllElements();
@@ -306,7 +305,11 @@ namespace ProgressSystem.UIEditor
             eventView.SetSize(-20, -20, 1, 1);
             eventView.Events.OnLeftDown += evt =>
             {
-                if (!LeftAlt) preSetting = null;
+                if (!LeftAlt && preSetting != null)
+                {
+                    preSetting.preSetting = false;
+                    preSetting = null;
+                }
             };
             eventView.Events.OnRightDown += evt =>
             {
@@ -630,6 +633,7 @@ namespace ProgressSystem.UIEditor
                 if (preSetting == null)
                 {
                     preSetting = ge;
+                    ge.preSetting = true;
                 }
                 else
                 {
@@ -649,14 +653,12 @@ namespace ProgressSystem.UIEditor
                     frameSelect.Remove(ge);
                     ge.selected = false;
                 }
-                else
-                    ge.selected = frameSelect.Add(ge);
+                else ge.selected = frameSelect.Add(ge);
             }
             else if (frameSelect.Any())
             {
                 draggingSelected = true;
-                Point mouse = (Main.MouseScreen - eventView.ChildrenElements[0]
-                .HitBox(false).TopLeft()).ToPoint();
+                Point mouse = (Main.MouseScreen - eventView.ChildrenElements[0].HitBox(false).TopLeft()).ToPoint();
                 selectedStart = new(mouse.X / 80, mouse.Y / 80);
             }
             dragging = true;
