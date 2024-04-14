@@ -67,16 +67,18 @@ namespace ProgressSystem.GameEvents
             }
             return table;
         }
-        public static bool TryAutoCreate(out ConstructInfoTable<T> table)
+        public static bool TryAutoCreate(out List<ConstructInfoTable<T>> tables)
         {
-            table = default;
-            var cs = typeof(T).GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            tables = [];
+            var cs = typeof(T).GetConstructors(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
             if (cs is null || cs.Length == 0)
             {
                 return false;
             }
-            var c = cs[0];
-            table = Create(c);
+            foreach (var c in cs)
+            {
+                tables.Add(Create(c));
+            }
             return true;
         }
         public static ConstructInfoTable<T> Create(ConstructorInfo c, string? extraInfo = null)
