@@ -31,16 +31,30 @@ public class PickItem : CountInt
         {
             IsCompleted = isCompleted;
         }
-        if (tag.TryGet(nameof(Type), out int type))
+        if (tag.TryGet(nameof(Type), out string type))
         {
-            Type = type;
+            if (int.TryParse(type, out int num))
+            {
+                Type = num;
+            }
+            else
+            {
+                if (ModContent.TryFind(type, out ModItem modItem))
+                {
+                    Type = modItem.Type;
+                }
+                else
+                {
+                    Type = -1;
+                }
+            }
         }
         base.Load(tag);
     }
     public override void Save(TagCompound tag)
     {
         tag[nameof(IsCompleted)] = IsCompleted;
-        tag[nameof(Type)] = Type;
+        tag[nameof(Type)] = Type >= ItemID.Count ? ItemLoader.GetItem(Type).FullName : Type;
         base.Save(tag);
     }
     public void TryComplete(Player player, Item item)

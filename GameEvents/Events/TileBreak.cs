@@ -25,22 +25,37 @@ public class TileBreak : CountInt
         SetUp(@event);
         return @event;
     }
+
     public override void Load(TagCompound tag)
     {
         if (tag.TryGet(nameof(IsCompleted), out bool isCompleted))
         {
             IsCompleted = isCompleted;
         }
-        if (tag.TryGet(nameof(Type), out int type))
+        if (tag.TryGet(nameof(Type), out string type))
         {
-            Type = type;
+            if (int.TryParse(type, out int num))
+            {
+                Type = num;
+            }
+            else
+            {
+                if (ModContent.TryFind(type, out ModTile modTile))
+                {
+                    Type = modTile.Type;
+                }
+                else
+                {
+                    Type = -1;
+                }
+            }
         }
         base.Load(tag);
     }
     public override void Save(TagCompound tag)
     {
         tag[nameof(IsCompleted)] = IsCompleted;
-        tag[nameof(Type)] = Type;
+        tag[nameof(Type)] = Type >= TileID.Count ? TileLoader.GetTile(Type).FullName : Type;
         base.Save(tag);
     }
     public void TryComplete(Player player, int x, int y, Tile tile)

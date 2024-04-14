@@ -5,7 +5,13 @@ namespace ProgressSystem.GameEvents.Events;
 
 public class NPCKilled : CountInt
 {
+    /// <summary>
+    /// The value may be -1. If it is -1, it is invalid
+    /// </summary>
     public int Type { get; private set; }
+    /// <summary>
+    /// The value may be -1. If it is -1, it is invalid
+    /// </summary>
     public int NetID { get; private set; }
     public static NPCKilled Create(int type, int netID, int target = 1)
     {
@@ -30,21 +36,45 @@ public class NPCKilled : CountInt
         SetUp(@event);
         return @event;
     }
+
     public override void Load(TagCompound tag)
     {
         if (tag.TryGet(nameof(IsCompleted), out bool isCompleted))
         {
             IsCompleted = isCompleted;
         }
-        if (tag.TryGet(nameof(NetID), out int netID))
+        if (tag.TryGet(nameof(Type), out string type))
+        {
+            if (int.TryParse(type, out int num))
+            {
+                Type = num;
+            }
+            else
+            {
+                if (ModContent.TryFind(type, out ModNPC modNPC))
+                {
+                    Type = modNPC.Type;
+                }
+                else
+                {
+                    Type = -1;
+                }
+            }
+        }
+        if(tag.TryGet(nameof(NetID), out int netID))
         {
             NetID = netID;
+        }
+        else
+        {
+            NetID = -1;
         }
         base.Load(tag);
     }
     public override void Save(TagCompound tag)
     {
         tag[nameof(IsCompleted)] = IsCompleted;
+        tag[nameof(Type)] = Type >= NPCID.Count ? NPCLoader.GetNPC(Type).FullName : Type;
         tag[nameof(NetID)] = NetID;
         base.Save(tag);
     }
@@ -57,7 +87,11 @@ public class NPCKilled : CountInt
     }
     public void TryComplete(Player player, NPC npc)
     {
-        if (npc.type == Type && npc.netID == NetID)
+        if (NetID != -1 && npc.netID != NetID)
+        {
+            return;
+        }
+        if (npc.type == Type)
         {
             Increase(1);
         }
