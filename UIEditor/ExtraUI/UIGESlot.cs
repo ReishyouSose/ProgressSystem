@@ -12,13 +12,28 @@ namespace ProgressSystem.UIEditor.ExtraUI
         private bool dragging;
         private Vector2 oldlocal;
         private readonly Texture2D Icon;
+
+        /// <summary>
+        /// 绘制用裁剪矩形
+        /// </summary>
         private readonly Rectangle? frame;
+
         /// <summary>
         /// 吸附位置
         /// </summary>
         private Vector2? adsorption;
         public Vector2 pos;
+
+        /// <summary>
+        /// 被框选中
+        /// </summary>
         public bool selected;
+
+        /// <summary>
+        /// 正在作为前置选中
+        /// </summary>
+        public bool preSetting;
+        public HashSet<UIRequireLine> postGE;
         public UIGESlot(GameEvent ge = null, Vector2? pos = null) : base(AssetLoader.Slot)
         {
             this.ge = ge;
@@ -28,6 +43,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
                 this.pos = pos.Value;
                 SetPos(this.pos * 80);
             }
+            postGE = [];
         }
         public override void OnInitialization()
         {
@@ -94,7 +110,11 @@ namespace ProgressSystem.UIEditor.ExtraUI
         public override void DrawSelf(SpriteBatch sb)
         {
             base.DrawSelf(sb);
-            if (selected)
+            if (preSetting)
+            {
+                RUIHelper.DrawRec(sb, HitBox(), 2, Color.Gold, false);
+            }
+            else if (selected)
             {
                 RUIHelper.DrawRec(sb, HitBox(), 2, Color.Red, false);
             }

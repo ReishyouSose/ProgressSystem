@@ -38,8 +38,10 @@ namespace ProgressSystem.UIEditor
         /// 用于判定包含的GE鼠标碰撞箱
         /// </summary>
         private static UIGECollision collision;
+        private UIGESlot preSetting;
         private static bool LeftShift;
         private static bool LeftCtrl;
+        private static bool LeftAlt;
         /// <summary>
         /// 正在编辑的modName
         /// </summary>
@@ -302,6 +304,10 @@ namespace ProgressSystem.UIEditor
 
             eventView = new();
             eventView.SetSize(-20, -20, 1, 1);
+            eventView.Events.OnLeftDown += evt =>
+            {
+                if (!LeftAlt) preSetting = null;
+            };
             eventView.Events.OnRightDown += evt =>
             {
                 collision = new();
@@ -496,7 +502,7 @@ namespace ProgressSystem.UIEditor
                                         ev.canDrag = true;
                                         eh.canDrag = true;
                                     };
-                                    ge.Events.OnLeftDown += GESlotDragCheck;
+                                    ge.Events.OnLeftDown += GESlotLeftCheck;
                                     ge.Events.OnLeftUp += evt =>
                                     {
                                         dragging = false;
@@ -536,6 +542,7 @@ namespace ProgressSystem.UIEditor
             KeyboardState state = Keyboard.GetState();
             LeftShift = state.IsKeyDown(Keys.LeftShift);
             LeftCtrl = state.IsKeyDown(Keys.LeftControl);
+            LeftAlt = state.IsKeyDown(Keys.LeftAlt);
             bool pressS = state.IsKeyDown(Keys.S);
             if (!pressS)
                 trySave = false;
@@ -613,9 +620,28 @@ namespace ProgressSystem.UIEditor
                 }
             }
         }
-        private void GESlotDragCheck(BaseUIElement uie)
+        private void GESlotLeftCheck(BaseUIElement uie)
         {
             UIGESlot ge = uie as UIGESlot;
+            if (LeftAlt)
+            {
+                frameSelect.Clear();
+                tempSelect.Clear();
+                if (preSetting == null)
+                {
+                    preSetting = ge;
+                }
+                else
+                {
+                    if (preSetting != ge)
+                    {
+                        UIRequireLine line = new(preSetting, ge);
+                        eventView.AddElement(line);
+                        preSetting.postGE.Add(line);
+                    }
+                }
+                return;
+            }
             if (LeftCtrl)
             {
                 if (frameSelect.Contains(ge))
@@ -735,14 +761,14 @@ namespace ProgressSystem.UIEditor
                 }
             }
         }
-        private static bool MatchGESlot(BaseUIElement uie) => uie is UIGESlot;
+        private static bool MatchTempGE(BaseUIElement uie) => uie is UIGESlot or UIRequireLine;
         private void ClearTemp()
         {
             GEPos.Clear();
             tempSelect.Clear();
             frameSelect.Clear();
             interacted.Clear();
-            eventView?.InnerUIE.RemoveAll(MatchGESlot);
+            eventView?.InnerUIE.RemoveAll(MatchTempGE);
             eventView?.Vscroll.ForceSetPixel(0);
             eventView?.Hscroll.ForceSetPixel(0);
         }

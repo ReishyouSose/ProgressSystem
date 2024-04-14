@@ -1,5 +1,4 @@
 ﻿using Humanizer;
-using ProgressSystem.GameEvents;
 using System.IO;
 
 namespace ProgressSystem.Core;
@@ -47,7 +46,8 @@ public abstract class Requirement
     /// <summary>
     /// 初始化, 在被加入 <see cref="RequirementList"/> 时被调用
     /// </summary>
-    public virtual void Initialize(Achievement achievement) {
+    public virtual void Initialize(Achievement achievement)
+    {
         Achievement = achievement;
         // TODO
         if (DisplayName.IsNone)
@@ -253,16 +253,6 @@ public abstract class Requirement
         return $"{GetType().Name}: {nameof(Completed)}: {Completed}, {nameof(Listening)}: {Listening}";
     }
 }
-
-public class EmptyRequirement : Requirement
-{
-    public override void Reset()
-    {
-        base.Reset();
-        Completed = true;
-    }
-}
-
 public abstract class RequirementCombination : Requirement
 {
     public List<Requirement> Requirements;
@@ -368,209 +358,5 @@ public class SomeOfRequirements(IEnumerable<Requirement> requirements, int count
         {
             CompleteSafe();
         }
-    }
-}
-
-// TODO
-/// <summary>
-/// 需要玩家在成就页面自行提交
-/// </summary>
-public class SubmitRequirement : Requirement {
-    public SubmitRequirement()
-    {
-        Completed = true;
-    }
-    public override void Reset()
-    {
-        base.Reset();
-        Completed = true;
-    }
-}
-
-/// <summary>
-/// 需要玩家捡到某个物品
-/// </summary>
-public class PickItemRequirement : Requirement
-{
-    public int ItemType;
-    public int Count;
-    public int CountNow;
-    public Func<Item, bool>? Condition;
-    public PickItemRequirement(int itemType, int count = 1) : this(itemType, null, count) { }
-    public PickItemRequirement(Func<Item, bool> condition, int count = 1) : this(0, condition, count) { }
-    protected PickItemRequirement(int itemType, Func<Item, bool>? condition, int count) : base(ListenTypeEnum.OnStart)
-    {
-        ItemType = itemType;
-        Condition = condition;
-        Count = count;
-    }
-
-    public override void Reset()
-    {
-        base.Reset();
-        CountNow = 0;
-    }
-
-    public override void SaveDataInPlayer(TagCompound tag)
-    {
-        base.SaveDataInPlayer(tag);
-        if (Completed)
-        {
-            return;
-        }
-        tag.SetWithDefault("CountNow", CountNow);
-    }
-    public override void LoadDataInPlayer(TagCompound tag)
-    {
-        base.LoadDataInPlayer(tag);
-        if (Completed)
-        {
-            CountNow = Count;
-            return;
-        }
-        tag.GetWithDefault("CountNow", out CountNow);
-    }
-
-    protected override void BeginListen()
-    {
-        base.BeginListen();
-        GEListener.OnLocalPlayerPickItem += ListenPickItem;
-        DoIf(CountNow >= Count, CompleteSafe);
-    }
-    protected override void EndListen()
-    {
-        base.EndListen();
-        GEListener.OnLocalPlayerPickItem -= ListenPickItem;
-    }
-    private void ListenPickItem(Item item)
-    {
-        if (ItemType > 0 && item.type != ItemType || Condition?.Invoke(item) == false)
-        {
-            return;
-        }
-        DoIf((CountNow += item.stack) >= Count, CompleteSafe);
-    }
-}
-
-/// <summary>
-/// 需要玩家制作某个物品
-/// </summary>
-public class CraftItemRequirement : Requirement
-{
-    public int ItemType;
-    public int Count;
-    public int CountNow;
-    public Func<Item, bool>? Condition;
-    public CraftItemRequirement(int itemType, int count = 1) : this(itemType, null, count) { }
-    public CraftItemRequirement(Func<Item, bool> condition, int count = 1) : this(0, condition, count) { }
-    protected CraftItemRequirement(int itemType, Func<Item, bool>? condition, int count) : base(ListenTypeEnum.OnStart)
-    {
-        ItemType = itemType;
-        Condition = condition;
-        Count = count;
-    }
-    public override void Reset()
-    {
-        base.Reset();
-        CountNow = 0;
-    }
-    public override void SaveDataInPlayer(TagCompound tag)
-    {
-        base.SaveDataInPlayer(tag);
-        if (Completed)
-        {
-            return;
-        }
-        tag.SetWithDefault("CountNow", CountNow);
-    }
-    public override void LoadDataInPlayer(TagCompound tag)
-    {
-        base.LoadDataInPlayer(tag);
-        if (Completed)
-        {
-            CountNow = Count;
-            return;
-        }
-        tag.GetWithDefault("CountNow", out CountNow);
-    }
-
-    protected override void BeginListen()
-    {
-        base.BeginListen();
-        GEListener.OnLocalPlayerCraftItem += ListenCraftItem;
-        DoIf(CountNow >= Count, CompleteSafe);
-    }
-    protected override void EndListen()
-    {
-        base.EndListen();
-        GEListener.OnLocalPlayerCraftItem -= ListenCraftItem;
-    }
-    private void ListenCraftItem(Item item, RecipeItemCreationContext context)
-    {
-        if (ItemType > 0 && item.type != ItemType || Condition?.Invoke(item) == false)
-        {
-            return;
-        }
-        DoIf((CountNow += item.stack) >= Count, CompleteSafe);
-    }
-}
-
-// TODO
-/// <summary>
-/// 有一个房子
-/// </summary>
-public class HouseRequirement : Requirement { }
-
-// TODO: NPC NetID
-public class KillNPCRequirement : Requirement
-{
-    public int NPCType;
-    public int Count;
-    public int CountNow;
-    public Func<NPC, bool>? Condition;
-    public KillNPCRequirement(int npcType, int count = 1) : this(npcType, null, count) { }
-    public KillNPCRequirement(Func<NPC, bool> condition, int count = 1) : this(0, condition, count) { }
-    protected KillNPCRequirement(int npcType, Func<NPC, bool>? condition, int count) : base(ListenTypeEnum.OnStart)
-    {
-        NPCType = npcType;
-        Condition = condition;
-        Count = count;
-    }
-
-    public override void Reset()
-    {
-        base.Reset();
-        CountNow = 0;
-    }
-
-    public override void SaveDataInPlayer(TagCompound tag)
-    {
-        base.SaveDataInPlayer(tag);
-        tag.SetWithDefault("countNow", CountNow);
-    }
-    public override void LoadDataInPlayer(TagCompound tag)
-    {
-        base.LoadDataInPlayer(tag);
-        tag.GetWithDefault("countNow", out CountNow);
-    }
-
-    protected override void BeginListen()
-    {
-        base.BeginListen();
-        GEListener.OnLocalPlayerKillNPC += ListenKillNPC;
-        DoIf(CountNow >= Count, CompleteSafe);
-    }
-    protected override void EndListen()
-    {
-        base.EndListen();
-        GEListener.OnLocalPlayerKillNPC -= ListenKillNPC;
-    }
-    private void ListenKillNPC(NPC npc)
-    {
-        if (NPCType > 0 && npc.type != NPCType || Condition?.Invoke(npc) == false)
-        {
-            return;
-        }
-        DoIf((CountNow += 1) >= Count, CompleteSafe);
     }
 }
