@@ -90,7 +90,7 @@ namespace ProgressSystem.GameEvents
                 {
                     objs.Add(entry.GetValue());
                 }
-                return (T)c.Invoke(objs.ToArray());
+                return (T)c.Invoke([.. objs]);
             }, $"Constructor of {c.DeclaringType?.FullName ?? "Anonymous"}", extraInfo);
             foreach (var p in c.GetParameters())
             {
@@ -125,6 +125,32 @@ namespace ProgressSystem.GameEvents
         public static ConstructInfoTable<T> Create(Delegate @delegate, string? extraInfo = null)
         {
             return Create(@delegate.Method, extraInfo);
+        }
+        public static bool Create(Type type, string? extraInfo,out List<ConstructInfoTable<object>> tables)
+        {
+            tables = [];
+            var cs = type.GetConstructors(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            if (cs is null || cs.Length == 0)
+            {
+                return false;
+            }
+            foreach (var c in cs)
+            {
+                ConstructInfoTable<object> table = new((t) =>
+                {
+                    List<object> objs = [];
+                    foreach (var entry in t)
+                    {
+                        objs.Add(entry.GetValue());
+                    }
+                    return (T)c.Invoke([.. objs]);
+                }, $"Constructor of {c.DeclaringType?.FullName ?? "Anonymous"}", extraInfo);
+                foreach (var p in c.GetParameters())
+                {
+                    table.AddEntry(new(p.ParameterType, p.Name));
+                }
+            }
+            return true;
         }
         public class Entry
         {
