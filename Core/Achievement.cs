@@ -510,6 +510,7 @@ public class Achievement : IWithStaticData
             }
             Texture = tag.GetWithDefault<string>("Texture");
             Position = tag.GetWithDefault<Vector2>("Position");
+            Requirements.Clear();
         });
     }
     #endregion

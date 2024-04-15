@@ -8,6 +8,7 @@ namespace ProgressSystem.Core;
 
 /// <summary>
 /// 达成成就所需的条件
+/// 继承它的非抽象类需要有一个无参构造 (用以读取静态数据)
 /// </summary>
 public abstract class Requirement : IWithStaticData
 {
@@ -299,8 +300,8 @@ public abstract class Requirement : IWithStaticData
 }
 public abstract class RequirementCombination : Requirement
 {
-    public List<Requirement> Requirements;
-
+    public List<Requirement> Requirements = [];
+    protected RequirementCombination() { }
     public RequirementCombination(IEnumerable<Requirement> requirements)
     {
         Requirements = [.. requirements];
@@ -343,7 +344,7 @@ public abstract class RequirementCombination : Requirement
     public override void LoadStaticData(TagCompound tag)
     {
         base.LoadStaticData(tag);
-        this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFS, "Requirements", tag);
+        this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFS, "Requirements", tag, (r, t) => Requirements.Clear());
     }
     #endregion
     #region 多人同步
@@ -386,8 +387,10 @@ public abstract class RequirementCombination : Requirement
     protected abstract void ElementComplete(int elementIndex);
     #endregion
 }
-public class AllOfRequirements(IEnumerable<Requirement> requirements) : RequirementCombination(requirements)
+public class AllOfRequirements : RequirementCombination
 {
+    public AllOfRequirements(IEnumerable<Requirement> requirements) : base(requirements) { }
+    protected AllOfRequirements() : base() { }
     protected override void ElementComplete(int elementIndex)
     {
         if (Requirements.All(r => r.Completed))
@@ -396,21 +399,44 @@ public class AllOfRequirements(IEnumerable<Requirement> requirements) : Requirem
         }
     }
 }
-public class AnyOfRequirements(IEnumerable<Requirement> requirements) : RequirementCombination(requirements)
+public class AnyOfRequirements : RequirementCombination
 {
+    public AnyOfRequirements(IEnumerable<Requirement> requirements) : base(requirements) { }
+    protected AnyOfRequirements() : base() { }
     protected override void ElementComplete(int elementIndex)
     {
         CompleteSafe();
     }
 }
-public class SomeOfRequirements(IEnumerable<Requirement> requirements, int count) : RequirementCombination(requirements)
+public class SomeOfRequirements : RequirementCombination
 {
-    public int Count = count;
+    public SomeOfRequirements(IEnumerable<Requirement> requirements, int count) : base(requirements)
+    {
+        Count = count;
+    }
+    protected SomeOfRequirements() : base() { }
+    public int Count;
     protected override void ElementComplete(int elementIndex)
     {
         if (Requirements.Sum(r => r.Completed.ToInt()) >= Count)
         {
             CompleteSafe();
+        }
+    }
+    public override void SaveStaticData(TagCompound tag)
+    {
+        base.SaveStaticData(tag);
+        if (ShouldSaveStaticData)
+        {
+            tag.SetWithDefault("Count", Count);
+        }
+    }
+    public override void LoadDataInPlayer(TagCompound tag)
+    {
+        base.LoadDataInPlayer(tag);
+        if (ShouldSaveStaticData)
+        {
+            tag.GetWithDefault("Count", out Count);
         }
     }
 }

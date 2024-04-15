@@ -17,6 +17,7 @@ public class KillNPCRequirement : Requirement
         Condition = condition;
         Count = count;
     }
+    protected KillNPCRequirement() { }
 
     public override void Reset()
     {
@@ -33,6 +34,24 @@ public class KillNPCRequirement : Requirement
     {
         base.LoadDataInPlayer(tag);
         tag.GetWithDefault("countNow", out CountNow);
+    }
+    public override void SaveStaticData(TagCompound tag)
+    {
+        base.SaveStaticData(tag);
+        if (ShouldSaveStaticData)
+        {
+            tag.SetWithDefault("NPCType", NPCType);
+            tag.SetWithDefault("Count", Count);
+        }
+    }
+    public override void LoadStaticData(TagCompound tag)
+    {
+        base.LoadStaticData(tag);
+        if (ShouldSaveStaticData)
+        {
+            tag.GetWithDefault("NPCType", out NPCType);
+            tag.GetWithDefault("Count", out Count);
+        }
     }
 
     protected override void BeginListen()

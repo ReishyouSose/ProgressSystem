@@ -19,6 +19,7 @@ public class CraftItemRequirement : Requirement
         Condition = condition;
         Count = count;
     }
+    protected CraftItemRequirement() { }
     public override void Reset()
     {
         base.Reset();
@@ -42,6 +43,24 @@ public class CraftItemRequirement : Requirement
             return;
         }
         tag.GetWithDefault("CountNow", out CountNow);
+    }
+    public override void SaveStaticData(TagCompound tag)
+    {
+        base.SaveStaticData(tag);
+        if (ShouldSaveStaticData)
+        {
+            tag.SetWithDefault("ItemType", ItemType);
+            tag.SetWithDefault("Count", Count);
+        }
+    }
+    public override void LoadStaticData(TagCompound tag)
+    {
+        base.LoadStaticData(tag);
+        if (ShouldSaveStaticData)
+        {
+            tag.GetWithDefault("ItemType", out ItemType);
+            tag.GetWithDefault("Count", out Count);
+        }
     }
 
     protected override void BeginListen()
