@@ -6,8 +6,8 @@ public abstract class GameEvent : ILoadable
 {
     public virtual bool IsCompleted { get; protected set; }
 
-    public event Action<GameEvent> OnCompleted;
-    protected ref Action<GameEvent> _onCompleted => ref OnCompleted;
+    public event Action<GameEvent>? OnCompleted;
+    protected ref Action<GameEvent>? _onCompleted => ref OnCompleted;
     public virtual void Complete()
     {
         if (IsCompleted)
@@ -21,7 +21,7 @@ public abstract class GameEvent : ILoadable
     {
         yield break;
     }
-    public virtual (Texture2D, Rectangle?) DrawData() => (null, null);
+    public virtual (Texture2D?, Rectangle?) DrawData() => (null, null);
 
     public virtual void Load(Mod mod) { }
     public virtual void Unload() { }

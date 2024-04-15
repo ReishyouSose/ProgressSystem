@@ -36,7 +36,7 @@ namespace ProgressSystem.GameEvents
             }
             yield break;
         }
-        public bool TryCreate(out T result)
+        public bool TryCreate(out T? result)
         {
             result = default;
             if (AllEntryMeet && Closed)
@@ -85,7 +85,7 @@ namespace ProgressSystem.GameEvents
         {
             ConstructInfoTable<T> table = new((t) =>
             {
-                List<object> objs = [];
+                List<object?> objs = [];
                 foreach (var entry in t)
                 {
                     objs.Add(entry.GetValue());
@@ -94,7 +94,7 @@ namespace ProgressSystem.GameEvents
             }, $"Constructor of {c.DeclaringType?.FullName ?? "Anonymous"}", extraInfo);
             foreach (var p in c.GetParameters())
             {
-                table.AddEntry(new Entry(p.ParameterType, p.Name));
+                table.AddEntry(new(p));
             }
             table.Close();
             return table;
@@ -108,12 +108,12 @@ namespace ProgressSystem.GameEvents
             bool isStatic = method.IsStatic;
             ConstructInfoTable<T> table = new((t) =>
             {
-                List<object> objs = [];
+                List<object?> objs = [];
                 foreach (var entry in t)
                 {
                     objs.Add(entry.GetValue());
                 }
-                return (T)method.Invoke(isStatic ? null : objs[0], objs.ToArray()[(isStatic ? 0 : 1)..]);
+                return (T)method.Invoke(isStatic ? null : objs[0], objs.ToArray()[(isStatic ? 0 : 1)..])!;
             }, method.IsSpecialName ? method.Name : "Anonymous", extraInfo);
             foreach (var p in method.GetParameters())
             {
@@ -138,7 +138,7 @@ namespace ProgressSystem.GameEvents
             {
                 ConstructInfoTable<object> table = new((t) =>
                 {
-                    List<object> objs = [];
+                    List<object?> objs = [];
                     foreach (var entry in t)
                     {
                         objs.Add(entry.GetValue());
@@ -160,16 +160,26 @@ namespace ProgressSystem.GameEvents
             /// 是否必填
             /// </summary>
             public readonly bool Important;
-            private object _value;
+            private object? _value;
             public Entry(Type type, string? name, bool important = true)
             {
                 Type = type;
                 Name = name;
                 Important = important;
             }
-            public object GetValue() => _value;
-            public EntryT GetValue<EntryT>() => (EntryT)_value;
-            public bool SetValue(object value)
+            public Entry(ParameterInfo parameter)
+            {
+                Type = parameter.ParameterType;
+                Name = parameter.Name;
+                Important = !parameter.HasDefaultValue;
+                if (parameter.HasDefaultValue)
+                {
+                    SetValue(parameter.DefaultValue);
+                }
+            }
+            public object? GetValue() => _value;
+            public EntryT? GetValue<EntryT>() => (EntryT?)_value;
+            public bool SetValue(object? value)
             {
                 try
                 {
