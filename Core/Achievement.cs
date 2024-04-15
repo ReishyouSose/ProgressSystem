@@ -5,7 +5,7 @@ namespace ProgressSystem.Core;
 /// <summary>
 /// 成就
 /// </summary>
-public sealed class Achievement
+public class Achievement
 {
     #region 不会在正常游玩时改变的 字段 / 属性
     /// <summary>
@@ -75,10 +75,10 @@ public sealed class Achievement
         set => _texture = value;
     }
 
-    private TextGetter _displayName;
-    private TextGetter _tooltip;
-    private TextGetter _description;
-    private Texture2DGetter _texture;
+    protected TextGetter _displayName;
+    protected TextGetter _tooltip;
+    protected TextGetter _description;
+    protected Texture2DGetter _texture;
 
     /// <summary>
     /// 在 UI 上的默认排列, 当为空时 UI 上的默认排列则自动给出
@@ -171,9 +171,9 @@ public sealed class Achievement
         }
     }
 
-    private List<Achievement>? predecessors;
-    private readonly List<Achievement> successors = [];
-    private List<(string Value, bool IsFullName)>? _predecessorNames;
+    protected List<Achievement>? predecessors;
+    protected readonly List<Achievement> successors = [];
+    protected List<(string Value, bool IsFullName)>? _predecessorNames;
 
     /// <summary>
     /// <br/>需要多少个前置才能开始此任务
@@ -218,7 +218,7 @@ public sealed class Achievement
     /// 一键获得所有奖励
     /// </summary>
     /// <returns>是否全部获取</returns>
-    public bool GetAllReward()
+    public virtual bool GetAllReward()
     {
         bool result = true;
         Rewards.ForeachDo(r => result &= r.Receive());
@@ -293,7 +293,7 @@ public sealed class Achievement
         return achievement;
     }
 
-    private Achievement()
+    protected Achievement()
     {
         ReachedStableState = DefaultReachedStableState;
         CloseCondition = DefaultCloseCondition;
@@ -315,7 +315,7 @@ public sealed class Achievement
     #region 重置与开始
     public static event Action<Achievement>? OnResetStatic;
     public event Action? OnReset;
-    public void Reset()
+    public virtual void Reset()
     {
         State = StateEnum.Locked;
         Requirements.ForeachDo(r => r.Reset());
@@ -324,7 +324,7 @@ public sealed class Achievement
     }
     public static event Action<Achievement>? OnStartStatic;
     public event Action? OnStart;
-    public void Start()
+    public virtual void Start()
     {
         CheckState();
         Requirements.ForeachDo(r => r.Start());
@@ -341,7 +341,7 @@ public sealed class Achievement
         Completed,
         Closed
     }
-    public StateEnum State { get; private set; }
+    public StateEnum State { get; protected set; }
     public Func<bool> ReachedStableState;
     public bool DefaultReachedStableState()
     {
@@ -355,7 +355,7 @@ public sealed class Achievement
     }
     public static event Action<Achievement>? OnUnlockStatic;
     public event Action? OnUnlock;
-    public void UnlockSafe()
+    public virtual void UnlockSafe()
     {
         if (!State.IsLocked())
         {
@@ -365,7 +365,7 @@ public sealed class Achievement
         OnUnlockStatic?.Invoke(this);
         OnUnlock?.Invoke();
     }
-    public void TryUnlock()
+    public virtual void TryUnlock()
     {
         if (State.IsLocked() && IsPredecessorsMet())
         {
@@ -378,7 +378,7 @@ public sealed class Achievement
     public bool DefaultCompleteCondition() => Requirements.All(r => r.Completed);
     public static event Action<Achievement>? OnCompleteStatic;
     public event Action? OnComplete;
-    public void CompleteSafe()
+    public virtual void CompleteSafe()
     {
         if (!State.IsUnlocked())
         {
@@ -390,7 +390,7 @@ public sealed class Achievement
         OnCompleteStatic?.Invoke(this);
         OnComplete?.Invoke();
     }
-    public void TryComplete()
+    public virtual void TryComplete()
     {
         if (State.IsUnlocked() && CompleteCondition())
         {
@@ -405,7 +405,7 @@ public sealed class Achievement
     }
     public static event Action<Achievement>? OnCloseStatic;
     public event Action? OnClose;
-    public void CloseSafe()
+    public virtual void CloseSafe()
     {
         if (!State.IsCompleted())
         {
@@ -415,7 +415,7 @@ public sealed class Achievement
         OnCloseStatic?.Invoke(this);
         OnClose?.Invoke();
     }
-    public void TryClose()
+    public virtual void TryClose()
     {
         if (State.IsCompleted() && CloseCondition())
         {
@@ -423,7 +423,7 @@ public sealed class Achievement
         }
     }
 
-    public void CheckState()
+    public virtual void CheckState()
     {
         if (ReachedStableState())
         {
@@ -436,21 +436,21 @@ public sealed class Achievement
     #endregion
 
     #region 数据存取
-    // todo: 成就本身与奖励相关的数据存取
-    public void SaveDataInWorld(TagCompound tag)
+    // TODO: 成就本身与奖励相关的数据存取
+    public virtual void SaveDataInWorld(TagCompound tag)
     {
         tag.SaveListData("Requirements", Requirements, (r, t) => r.SaveDataInWorld(t));
     }
-    public void LoadDataInWorld(TagCompound tag)
+    public virtual void LoadDataInWorld(TagCompound tag)
     {
         tag.LoadListData("Requirements", Requirements, (r, t) => r.LoadDataInWorld(t));
     }
-    public void SaveDataInPlayer(TagCompound tag)
+    public virtual void SaveDataInPlayer(TagCompound tag)
     {
         tag.SetWithDefault("State", State.ToString(), StateEnum.Locked.ToString());
         tag.SaveListData("Requirements", Requirements, (r, t) => r.SaveDataInPlayer(t));
     }
-    public void LoadDataInPlayer(TagCompound tag)
+    public virtual void LoadDataInPlayer(TagCompound tag)
     {
         if (Enum.TryParse(tag.GetWithDefault("State", StateEnum.Locked.ToString()), out StateEnum state))
         {
@@ -462,11 +462,11 @@ public sealed class Achievement
 
     #region 网络同步
     // todo: 成就本身与奖励相关的网络同步
-    public void NetSend(BinaryWriter writer)
+    public virtual void NetSend(BinaryWriter writer)
     {
         Requirements.ForeachDo(r => r.NetSend(writer));
     }
-    public void NetReceive(BinaryReader reader)
+    public virtual void NetReceive(BinaryReader reader)
     {
         Requirements.ForeachDo(r => r.NetReceive(reader));
     }

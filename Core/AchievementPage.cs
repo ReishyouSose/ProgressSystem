@@ -6,7 +6,7 @@ namespace ProgressSystem.Core;
 /// 成就页
 /// 代表一个显示多个成就的界面
 /// </summary>
-public sealed class AchievementPage
+public class AchievementPage
 {
     #region Vars
     public Mod Mod;
@@ -41,14 +41,14 @@ public sealed class AchievementPage
     /// <summary>
     /// 在初始化时就会调用一次
     /// </summary>
-    public void Reset() {
+    public virtual void Reset() {
         Achievements.Values.ForeachDo(a => a.Reset());
         OnResetStatic?.Invoke(this);
         OnReset?.Invoke();
     }
     public static event Action<AchievementPage>? OnStartStatic;
     public event Action? OnStart;
-    public void Start()
+    public virtual void Start()
     {
         CheckState();
         Achievements.Values.ForeachDo(a => a.Start());
@@ -64,9 +64,9 @@ public sealed class AchievementPage
         Unlocked,
         Completed
     }
-    public StateEnum State { get; private set; }
+    public StateEnum State { get; protected set; }
 
-    public void CheckState()
+    public virtual void CheckState()
     {
         if (State == StateEnum.Completed)
         {
@@ -124,14 +124,14 @@ public sealed class AchievementPage
     #endregion
     public static event Action<AchievementPage>? OnUnlockStatic;
     public event Action? OnUnlock;
-    public void TryUnlock()
+    public virtual void TryUnlock()
     {
         if (State == StateEnum.Locked && UnlockCondition())
         {
             UnlockSafe();
         }
     }
-    public void UnlockSafe()
+    public virtual void UnlockSafe()
     {
         if (State != StateEnum.Locked)
         {
@@ -155,14 +155,14 @@ public sealed class AchievementPage
     #endregion
     public static event Action<AchievementPage>? OnCompleteStatic;
     public event Action? OnComplete;
-    public void TryComplete()
+    public virtual void TryComplete()
     {
         if (State == StateEnum.Unlocked && CompleteCondition())
         {
             CompleteSafe();
         }
     }
-    public void CompleteSafe()
+    public virtual void CompleteSafe()
     {
         if (State != StateEnum.Unlocked)
         {
@@ -187,7 +187,7 @@ public sealed class AchievementPage
     /// </summary>
     /// <param name="mod">添加此成就页的模组</param>
     /// <param name="name">此成就页的内部名</param>
-    private AchievementPage(Mod mod, string name)
+    protected AchievementPage(Mod mod, string name)
     {
         Mod = mod;
         Name = name;
@@ -308,17 +308,17 @@ public sealed class AchievementPage
 
     #region 存取数据
     // TODO: 存取 Page 自身的数据
-    public void SaveDataInWorld(TagCompound tag) {
+    public virtual void SaveDataInWorld(TagCompound tag) {
         tag.SaveDictionaryData("Achievements", Achievements, (a, t) => a.SaveDataInWorld(t));
     }
-    public void LoadDataInWorld(TagCompound tag) {
+    public virtual void LoadDataInWorld(TagCompound tag) {
         tag.LoadDictionaryData("Achievements", Achievements, (a, t) => a.LoadDataInWorld(t));
     }
-    public void SaveDataInPlayer(TagCompound tag) {
+    public virtual void SaveDataInPlayer(TagCompound tag) {
         tag.SetWithDefault("State", State.ToString(), StateEnum.Locked.ToString());
         tag.SaveDictionaryData("Achievements", Achievements, (a, t) => a.SaveDataInPlayer(t));
     }
-    public void LoadDataInPlayer(TagCompound tag) {
+    public virtual void LoadDataInPlayer(TagCompound tag) {
         if (Enum.TryParse(tag.GetWithDefault("State", StateEnum.Locked.ToString()), out StateEnum state))
         {
             State = state;
@@ -329,10 +329,10 @@ public sealed class AchievementPage
 
     #region 网络同步
     // TODO: Page 自身的网络同步
-    public void NetSend(BinaryWriter writer) {
+    public virtual void NetSend(BinaryWriter writer) {
         Achievements.Values.ForeachDo(a => a.NetSend(writer));
     }
-    public void NetReceive(BinaryReader reader) {
+    public virtual void NetReceive(BinaryReader reader) {
         Achievements.Values.ForeachDo(a => a.NetReceive(reader));
     }
     #endregion
