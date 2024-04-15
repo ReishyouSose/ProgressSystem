@@ -7,8 +7,8 @@ namespace ProgressSystem.UIEditor.ExtraUI
     {
         public readonly UIGESlot start = start;
         public readonly UIGESlot end = end;
-        private readonly static Color pink = Color.LightPink;
-        private readonly static Color blue = Color.LightBlue;
+        private readonly static Color pink = Color.Pink;
+        private readonly static Color blue = Color.Blue;
         public override void DrawSelf(SpriteBatch sb)
         {
             Vector2 startPos = start.Center();
