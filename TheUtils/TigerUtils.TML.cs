@@ -360,11 +360,14 @@ public static partial class TigerClasses
             readonly get => Type == TextGetterType.StringGetter ? stringGetterValue : null;
             set => (Type, stringGetterValue) = (TextGetterType.StringGetter, value);
         }
+        public readonly static TextGetter Default = default;
+        public readonly TextGetter WithDefault(TextGetter defaultValue) => IsNone ? defaultValue : this;
         #endregion
         #region 类型转换
-        public static implicit operator TextGetter(string stringValue) => new(stringValue);
-        public static implicit operator TextGetter(LocalizedText localizedTextValue) => new(localizedTextValue);
-        public static implicit operator TextGetter(Func<string> stringGetterValue) => new(stringGetterValue);
+        public static implicit operator TextGetter(string? stringValue) => stringValue == null ? Default : new(stringValue);
+        public static implicit operator TextGetter(LocalizedText? localizedTextValue) =>  localizedTextValue == null ? Default : new(localizedTextValue);
+        public static implicit operator TextGetter(Func<string>? stringGetterValue) => stringGetterValue == null ? Default :  new(stringGetterValue);
+        public override readonly string ToString() => Value ?? string.Empty;
         #endregion
         #region 运算符重载
         static public TextGetter operator |(TextGetter left, TextGetter right) => left.IsNone ? right : left;
@@ -375,7 +378,7 @@ public static partial class TigerClasses
     /// <br/>可以为 <see cref="Texture2D"/>, <see cref="Asset{T}"/>, 委托, 或者图片的路径 (会转换为 <see cref="Asset{T}"/>)
     /// <br/>如果要使用委托, 可以使用 new(delegate) 的形式获得
     /// </summary>
-    [StructLayout(LayoutKind.Explicit, Size = 12)]
+    [StructLayout(LayoutKind.Explicit, Size = 20)]
     public struct Texture2DGetter
     {
         #region 构造函数
@@ -392,7 +395,7 @@ public static partial class TigerClasses
             AssetOfTexture2D,
             Texture2DGetter
         }
-        [FieldOffset(8)]
+        [FieldOffset(16)]
         Texture2DGetterType Type;
         [FieldOffset(0)]
         Texture2D? texture2DValue;
@@ -400,6 +403,8 @@ public static partial class TigerClasses
         Asset<Texture2D>? assetOfTexture2DValue;
         [FieldOffset(0)]
         Func<Texture2D>? texture2DGetterValue;
+        [FieldOffset(8)]
+        string? assetPath;
         #endregion
         #region 设置与获取值
         public readonly bool IsNone => Type == Texture2DGetterType.None;
@@ -410,11 +415,16 @@ public static partial class TigerClasses
             Texture2DGetterType.Texture2DGetter => texture2DGetterValue?.Invoke(),
             _ => null
         };
-        public void SetTexturePath(string texturePath)
+        public void SetTexturePath(string? texturePath)
         {
-            if (ModContent.RequestIfExists<Texture2D>(texturePath, out var texture))
+            if (texturePath != null && ModContent.RequestIfExists<Texture2D>(texturePath, out var texture))
             {
                 AssetOfTexture2DValue = texture;
+                assetPath = texturePath;
+            }
+            else
+            {
+                Type = Texture2DGetterType.None;
             }
         }
         public Texture2D? Texture2DValue
@@ -422,22 +432,30 @@ public static partial class TigerClasses
             readonly get => Type == Texture2DGetterType.Texture2D ? texture2DValue : null;
             set => (Type, texture2DValue) = (Texture2DGetterType.Texture2D, value);
         }
+        public string? AssetPath
+        {
+            readonly get => Type == Texture2DGetterType.AssetOfTexture2D ? assetPath : null;
+            set => SetTexturePath(value);
+        }
         public Asset<Texture2D>? AssetOfTexture2DValue
         {
             readonly get => Type == Texture2DGetterType.AssetOfTexture2D ? assetOfTexture2DValue : null;
-            set => (Type, assetOfTexture2DValue) = (Texture2DGetterType.AssetOfTexture2D, value);
+            set => (Type, assetOfTexture2DValue, assetPath) = (Texture2DGetterType.AssetOfTexture2D, value, null);
         }
         public Func<Texture2D>? Texture2DGetterValue
         {
             readonly get => Type == Texture2DGetterType.Texture2DGetter ? texture2DGetterValue : null;
             set => (Type, texture2DGetterValue) = (Texture2DGetterType.Texture2DGetter, value);
         }
+        public static readonly Texture2DGetter Default = default;
+        public readonly Texture2DGetter WithDefault(Texture2DGetter defaultValue) => IsNone ? defaultValue : this;
         #endregion
         #region 类型转换
-        public static implicit operator Texture2DGetter(string texturePath) => new(texturePath);
-        public static implicit operator Texture2DGetter(Texture2D texture2DValue) => new(texture2DValue);
-        public static implicit operator Texture2DGetter(Asset<Texture2D> assetOfTexture2DValue) => new(assetOfTexture2DValue);
-        public static implicit operator Texture2DGetter(Func<Texture2D> texture2DGetterValue) => new(texture2DGetterValue);
+        public static implicit operator Texture2DGetter(string? texturePath) =>  texturePath == null ? default : new(texturePath);
+        public static implicit operator Texture2DGetter(Texture2D? texture2DValue) =>  texture2DValue == null ? default : new(texture2DValue);
+        public static implicit operator Texture2DGetter(Asset<Texture2D>? assetOfTexture2DValue) =>  assetOfTexture2DValue == null ? default : new(assetOfTexture2DValue);
+        public static implicit operator Texture2DGetter(Func<Texture2D>? texture2DGetterValue) =>  texture2DGetterValue == null ? default : new(texture2DGetterValue);
+        public override readonly string ToString() => Value?.ToString() ?? string.Empty;
         #endregion
         #region 运算符重载
         static public Texture2DGetter operator |(Texture2DGetter left, Texture2DGetter right) => left.IsNone ? right : left;

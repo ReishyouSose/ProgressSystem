@@ -1,19 +1,22 @@
 ﻿using Humanizer;
+using ProgressSystem.Core.StaticData;
+using ProgressSystem.GameEvents;
 using System.IO;
+using Terraria.Localization;
 
 namespace ProgressSystem.Core;
 
 /// <summary>
 /// 达成成就所需的条件
 /// </summary>
-public abstract class Requirement
+public abstract class Requirement : IWithStaticData
 {
     public Achievement Achievement = null!;
     public TextGetter DisplayName;
-    public TextGetter TooltipName;
+    public TextGetter Tooltip;
     public Texture2DGetter Texture;
     protected virtual object?[] DisplayNameArgs => [];
-    protected virtual object?[] TooltipNameArgs => [];
+    protected virtual object?[] TooltipArgs => [];
     #region 构造函数与初始化
     static Requirement()
     {
@@ -52,16 +55,21 @@ public abstract class Requirement
         // TODO
         if (DisplayName.IsNone)
         {
-            TooltipName = achievement.Mod.GetLocalization($"Requirements.{GetType().Name}.DisplayName".FormatWith(DisplayNameArgs));
+            Tooltip = achievement.Mod.GetLocalization($"Requirements.{GetType().Name}.DisplayName".FormatWith(DisplayNameArgs));
         }
         if (DisplayName.IsNone)
         {
-            TooltipName = achievement.Mod.GetLocalization($"Requirements.{GetType().Name}.Tooltip".FormatWith(TooltipNameArgs));
+            Tooltip = achievement.Mod.GetLocalization($"Requirements.{GetType().Name}.Tooltip".FormatWith(TooltipArgs));
         }
         if (Texture.IsNone)
         {
             Texture = $"{achievement.Mod.Name}/Assets/Textures/Requirements/{GetType().Name}";
         }
+    }
+    public virtual IEnumerable<ConstructInfoTable<Requirement>> GetConstructInfoTables()
+    {
+        ConstructInfoTable<Achievement>.TryAutoCreate<Requirement>(GetType(), null, out var constructors);
+        return constructors;
     }
     #endregion
     #region 重置与开始
@@ -132,6 +140,42 @@ public abstract class Requirement
         {
             Completed = tag.GetWithDefault<bool>("Completed");
         }
+    }
+    public bool ShouldSaveStaticData { get; set; }
+    public virtual void SaveStaticData(TagCompound tag)
+    {
+        if (!ShouldSaveStaticData)
+        {
+            return;
+        }
+        tag["SaveStatic"] = true;
+        tag["Type"] = GetType().FullName;
+        tag.SetWithDefault("DisplayNameKey", DisplayName.LocalizedTextValue?.Key);
+        tag.SetWithDefault("DisplayName", DisplayName.StringValue);
+        tag.SetWithDefault("TooltipKey", Tooltip.LocalizedTextValue?.Key);
+        tag.SetWithDefault("Tooltip", Tooltip.StringValue);
+        tag.SetWithDefault("Texture", Texture.AssetPath);
+    }
+    public virtual void LoadStaticData(TagCompound tag)
+    {
+        ShouldSaveStaticData = tag.GetWithDefault<bool>("SaveStatic");
+        if (tag.TryGet("DisplayNameKey", out string displayNameKey))
+        {
+            DisplayName = Language.GetText(displayNameKey);
+        }
+        else if (tag.TryGet("DisplayName", out string displayName))
+        {
+            DisplayName = displayName;
+        }
+        if (tag.TryGet("TooltipKey", out string tooltipKey))
+        {
+            Tooltip = Language.GetText(tooltipKey);
+        }
+        else if (tag.TryGet("Tooltip", out string tooltip))
+        {
+            Tooltip = tooltip;
+        }
+        Texture = tag.GetWithDefault<string>("Texture");
     }
     #endregion
     #region 多人同步
@@ -290,6 +334,16 @@ public abstract class RequirementCombination : Requirement
     {
         base.LoadDataInWorld(tag);
         tag.LoadListData("Requirements", Requirements, (r, t) => r.LoadDataInWorld(t));
+    }
+    public override void SaveStaticData(TagCompound tag)
+    {
+        base.SaveStaticData(tag);
+        this.SaveStaticDataListTemplate(Requirements, "Requirements", tag);
+    }
+    public override void LoadStaticData(TagCompound tag)
+    {
+        base.LoadStaticData(tag);
+        this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFS, "Requirements", tag);
     }
     #endregion
     #region 多人同步

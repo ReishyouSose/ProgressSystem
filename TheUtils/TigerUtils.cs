@@ -4210,6 +4210,22 @@ public static partial class TigerExtensions
     public static T ElementAtS<T>(this IList<T> list, int index, T defaultValue) => index < 0 || index >= list.Count ? defaultValue : list[index];
     public static void ElementAsS<T>(this IList<T> list, int index, out T value, T defaultValue) => value = index < 0 || index >= list.Count ? defaultValue : list[index];
     #endregion
+    #region 设置数组元素
+    /// <summary>
+    /// <br/>保证设置值
+    /// <br/>若 <paramref name="index"/> &lt; 0 则在末尾插入
+    /// <br/>若 <paramref name="index"/> 过大, 则将 <paramref name="list"/> 的长度扩充到 <paramref name="index"/> + 1 在设置
+    /// </summary>
+    public static void SetFS<T>(this IList<T?> list, int index, T? value)
+    {
+        if (index < 0)
+        {
+            list.Add(value);
+        }
+        list.EnsureLength(index + 1);
+        list[index] = value;
+    }
+    #endregion
     #endregion
     #region 字典拓展
     public static void Add<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, KeyValuePair<TKey, TValue> pair) where TKey : notnull

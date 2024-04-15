@@ -1,4 +1,5 @@
 ﻿using ProgressSystem.Core.Requirements;
+using ProgressSystem.Core.StaticData;
 using System.Reflection;
 
 namespace ProgressSystem.Core;
@@ -8,8 +9,9 @@ namespace ProgressSystem.Core;
 /// <summary>
 /// 储存并管理所有的成就
 /// </summary>
-public class AchievementManager : ModSystem
+public class AchievementManager : ModSystem, IWithStaticData
 {
+    public static AchievementManager Instance { get; set; } = null!;
     #region Test
     public override void OnModLoad()
     {
@@ -60,6 +62,7 @@ public class AchievementManager : ModSystem
     {
         Pages.Values.ForeachDo(p => p.Achievements.Values.ForeachDo(a => a.PostInitialize()));
     }
+    #region 存取数据
     public override void SaveWorldData(TagCompound tag)
     {
         tag.SaveDictionaryData("Pages", pages, (p, t) => p.SaveDataInWorld(t));
@@ -68,6 +71,22 @@ public class AchievementManager : ModSystem
     {
         tag.LoadDictionaryData("Pages", pages, (p, t) => p.LoadDataInWorld(t));
     }
+    /// <summary>
+    /// 永远是false
+    /// </summary>
+    public bool ShouldSaveStaticData { get => false; set { } }
+    public static void SaveStaticDataStatic(TagCompound tag) => Instance.SaveStaticData(tag);
+    public static void LoadStaticDataStatic(TagCompound tag) => Instance.LoadStaticData(tag);
+    public void SaveStaticData(TagCompound tag)
+    {
+        this.SaveStaticDataTemplate(Pages.Values, p => p.FullName, "Pages", tag);
+    }
+    public void LoadStaticData(TagCompound tag)
+    {
+        this.LoadStaticDataTemplate(fullName => Pages.TryGetValue(fullName, out var p) ? p : null,
+            (p, m, n) => { p.Mod = m; p.Name = n; }, (f, p) => AddPage(p), "Pages", tag);
+    }
+    #endregion
     public override void OnWorldLoad()
     {
         // 在 LoadWorldData 前执行
@@ -104,6 +123,7 @@ public class AchievementManager : ModSystem
     #region 钩子
     public override void Load()
     {
+        Instance = this;
         HookInPostInitialize();
     }
     static void HookInPostInitialize()

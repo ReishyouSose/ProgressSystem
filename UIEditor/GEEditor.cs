@@ -781,7 +781,7 @@ namespace ProgressSystem.UIEditor
                 return;
             }
 
-            if (constructData.TryCreate(out GameEvent task))
+            if (constructData.TryConstruct(out GameEvent task))
             {
                 UIGESlot ge = new(task);
                 RegisterEventToGESlot(ge);
@@ -841,7 +841,7 @@ namespace ProgressSystem.UIEditor
             int innerY = 0;
             foreach (var info in data)
             {
-                UIText name = new(info.Name ?? "Anonymous");
+                UIText name = new(info.DisplayName.Value ?? "Anonymous");
                 name.SetPos(0, innerY);
                 name.SetSize(name.TextSize);
                 constructPanel.Register(name);

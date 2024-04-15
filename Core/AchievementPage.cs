@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using ProgressSystem.Core.StaticData;
+using System.IO;
+using System.Reflection;
 
 namespace ProgressSystem.Core;
 
@@ -6,15 +8,15 @@ namespace ProgressSystem.Core;
 /// 成就页
 /// 代表一个显示多个成就的界面
 /// </summary>
-public class AchievementPage
+public class AchievementPage : IWithStaticData
 {
     #region Vars
-    public Mod Mod;
+    public Mod Mod = null!;
 
     /// <summary>
     /// 此成就页的内部名
     /// </summary>
-    public string Name;
+    public string Name = null!;
 
     /// <summary>
     /// 全名, 全局唯一, 可作为标识符
@@ -187,13 +189,15 @@ public class AchievementPage
     /// </summary>
     /// <param name="mod">添加此成就页的模组</param>
     /// <param name="name">此成就页的内部名</param>
-    protected AchievementPage(Mod mod, string name)
+    protected AchievementPage(Mod mod, string name) : this()
     {
         Mod = mod;
         Name = name;
+    }
+    private AchievementPage()
+    {
         UnlockCondition = DefaultUnlockCondition;
         CompleteCondition = DefaultCompleteCondition;
-        Reset();
     }
 
     /// <summary>
@@ -211,6 +215,7 @@ public class AchievementPage
         }
         AchievementPage result = new(mod, name);
         AchievementManager.AddPage(result);
+        result.Reset();
         return result;
     }
     #endregion
@@ -324,6 +329,16 @@ public class AchievementPage
             State = state;
         }
         tag.LoadDictionaryData("Achievements", Achievements, (a, t) => a.LoadDataInPlayer(t));
+    }
+    public bool ShouldSaveStaticData { get; set; }
+    public virtual void SaveStaticData(TagCompound tag)
+    {
+        this.SaveStaticDataTemplate(Achievements.Values, a => a.FullName, "Achievements", tag);
+    }
+    public virtual void LoadStaticData(TagCompound tag)
+    {
+        this.LoadStaticDataTemplate(fullName => Achievements.TryGetValue(fullName, out var a) ? a : null,
+            (a, m, n) => { a.Mod = m; a.Name = n; }, Achievements.Add, "Achievements", tag);
     }
     #endregion
 

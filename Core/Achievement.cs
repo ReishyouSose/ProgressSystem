@@ -1,11 +1,16 @@
+using ProgressSystem.Core.StaticData;
+using ProgressSystem.GameEvents;
 using System.IO;
+using Terraria.Localization;
 
 namespace ProgressSystem.Core;
 
 /// <summary>
-/// 成就
+/// <br/>成就
+/// <br/>Tips: 在 UI 中修改了相关数据时需要设置 <see cref="ShouldSaveStaticData"/> 为真,
+/// <br/>对于 <see cref="AchievementPage"/> 等其它实现了 <see cref="IWithStaticData"/> 接口的也是如此
 /// </summary>
-public class Achievement
+public class Achievement : IWithStaticData
 {
     #region 不会在正常游玩时改变的 字段 / 属性
     /// <summary>
@@ -310,6 +315,11 @@ public class Achievement
         _ = Description;
         _ = Texture;
     }
+
+    public virtual IEnumerable<ConstructInfoTable<Achievement>> GetConstructInfoTables()
+    {
+        yield return ConstructInfoTable<Achievement>.Create(Create);
+    }
     #endregion
 
     #region 重置与开始
@@ -457,6 +467,49 @@ public class Achievement
             State = state;
         }
         tag.LoadListData("Requirements", Requirements, (r, t) => r.LoadDataInPlayer(t));
+    }
+    public bool ShouldSaveStaticData { get; set; }
+    public virtual void SaveStaticData(TagCompound tag)
+    {
+        this.SaveStaticDataListTemplate(Requirements, "Requirements", tag, (a, t) =>
+        {
+            tag.SetWithDefault("DisplayNameKey", DisplayName.LocalizedTextValue?.Key);
+            tag.SetWithDefault("DisplayName", DisplayName.StringValue);
+            tag.SetWithDefault("TooltipKey", Tooltip.LocalizedTextValue?.Key);
+            tag.SetWithDefault("Tooltip", Tooltip.StringValue);
+            tag.SetWithDefault("Texture", Texture.AssetPath);
+        });
+    }
+    public virtual void LoadStaticData(TagCompound tag)
+    {
+        this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFS, "Requirements", tag, (a, t) =>
+        {
+            if (tag.TryGet("DisplayNameKey", out string displayNameKey))
+            {
+                DisplayName = Language.GetText(displayNameKey);
+            }
+            else if (tag.TryGet("DisplayName", out string displayName))
+            {
+                DisplayName = displayName;
+            }
+            if (tag.TryGet("TooltipKey", out string tooltipKey))
+            {
+                Tooltip = Language.GetText(tooltipKey);
+            }
+            else if (tag.TryGet("Tooltip", out string tooltip))
+            {
+                Tooltip = tooltip;
+            }
+            if (tag.TryGet("DescriptionKey", out string descriptionKey))
+            {
+                Description = Language.GetText(descriptionKey);
+            }
+            else if (tag.TryGet("Description", out string description))
+            {
+                Description = description;
+            }
+            Texture = tag.GetWithDefault<string>("Texture");
+        });
     }
     #endregion
 

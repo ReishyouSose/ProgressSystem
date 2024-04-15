@@ -1,8 +1,15 @@
-﻿using System.Collections;
+﻿using MonoMod.Utils;
+using System.Collections;
 using System.Reflection;
 
 namespace ProgressSystem.GameEvents
 {
+    [AttributeUsage(AttributeTargets.Constructor | AttributeTargets.Method)]
+    public class SpecializeAutoConstructAttribute : Attribute
+    {
+        public bool Disabled { get; set; }
+    }
+
     public class ConstructInfoTable<T> : IEnumerable<ConstructInfoTable<T>.Entry>
     {
         public string Name { get; private set; }
@@ -12,7 +19,6 @@ namespace ProgressSystem.GameEvents
         public bool Closed { get; private set; }
         public ConstructInfoTable(Func<ConstructInfoTable<T>, T> createFunc, string name = "Anonymous", string? extraInfo = null)
         {
-            Type t = typeof(T);
             _createFunc = createFunc ?? throw new ArgumentNullException(nameof(createFunc));
             Name = name;
             ExtraInfo = extraInfo;
@@ -36,7 +42,7 @@ namespace ProgressSystem.GameEvents
             }
             yield break;
         }
-        public bool TryCreate(out T? result)
+        public bool TryConstruct(out T? result)
         {
             result = default;
             if (AllEntryMeet && Closed)
@@ -63,23 +69,14 @@ namespace ProgressSystem.GameEvents
             var table = new ConstructInfoTable<T>(_createFunc);
             foreach (var entry in _entries)
             {
-                table.AddEntry(new(entry.Type, entry.Name, entry.Important));
+                table.AddEntry(new(entry.Type, entry.DisplayName, entry.Important));
             }
             return table;
         }
         public static bool TryAutoCreate(out List<ConstructInfoTable<T>> tables)
         {
-            tables = [];
-            var cs = typeof(T).GetConstructors(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-            if (cs is null || cs.Length == 0)
-            {
-                return false;
-            }
-            foreach (var c in cs)
-            {
-                tables.Add(Create(c));
-            }
-            return true;
+            Type t = typeof(T);
+            return TryAutoCreate(typeof(T), t.Name, out tables);
         }
         public static ConstructInfoTable<T> Create(ConstructorInfo c, string? extraInfo = null)
         {
@@ -101,9 +98,9 @@ namespace ProgressSystem.GameEvents
         }
         public static ConstructInfoTable<T> Create(MethodInfo method, string? extraInfo = null)
         {
-            if (method.ReturnType != typeof(T) && !method.ReturnType.IsSubclassOf(typeof(T)))
+            if (method.ReturnType != typeof(T) && !method.ReturnType.IsAssignableFrom(typeof(T)))
             {
-                throw new ArgumentException($"Method return type is not defined from {typeof(T).FullName}");
+                throw new ArgumentException($"Method return type is not assignable from {typeof(T).FullName}");
             }
             bool isStatic = method.IsStatic;
             ConstructInfoTable<T> table = new((t) =>
@@ -117,7 +114,7 @@ namespace ProgressSystem.GameEvents
             }, method.IsSpecialName ? method.Name : "Anonymous", extraInfo);
             foreach (var p in method.GetParameters())
             {
-                table.AddEntry(new Entry(p.ParameterType, p.Name));
+                table.AddEntry(new(p));
             }
             table.Close();
             return table;
@@ -126,52 +123,65 @@ namespace ProgressSystem.GameEvents
         {
             return Create(@delegate.Method, extraInfo);
         }
-        public static bool Create(Type type, string? extraInfo,out List<ConstructInfoTable<object>> tables)
+        public static bool TryAutoCreate<TResult>(Type type, string? extraInfo,out List<ConstructInfoTable<TResult>> tables)
         {
+            if (type.IsAssignableTo(typeof(TResult)))
+            {
+                throw new ArgumentException($"Type {type.FullName} is not assignable to {typeof(TResult).FullName}");
+            }
             tables = [];
-            var cs = type.GetConstructors(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            // 不要静态构造
+            var cs = type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (cs is null || cs.Length == 0)
             {
                 return false;
             }
             foreach (var c in cs)
             {
-                ConstructInfoTable<object> table = new((t) =>
+                var paras = c.GetCustomAttribute<SpecializeAutoConstructAttribute>();
+                if (paras != null)
+                {
+                    if (paras.Disabled)
+                    {
+                        continue;
+                    }
+                }
+
+                ConstructInfoTable<TResult> table = new((t) =>
                 {
                     List<object?> objs = [];
                     foreach (var entry in t)
                     {
                         objs.Add(entry.GetValue());
                     }
-                    return (T)c.Invoke([.. objs]);
+                    return (TResult)c.Invoke([.. objs]);
                 }, $"Constructor of {c.DeclaringType?.FullName ?? "Anonymous"}", extraInfo);
                 foreach (var p in c.GetParameters())
                 {
-                    table.AddEntry(new(p.ParameterType, p.Name));
+                    table.AddEntry(new(p));
                 }
             }
             return true;
         }
         public class Entry
         {
-            public readonly string? Name;
+            public readonly TextGetter DisplayName;
             public readonly Type Type;
             /// <summary>
             /// 是否必填
             /// </summary>
             public readonly bool Important;
             private object? _value;
-            public Entry(Type type, string? name, bool important = true)
+            public Entry(Type type, TextGetter name, bool important = true)
             {
                 Type = type;
-                Name = name;
+                DisplayName = name;
                 Important = important;
             }
             public Entry(ParameterInfo parameter)
             {
                 Type = parameter.ParameterType;
-                Name = parameter.Name;
-                Important = !parameter.HasDefaultValue;
+                DisplayName = parameter.Name;
                 if (parameter.HasDefaultValue)
                 {
                     SetValue(parameter.DefaultValue);
@@ -196,17 +206,7 @@ namespace ProgressSystem.GameEvents
             /// 是否至少填入一次合法参数
             /// </summary>
             public bool HasValue { get; private set; }
-            public bool IsMet
-            {
-                get
-                {
-                    if (Important)
-                    {
-                        return HasValue;
-                    }
-                    return true;
-                }
-            }
+            public bool IsMet => !Important || HasValue;
         }
     }
 }
