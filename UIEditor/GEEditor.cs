@@ -39,6 +39,7 @@ namespace ProgressSystem.UIEditor
         /// </summary>
         private static UIGECollision collision;
         private UIGESlot preSetting;
+        private UIText saveTip;
         private static bool LeftShift;
         private static bool LeftCtrl;
         private static bool LeftAlt;
@@ -157,13 +158,21 @@ namespace ProgressSystem.UIEditor
                 if (!mod.HasAsset("icon")) continue;
                 datas.TryAdd(mod.Name, []);
                 string modName = mod.Name;
-                UIImage modSlot = new(RUIHelper.T2D(modName + "/icon")) { hoverText = mod.DisplayName };
+                UIModSlot modSlot = new(RUIHelper.T2D(modName + "/icon"), modName) { hoverText = mod.DisplayName };
+                modSlot.ReDraw = sb =>
+                {
+                    modSlot.DrawSelf(sb);
+                    if (EditMod == modSlot.modName)
+                    {
+                        RUIHelper.DrawRec(sb, modSlot.HitBox(), 5f, Color.Red);
+                    }
+                };
                 modSlot.Events.OnLeftDown += evt =>
                 {
                     indexList.ClearAllElements();
-                    EditMod = modName;
+                    EditMod = modSlot.modName;
                     ClearTemp();
-                    if (datas.TryGetValue(modName, out var modPages))
+                    if (datas.TryGetValue(modSlot.modName, out var modPages))
                     {
                         bool firstPage = false;
                         foreach (var (page, ges) in modPages)
@@ -303,6 +312,18 @@ namespace ProgressSystem.UIEditor
             };
             bg.Register(deleteProgress);
 
+            saveTip = new("已保存", Color.Green);
+            saveTip.SetSize(saveTip.TextSize);
+            saveTip.SetPos(groupFilter.Width + indexList.showArea.Width +
+                newProgress.Width + deleteProgress.Width + 40, 5);
+            saveTip.Events.OnLeftDown += evt =>
+            {
+                SaveProgress();
+                saveTip.ChangeText("已保存");
+                saveTip.color = Color.Green;
+            };
+            bg.Register(saveTip);
+
             eventView = new();
             eventView.SetSize(-20, -20, 1, 1);
             eventView.Events.OnLeftDown += evt =>
@@ -336,6 +357,34 @@ namespace ProgressSystem.UIEditor
                 collision = null;
                 tempSelect.Clear();
                 interacted.Clear();
+                if (LeftAlt && preSetting != null)
+                {
+                    if (frameSelect.Any())
+                    {
+                        foreach (UIGESlot ge in frameSelect)
+                        {
+                            if (preSetting != ge)
+                            {
+                                if (preSetting.PostGE.Contains(ge))
+                                {
+                                    UIRequireLine line = preSetting.postGE.First(x => x.end == ge);
+                                    preSetting.postGE.Remove(line);
+                                    eventView.RemoveElement(line);
+                                }
+                                else
+                                {
+                                    UIRequireLine line = new(preSetting, ge);
+                                    eventView.AddElement(line, 100);
+                                    preSetting.postGE.Add(line);
+                                }
+                            }
+                            ge.selected = false;
+                        }
+                        saveTip.ChangeText("未保存");
+                        saveTip.color = Color.Red;
+                        frameSelect.Clear();
+                    }
+                }
             };
             eventPanel.Register(eventView);
 
@@ -451,12 +500,13 @@ namespace ProgressSystem.UIEditor
             LeftCtrl = state.IsKeyDown(Keys.LeftControl);
             LeftAlt = state.IsKeyDown(Keys.LeftAlt);
             bool pressS = state.IsKeyDown(Keys.S);
-            if (!pressS)
-                trySave = false;
+            if (!pressS) trySave = false;
             if (!trySave && LeftCtrl && pressS)
             {
                 SaveProgress();
                 trySave = true;
+                saveTip.ChangeText("已保存");
+                saveTip.color = Color.Green;
             }
             if (dragging || collision != null)
             {
@@ -523,6 +573,8 @@ namespace ProgressSystem.UIEditor
                             ge.SetPos(ge.pos * 80);
                         }
                         selectedStart = p;
+                        saveTip.ChangeText("未保存");
+                        saveTip.color = Color.Red;
                     }
                 }
             }
@@ -543,9 +595,20 @@ namespace ProgressSystem.UIEditor
                 {
                     if (preSetting != ge)
                     {
-                        UIRequireLine line = new(preSetting, ge);
-                        eventView.AddElement(line);
-                        preSetting.postGE.Add(line);
+                        if (preSetting.PostGE.Contains(ge))
+                        {
+                            UIRequireLine line = preSetting.postGE.First(x => x.end == ge);
+                            preSetting.postGE.Remove(line);
+                            eventView.RemoveElement(line);
+                        }
+                        else
+                        {
+                            UIRequireLine line = new(preSetting, ge);
+                            eventView.AddElement(line, 100);
+                            preSetting.postGE.Add(line);
+                        }
+                        saveTip.ChangeText("未保存");
+                        saveTip.color = Color.Red;
                     }
                 }
                 return;
@@ -729,6 +792,8 @@ namespace ProgressSystem.UIEditor
                 GEPos.Add(pos);
                 eventView.AddElement(ge);
                 datas[EditMod][EditPage].Add(task, new(pos.X, pos.Y, constructData.Name, constructData.ExtraInfo));
+                saveTip.ChangeText("未保存");
+                saveTip.color = Color.Red;
             }
         }
         private void RegisterEventToGESlot(UIGESlot ge)
@@ -750,7 +815,12 @@ namespace ProgressSystem.UIEditor
             {
                 dragging = false;
                 draggingSelected = false;
-                datas[EditMod][EditPage][ge.ge].Pos = ge.pos;
+                if (datas[EditMod][EditPage][ge.ge].Pos != ge.pos)
+                {
+                    datas[EditMod][EditPage][ge.ge].Pos = ge.pos;
+                    saveTip.ChangeText("未保存");
+                    saveTip.color = Color.Red;
+                }
             };
             ge.Events.OnUpdate += GESlotUpdate;
             ge.Events.OnRightDoubleClick += evt =>
@@ -758,6 +828,8 @@ namespace ProgressSystem.UIEditor
                 datas[EditMod][EditPage].Remove(ge.ge);
                 GEPos.Remove(ge.pos);
                 eventView.InnerUIE.Remove(ge);
+                saveTip.ChangeText("未保存");
+                saveTip.color = Color.Red;
             };
         }
         private void CreateDataInput(ConstructInfoTable<GameEvent> data, UIContainerPanel dataView, HorizontalScrollbar eh, VerticalScrollbar ev)
