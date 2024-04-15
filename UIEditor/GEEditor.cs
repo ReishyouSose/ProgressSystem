@@ -54,20 +54,50 @@ namespace ProgressSystem.UIEditor
         /// 检测是否已按下ctrl + S
         /// </summary>
         private bool trySave;
+        private class GEData(float x, float y, string constructName, string? extraInfo)
+        {
+            public float x = x;
+            public float y = y;
+            public readonly string constructName = constructName;
+            public readonly string? extraInfo = extraInfo;
+            private const string X = "X";
+            private const string Y = "Y";
+            private const string Name = "constructName";
+            private const string Extra = "extraInfo";
+            public Vector2 Pos
+            {
+                get => new(x, y);
+                set
+                {
+                    x = value.X;
+                    y = value.Y;
+                }
+            }
+
+            public void SaveData(TagCompound tag)
+            {
+                tag[X] = x;
+                tag[Y] = y;
+                tag[Name] = constructName;
+                if (extraInfo != null) tag[Extra] = extraInfo;
+            }
+            public static GEData LoadData(TagCompound tag) => new(tag.GetFloat(X), tag.GetFloat(Y),
+                tag.GetString(Name), tag.TryGet(Extra, out string extra) ? extra : null);
+        }
+
         /// <summary>
         /// InternalModName, GroupIndex, GE
         /// </summary>
-        private Dictionary<string, Dictionary<string, Dictionary<GameEvent, Vector2>>> datas;
+        private Dictionary<string, Dictionary<string, Dictionary<GameEvent, GEData>>> datas;
         public override void OnInitialization()
         {
             base.OnInitialization();
             datas ??= [];
-            if (datas.Count == 0)
+            if (!datas.Any())
             {
                 LoadProgress();
             }
-            if (Main.gameMenu)
-                return;
+            if (Main.gameMenu) return;
             Info.IsVisible = true;
             RemoveAll();
 
@@ -125,6 +155,7 @@ namespace ProgressSystem.UIEditor
             foreach (Mod mod in ModLoader.Mods)
             {
                 if (!mod.HasAsset("icon")) continue;
+                datas.TryAdd(mod.Name, []);
                 string modName = mod.Name;
                 UIImage modSlot = new(RUIHelper.T2D(modName + "/icon")) { hoverText = mod.DisplayName };
                 modSlot.Events.OnLeftDown += evt =>
@@ -186,35 +217,7 @@ namespace ProgressSystem.UIEditor
 
             UIInputBox indexInputer = new("输入进度组名称");
             indexInputer.SetSize(-40, 0, 1, 1);
-            indexInputer.OnInputText += text =>
-            {
-                if (text.Any())
-                {
-                    if (datas.TryGetValue(EditMod, out var mod))
-                    {
-                        if (mod.ContainsKey(text))
-                        {
-                            report.ChangeText("名称重复");
-                            report.color = Color.Red;
-                        }
-                        else
-                        {
-                            report.ChangeText("名称可用");
-                            report.color = Color.Green;
-                        }
-                    }
-                    else
-                    {
-                        report.ChangeText("名称可用");
-                        report.color = Color.Green;
-                    }
-                }
-                else
-                {
-                    report.ChangeText("不可为空");
-                    report.color = Color.Red;
-                }
-            };
+            indexInputer.OnInputText += text => MatchPageName(text, report);
             inputBg.Register(indexInputer);
 
             UIClose clearText = new();
@@ -231,7 +234,6 @@ namespace ProgressSystem.UIEditor
             {
                 if (report.color == Color.Green)
                 {
-                    if (!datas.ContainsKey(EditMod)) datas[EditMod] = [];
                     EditPage = indexInputer.Text;
                     datas[EditMod][EditPage] = [];
                     bg.LockInteract(true);
@@ -342,10 +344,7 @@ namespace ProgressSystem.UIEditor
             eventView.SetVerticalScrollbar(ev);
             eventPanel.Register(ev);
 
-            HorizontalScrollbar eh = new(80)
-            {
-                useScrollWheel = false
-            };
+            HorizontalScrollbar eh = new(80) { useScrollWheel = false };
             eh.Info.Top.Pixel += 10;
             eventView.SetHorizontalScrollbar(eh);
             eventPanel.Register(eh);
@@ -372,12 +371,9 @@ namespace ProgressSystem.UIEditor
             itemSlot.SetCenter(taskPanel.Width + 26, 0, 0, 0.5f);
             itemSlot.Events.OnLeftDown += evt =>
             {
-                if (itemSlot.ContainedItem.type <= 0)
+                if (Main.mouseItem.type > ItemID.None)
                 {
-                    if (Main.mouseItem.type > ItemID.None)
-                    {
-                        itemSlot.ContainedItem = Main.mouseItem.Clone();
-                    }
+                    itemSlot.ContainedItem = Main.mouseItem.Clone();
                 }
                 else
                 {
@@ -431,116 +427,15 @@ namespace ProgressSystem.UIEditor
             foreach (var ge in ModContent.GetContent<GameEvent>())
             {
                 var tables = ge.GetConstructInfoTables();
-                foreach (var t in tables)
+                foreach (var constructInfo in tables)
                 {
-                    string label = t.Name;
+                    var data = constructInfo;
+                    string label = data.Name;
                     UIText type = new(label is null ? "Anonymous" : label.Split('.')[^1]);
                     type.SetSize(type.TextSize);
                     type.Events.OnMouseOver += evt => type.color = Color.Gold;
                     type.Events.OnMouseOut += evt => type.color = Color.White;
-                    type.Events.OnLeftDown += evt =>
-                    {
-                        var constructs = tables;
-                        dataView.ClearAllElements();
-                        foreach (var constructData in constructs)
-                        {
-                            UIVnlPanel constructPanel = new(0, 0);
-                            constructPanel.Info.SetMargin(10);
-                            dataView.AddElement(constructPanel);
-                            int innerY = 0;
-                            foreach (var info in constructData)
-                            {
-                                UIText name = new(info.Name ?? "Anonymous");
-                                name.SetPos(0, innerY);
-                                name.SetSize(name.TextSize);
-                                constructPanel.Register(name);
-
-                                UIText legal = new(info.Important ? "可以为空" : "不可为空");
-                                legal.SetPos(name.TextSize.X + 10, innerY);
-                                constructPanel.Register(legal);
-                                innerY += 28;
-
-                                UIVnlPanel valueInputBg = new(0, 28);
-                                valueInputBg.Info.Width.Percent = 1;
-                                valueInputBg.SetPos(0, innerY);
-                                constructPanel.Register(valueInputBg);
-
-                                UIInputBox valueInputer = new("类型为" + info.Type.Name);
-                                valueInputer.SetSize(-40, 0, 1, 1);
-                                valueInputer.OnInputText += text =>
-                                {
-                                    if (text.Any())
-                                    {
-                                        info.SetValue(text);
-                                        legal.ChangeText(info.IsMet ? ("合法值：" + info.GetValue()) : "不合法");
-                                    }
-                                    else legal.ChangeText(info.Important ? "可以为空" : "不可为空");
-                                };
-                                valueInputBg.Register(valueInputer);
-
-                                UIClose clear = new();
-                                clear.SetCenter(-10, 0, 1, 0.5f);
-                                clear.Events.OnLeftDown += evt => valueInputer.ClearText();
-                                valueInputBg.Register(clear);
-                                innerY += 48;
-                            }
-
-                            UIText create = new("创建进度");
-                            create.SetSize(create.TextSize);
-                            create.SetPos(0, innerY);
-                            create.Events.OnMouseOver += evt => create.color = Color.Gold;
-                            create.Events.OnMouseOut += evt => create.color = Color.White;
-                            create.Events.OnLeftDown += evt =>
-                            {
-                                if (constructData.TryCreate(out GameEvent task))
-                                {
-                                    UIGESlot ge = new(task);
-                                    ge.Events.OnMouseOver += evt =>
-                                    {
-                                        ev.canDrag = false;
-                                        eh.canDrag = false;
-                                    };
-                                    ge.Events.OnMouseOut += evt =>
-                                    {
-                                        ev.canDrag = true;
-                                        eh.canDrag = true;
-                                    };
-                                    ge.Events.OnLeftDown += GESlotLeftCheck;
-                                    ge.Events.OnLeftUp += evt =>
-                                    {
-                                        dragging = false;
-                                        draggingSelected = false;
-                                        datas[EditMod][EditPage][task] = ge.pos;
-                                    };
-                                    ge.Events.OnUpdate += GESlotUpdate;
-                                    ge.Events.OnRightDoubleClick += evt =>
-                                    {
-                                        datas[EditMod][EditPage].Remove(task);
-                                        GEPos.Remove(ge.pos);
-                                        eventView.InnerUIE.Remove(ge);
-                                    };
-                                    Vector2 pos = Vector2.Zero;
-                                    while (GEPos.Contains(pos)) pos.X++;
-                                    ge.pos = pos;
-                                    ge.SetPos(pos * 80);
-                                    GEPos.Add(pos);
-                                    eventView.AddElement(ge);
-                                    datas ??= [];
-                                    if(!datas.ContainsKey(EditMod))
-                                    {
-                                        datas[EditMod] = [];
-                                    }
-                                    if (!datas[EditMod].ContainsKey(EditPage))
-                                    {
-                                        datas[EditMod][EditPage] = [];
-                                    }
-                                    datas[EditMod][EditPage].Add(task, pos);
-                                }
-                            };
-                            constructPanel.Register(create);
-                            constructPanel.SetSize(0, innerY + 48, 1);
-                        }
-                    };
+                    type.Events.OnLeftDown += evt => CreateDataInput(data, dataView, eh, ev);
                     typeSelector.AddElement(type);
                 }
             }
@@ -713,23 +608,23 @@ namespace ProgressSystem.UIEditor
         {
             string root = Path.Combine(Main.SavePath, "Mods", ProgressSystem.Instance.Name);
             Directory.CreateDirectory(root);
-            foreach ((string modName, Dictionary<string, Dictionary<GameEvent, Vector2>> pages) in datas)
+            foreach ((string modName, Dictionary<string, Dictionary<GameEvent, GEData>> pages) in datas)
             {
+                if (!pages.Any()) continue;
                 Directory.CreateDirectory(Path.Combine(root, modName));
-                foreach ((string pageName, Dictionary<GameEvent, Vector2> ges) in pages)
+                foreach ((string pageName, Dictionary<GameEvent, GEData> ges) in pages)
                 {
                     using FileStream stream = File.OpenWrite(Path.Combine(root, modName, pageName + ".dat"));
                     using BinaryWriter writer = new(stream);
                     writer.Write(CurrentSaveVersion);
                     TagCompound tag = [];
                     List<TagCompound> subTags = [];
-                    foreach (var (ge, pos) in ges)
+                    foreach (var (ge, data) in ges)
                     {
                         var subtag = GEManager.Save(ge);
                         if (subtag != null)
                         {
-                            subtag["posX"] = pos.X;
-                            subtag["posY"] = pos.Y;
+                            data.SaveData(subtag);
                             subTags.Add(subtag);
                         }
                     }
@@ -761,7 +656,7 @@ namespace ProgressSystem.UIEditor
                         using FileStream stream = File.OpenRead(pageFile);
                         using BinaryReader reader = new(stream);
                         string fileSaveVersion = reader.ReadString();
-                        switch(fileSaveVersion)
+                        switch (fileSaveVersion)
                         {
                             case "1.0.0.0":
                                 {
@@ -779,14 +674,15 @@ namespace ProgressSystem.UIEditor
         void LoadPage_1_0_0_0(Stream stream, string modName, string pageName)
         {
             var tag = TagIO.FromStream(stream);
-            tag.TryGet("data", out List<TagCompound> tags);
-            foreach (var data in tags)
+            if (tag.TryGet("data", out List<TagCompound> tags))
             {
-                var ge = GEManager.Load(data);
-                if (ge != null)
+                foreach (var data in tags)
                 {
-                    Vector2 pos = new(data.GetFloat("posX"), data.GetFloat("posY"));
-                    datas[modName][pageName].Add(ge, pos);
+                    var ge = GEManager.Load(data);
+                    if (ge != null)
+                    {
+                        datas[modName][pageName].Add(ge, GEData.LoadData(data));
+                    }
                 }
             }
         }
@@ -805,12 +701,144 @@ namespace ProgressSystem.UIEditor
         {
             EditPage = pageName;
             ClearTemp();
-            foreach (var (ge, pos) in datas[EditMod][EditPage])
+            foreach (var (ge, data) in datas[EditMod][EditPage])
             {
-                GEPos.Add(pos);
+                Vector2 pos = data.Pos;
                 UIGESlot slot = new(ge, pos);
-                slot.SetPos(pos * 80);
+                RegisterEventToGESlot(slot);
+                GEPos.Add(pos);
                 eventView.AddElement(slot);
+            }
+        }
+        private void CreateGESlot(ConstructInfoTable<GameEvent> constructData, Vector2? orderPos = null)
+        {
+            if (EditMod == "" || EditPage == "")
+            {
+                Main.NewText("请先创建并选中进度表");
+                return;
+            }
+
+            if (constructData.TryCreate(out GameEvent task))
+            {
+                UIGESlot ge = new(task);
+                RegisterEventToGESlot(ge);
+                Vector2 pos = Vector2.Zero;
+                while (GEPos.Contains(pos)) pos.X++;
+                ge.pos = pos;
+                ge.SetPos(pos * 80);
+                GEPos.Add(pos);
+                eventView.AddElement(ge);
+                datas[EditMod][EditPage].Add(task, new(pos.X, pos.Y, constructData.Name, constructData.ExtraInfo));
+            }
+        }
+        private void RegisterEventToGESlot(UIGESlot ge)
+        {
+            var ev = eventView.Vscroll;
+            var eh = eventView.Hscroll;
+            ge.Events.OnMouseOver += evt =>
+            {
+                ev.canDrag = false;
+                eh.canDrag = false;
+            };
+            ge.Events.OnMouseOut += evt =>
+            {
+                ev.canDrag = true;
+                eh.canDrag = true;
+            };
+            ge.Events.OnLeftDown += GESlotLeftCheck;
+            ge.Events.OnLeftUp += evt =>
+            {
+                dragging = false;
+                draggingSelected = false;
+                datas[EditMod][EditPage][ge.ge].Pos = ge.pos;
+            };
+            ge.Events.OnUpdate += GESlotUpdate;
+            ge.Events.OnRightDoubleClick += evt =>
+            {
+                datas[EditMod][EditPage].Remove(ge.ge);
+                GEPos.Remove(ge.pos);
+                eventView.InnerUIE.Remove(ge);
+            };
+        }
+        private void CreateDataInput(ConstructInfoTable<GameEvent> data, UIContainerPanel dataView, HorizontalScrollbar eh, VerticalScrollbar ev)
+        {
+            dataView.ClearAllElements();
+            UIVnlPanel constructPanel = new(0, 0);
+            constructPanel.Info.SetMargin(10);
+            dataView.AddElement(constructPanel);
+            int innerY = 0;
+            foreach (var info in data)
+            {
+                UIText name = new(info.Name ?? "Anonymous");
+                name.SetPos(0, innerY);
+                name.SetSize(name.TextSize);
+                constructPanel.Register(name);
+
+                UIText legal = new(info.Important ? "可以为空" : "不可为空");
+                legal.SetPos(name.TextSize.X + 10, innerY);
+                constructPanel.Register(legal);
+                innerY += 28;
+
+                UIVnlPanel valueInputBg = new(0, 28);
+                valueInputBg.Info.Width.Percent = 1;
+                valueInputBg.SetPos(0, innerY);
+                constructPanel.Register(valueInputBg);
+
+                UIInputBox valueInputer = new("类型为" + info.Type.Name);
+                valueInputer.SetSize(-40, 0, 1, 1);
+                valueInputer.OnInputText += text =>
+                {
+                    if (text.Any())
+                    {
+                        info.SetValue(text);
+                        legal.ChangeText(info.IsMet ? ("合法值：" + info.GetValue()) : "不合法");
+                    }
+                    else legal.ChangeText(info.Important ? "可以为空" : "不可为空");
+                };
+                valueInputBg.Register(valueInputer);
+
+                UIClose clear = new();
+                clear.SetCenter(-10, 0, 1, 0.5f);
+                clear.Events.OnLeftDown += evt => valueInputer.ClearText();
+                valueInputBg.Register(clear);
+                innerY += 48;
+            }
+            UIText create = new("创建进度");
+            create.SetSize(create.TextSize);
+            create.SetPos(0, innerY);
+            create.Events.OnMouseOver += evt => create.color = Color.Gold;
+            create.Events.OnMouseOut += evt => create.color = Color.White;
+            create.Events.OnLeftDown += evt => CreateGESlot(data);
+            constructPanel.Register(create);
+            constructPanel.SetSize(0, innerY + 48, 1);
+        }
+        private void MatchPageName(string text, UIText report)
+        {
+            if (text.Any())
+            {
+                if (datas.TryGetValue(EditMod, out var mod))
+                {
+                    if (mod.ContainsKey(text))
+                    {
+                        report.ChangeText("名称重复");
+                        report.color = Color.Red;
+                    }
+                    else
+                    {
+                        report.ChangeText("名称可用");
+                        report.color = Color.Green;
+                    }
+                }
+                else
+                {
+                    report.ChangeText("名称可用");
+                    report.color = Color.Green;
+                }
+            }
+            else
+            {
+                report.ChangeText("不可为空");
+                report.color = Color.Red;
             }
         }
     }
