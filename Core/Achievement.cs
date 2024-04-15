@@ -86,10 +86,9 @@ public class Achievement : IWithStaticData
     protected Texture2DGetter _texture;
 
     /// <summary>
-    /// 在 UI 上的默认排列, 当为空时 UI 上的默认排列则自动给出
-    /// 当在 UI 上设置了此成就的位置时此项失效
+    /// 在 UI 上的位置, 当为空时 UI 上的默认排列则自动给出
     /// </summary>
-    public Vector2? DefaultPosition;
+    public Vector2? Position;
     #endregion
 
     #region 前后置相关
@@ -292,7 +291,7 @@ public class Achievement : IWithStaticData
         achievement.Tooltip = tooltip;
         achievement.Description = description;
         achievement.Texture = texture;
-        achievement.DefaultPosition = defaultPosition;
+        achievement.Position = defaultPosition;
 
         page.AddF(achievement);
         return achievement;
@@ -478,6 +477,7 @@ public class Achievement : IWithStaticData
             tag.SetWithDefault("TooltipKey", Tooltip.LocalizedTextValue?.Key);
             tag.SetWithDefault("Tooltip", Tooltip.StringValue);
             tag.SetWithDefault("Texture", Texture.AssetPath);
+            tag.SetWithDefault("Position", Position ?? Vector2.Zero);
         });
     }
     public virtual void LoadStaticData(TagCompound tag)
@@ -509,6 +509,7 @@ public class Achievement : IWithStaticData
                 Description = description;
             }
             Texture = tag.GetWithDefault<string>("Texture");
+            Position = tag.GetWithDefault<Vector2>("Position");
         });
     }
     #endregion

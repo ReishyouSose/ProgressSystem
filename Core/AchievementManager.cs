@@ -60,7 +60,7 @@ public class AchievementManager : ModSystem, IWithStaticData
 
     public static void PostInitialize()
     {
-        Pages.Values.ForeachDo(p => p.Achievements.Values.ForeachDo(a => a.PostInitialize()));
+        Pages.Values.ForeachDo(p => p.PostInitialize());
     }
     #region 存取数据
     public override void SaveWorldData(TagCompound tag)

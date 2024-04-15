@@ -1,6 +1,5 @@
 ﻿using ProgressSystem.Core.StaticData;
 using System.IO;
-using System.Reflection;
 
 namespace ProgressSystem.Core;
 
@@ -217,6 +216,41 @@ public class AchievementPage : IWithStaticData
         AchievementManager.AddPage(result);
         result.Reset();
         return result;
+    }
+
+    public void PostInitialize()
+    {
+        Achievements.Values.ForeachDo(a => a.PostInitialize());
+        SetDefaultPositionForAchievements();
+    }
+    void SetDefaultPositionForAchievements()
+    {
+        var values = Achievements.Values;
+        int achievementCount = values.Count;
+        int sqrt = (int)Math.Ceiling(Math.Sqrt(achievementCount));
+        bool[,] cell = new bool[sqrt, sqrt];
+        int i = 0;
+        var e = values.GetEnumerator();
+        int pow2 = sqrt * sqrt;
+        while (e.MoveNext())
+        {
+            if (e.Current.Position.HasValue)
+            {
+                Vector2 position = e.Current.Position.Value;
+                int x = (int)(position.X + 0.5f), y = (int)(position.Y + 0.5f);
+                if (0 <= x && x < sqrt && 0 <= y && y < sqrt)
+                {
+                    cell[x, y] = true;
+                }
+                continue;
+            }
+            while (i < pow2 && cell[i / sqrt, i % sqrt])
+            {
+                i += 1;
+            }
+            e.Current.Position = new(i / sqrt, i % sqrt);
+            i += 1;
+        }
     }
     #endregion
 
