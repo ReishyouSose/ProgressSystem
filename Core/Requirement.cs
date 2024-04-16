@@ -31,7 +31,7 @@ public abstract class Requirement
         // 在成就完成时结束监听
         Achievement.OnCompleteStatic += a =>
         {
-            foreach (var requirement in a.Requirements)
+            foreach (Requirement requirement in a.Requirements)
             {
                 requirement.EndListenSafe();
             }
@@ -296,7 +296,7 @@ public abstract class RequirementCombination : Requirement
     public override void NetSend(BinaryWriter writer)
     {
         base.NetSend(writer);
-        foreach (var requirement in Requirements)
+        foreach (Requirement requirement in Requirements)
         {
             requirement.NetSend(writer);
         }
@@ -304,7 +304,7 @@ public abstract class RequirementCombination : Requirement
     public override void NetReceive(BinaryReader reader)
     {
         base.NetReceive(reader);
-        foreach (var requirement in Requirements)
+        foreach (Requirement requirement in Requirements)
         {
             requirement.NetReceive(reader);
         }
@@ -314,7 +314,7 @@ public abstract class RequirementCombination : Requirement
     protected override void BeginListen()
     {
         base.BeginListen();
-        foreach (var requirement in Requirements)
+        foreach (Requirement requirement in Requirements)
         {
             requirement.BeginListenSafe();
         }
@@ -322,7 +322,7 @@ public abstract class RequirementCombination : Requirement
     protected override void EndListen()
     {
         base.EndListen();
-        foreach (var requirement in Requirements)
+        foreach (Requirement requirement in Requirements)
         {
             requirement.EndListenSafe();
         }

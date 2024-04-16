@@ -2,11 +2,11 @@
 {
     public class TimeRange : GameEvent, IProgressable, ISaveable
     {
-        const int TimePerDay = 86400;
-        const int TimePerHour = 3600;
-        const int DayStart = 16200;
-        const int NightStart = 70200;
-        double _timeMax, _timeMin;
+        private const int TimePerDay = 86400;
+        private const int TimePerHour = 3600;
+        private const int DayStart = 16200;
+        private const int NightStart = 70200;
+        private double _timeMax, _timeMin;
         public double TimeMax => _timeMax;
         public double TimeMin => _timeMin;
         public float Progress => Math.Clamp((float)((GetCurrentTime() - TimeMin) / (TimeMax - TimeMin)), 0, 1);
@@ -14,7 +14,7 @@
         {
             get
             {
-                var time = GetCurrentTime();
+                double time = GetCurrentTime();
                 while (time < _timeMin)
                 {
                     time += TimePerDay;
@@ -33,8 +33,8 @@
         }
         public TimeRange(int startHour, int endHour, int startMinute = 0, int endMinute = 0)
         {
-            _timeMin = (startHour * TimePerHour + startMinute) % TimePerDay;
-            _timeMax = (endHour * TimePerHour + endMinute) % TimePerDay;
+            _timeMin = ((startHour * TimePerHour) + startMinute) % TimePerDay;
+            _timeMax = ((endHour * TimePerHour) + endMinute) % TimePerDay;
             while (_timeMax < _timeMin)
             {
                 _timeMax += TimePerDay;
@@ -42,22 +42,18 @@
         }
         public static double GetCurrentTime()
         {
-            if (Main.dayTime)
-            {
-                return DayStart + Main.time;
-            }
-            return (NightStart + Main.time) % TimePerDay;
+            return Main.dayTime ? DayStart + Main.time : (NightStart + Main.time) % TimePerDay;
         }
         public override void Complete()
         {
 
         }
-        public void Save(TagCompound tag)
+        public void SaveData(TagCompound tag)
         {
             tag[nameof(_timeMin)] = _timeMin;
             tag[nameof(_timeMax)] = _timeMax;
         }
-        public void Load(TagCompound tag)
+        public void LoadData(TagCompound tag)
         {
             tag.TryGet(nameof(_timeMin), out _timeMin);
             tag.TryGet(nameof(_timeMax), out _timeMax);
@@ -76,14 +72,14 @@
         }
         public override IEnumerable<ConstructInfoTable<GameEvent>> GetConstructInfoTables()
         {
-            var table = new ConstructInfoTable<GameEvent>(t =>
+            ConstructInfoTable<GameEvent> table = new ConstructInfoTable<GameEvent>(t =>
             {
-                var e = t.GetEnumerator();
+                IEnumerator<ConstructInfoTable<GameEvent>.Entry> e = t.GetEnumerator();
                 e.MoveNext();
                 double timeMin = e.Current.GetValue<double>();
                 e.MoveNext();
                 double timeMax = e.Current.GetValue<double>();
-                return Create(timeMin,timeMax);
+                return Create(timeMin, timeMax);
             }, nameof(TimeRange));
             table.AddEntry(new(typeof(double), "timeMin"));
             table.AddEntry(new(typeof(double), "timeMax"));

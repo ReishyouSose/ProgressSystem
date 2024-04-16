@@ -7,8 +7,9 @@ namespace ProgressSystem.GameEvents
     {
         public string Name { get; private set; }
         public string? ExtraInfo { get; private set; }
-        List<Entry> _entries;
-        Func<ConstructInfoTable<T>, T> _createFunc;
+
+        private List<Entry> _entries;
+        private Func<ConstructInfoTable<T>, T> _createFunc;
         public bool Closed { get; private set; }
         public ConstructInfoTable(Func<ConstructInfoTable<T>, T> createFunc, string name = "Anonymous", string? extraInfo = null)
         {
@@ -30,7 +31,7 @@ namespace ProgressSystem.GameEvents
         public void Close() => Closed = true;
         public IEnumerator<Entry> GetEnumerator()
         {
-            foreach (var entry in _entries)
+            foreach (Entry entry in _entries)
             {
                 yield return entry;
             }
@@ -60,8 +61,8 @@ namespace ProgressSystem.GameEvents
         public bool AllEntryMeet => _entries.All(e => e.IsMet);
         public ConstructInfoTable<T> Clone()
         {
-            var table = new ConstructInfoTable<T>(_createFunc);
-            foreach (var entry in _entries)
+            ConstructInfoTable<T> table = new ConstructInfoTable<T>(_createFunc);
+            foreach (Entry entry in _entries)
             {
                 table.AddEntry(new(entry.Type, entry.Name, entry.Important));
             }
@@ -70,12 +71,12 @@ namespace ProgressSystem.GameEvents
         public static bool TryAutoCreate(out List<ConstructInfoTable<T>> tables)
         {
             tables = [];
-            var cs = typeof(T).GetConstructors(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            ConstructorInfo[]? cs = typeof(T).GetConstructors(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
             if (cs is null || cs.Length == 0)
             {
                 return false;
             }
-            foreach (var c in cs)
+            foreach (ConstructorInfo c in cs)
             {
                 tables.Add(Create(c));
             }
@@ -86,13 +87,13 @@ namespace ProgressSystem.GameEvents
             ConstructInfoTable<T> table = new((t) =>
             {
                 List<object?> objs = [];
-                foreach (var entry in t)
+                foreach (Entry entry in t)
                 {
                     objs.Add(entry.GetValue());
                 }
                 return (T)c.Invoke([.. objs]);
             }, $"Constructor of {c.DeclaringType?.FullName ?? "Anonymous"}", extraInfo);
-            foreach (var p in c.GetParameters())
+            foreach (ParameterInfo p in c.GetParameters())
             {
                 table.AddEntry(new(p));
             }
@@ -109,13 +110,13 @@ namespace ProgressSystem.GameEvents
             ConstructInfoTable<T> table = new((t) =>
             {
                 List<object?> objs = [];
-                foreach (var entry in t)
+                foreach (Entry entry in t)
                 {
                     objs.Add(entry.GetValue());
                 }
                 return (T)method.Invoke(isStatic ? null : objs[0], objs.ToArray()[(isStatic ? 0 : 1)..])!;
             }, method.IsSpecialName ? method.Name : "Anonymous", extraInfo);
-            foreach (var p in method.GetParameters())
+            foreach (ParameterInfo p in method.GetParameters())
             {
                 table.AddEntry(new Entry(p.ParameterType, p.Name));
             }
@@ -126,26 +127,26 @@ namespace ProgressSystem.GameEvents
         {
             return Create(@delegate.Method, extraInfo);
         }
-        public static bool Create(Type type, string? extraInfo,out List<ConstructInfoTable<object>> tables)
+        public static bool Create(Type type, string? extraInfo, out List<ConstructInfoTable<object>> tables)
         {
             tables = [];
-            var cs = type.GetConstructors(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            ConstructorInfo[]? cs = type.GetConstructors(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
             if (cs is null || cs.Length == 0)
             {
                 return false;
             }
-            foreach (var c in cs)
+            foreach (ConstructorInfo c in cs)
             {
                 ConstructInfoTable<object> table = new((t) =>
                 {
                     List<object?> objs = [];
-                    foreach (var entry in t)
+                    foreach (ConstructInfoTable<object>.Entry entry in t)
                     {
                         objs.Add(entry.GetValue());
                     }
                     return (T)c.Invoke([.. objs]);
                 }, $"Constructor of {c.DeclaringType?.FullName ?? "Anonymous"}", extraInfo);
-                foreach (var p in c.GetParameters())
+                foreach (ParameterInfo p in c.GetParameters())
                 {
                     table.AddEntry(new(p.ParameterType, p.Name));
                 }
@@ -177,8 +178,8 @@ namespace ProgressSystem.GameEvents
                     SetValue(parameter.DefaultValue);
                 }
             }
-            public object? GetValue() => _value;
-            public EntryT? GetValue<EntryT>() => (EntryT?)_value;
+            public object? GetValue() => HasValue ? _value : default;
+            public EntryT? GetValue<EntryT>() => HasValue ? (EntryT?)_value : default;
             public bool SetValue(object? value)
             {
                 try
@@ -200,11 +201,7 @@ namespace ProgressSystem.GameEvents
             {
                 get
                 {
-                    if (Important)
-                    {
-                        return HasValue;
-                    }
-                    return true;
+                    return !Important || HasValue;
                 }
             }
         }

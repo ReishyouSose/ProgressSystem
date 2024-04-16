@@ -23,7 +23,7 @@ public static partial class TigerUtils
     public static Item NewItem<T>(int stack = 1, int prefix = 0) where T : ModItem => new(ModContent.ItemType<T>(), stack, prefix);
     public static T NewModItem<T>(int stack = 1, int prefix = 0) where T : ModItem => (T)new Item(ModContent.ItemType<T>(), stack, prefix).ModItem;
     public static T NewGlobalItem<T>(int type, int stack = 1, int prefix = 0) where T : GlobalItem => new Item(type, stack, prefix).GetGlobalItem<T>();
-    public static T? NewGlobalItemS<T>(int type, int stack = 1, int prefix = 0) where T : GlobalItem => new Item(type, stack, prefix).TryGetGlobalItem<T>(out var result) ? result : null;
+    public static T? NewGlobalItemS<T>(int type, int stack = 1, int prefix = 0) where T : GlobalItem => new Item(type, stack, prefix).TryGetGlobalItem<T>(out T? result) ? result : null;
     public static Item SampleItem(int itemID) => ContentSamples.ItemsByType[itemID];
     public static Item SampleItem<T>() where T : ModItem => ContentSamples.ItemsByType[ModContent.ItemType<T>()];
     public static T SampleModItem<T>() where T : ModItem => (T)ContentSamples.ItemsByType[ModContent.ItemType<T>()].ModItem;
@@ -65,11 +65,7 @@ public static partial class TigerUtils
     {
         get
         {
-            if (Main.mouseItem.IsNotAirS())
-            {
-                return Main.mouseItem;
-            }
-            return Main.LocalPlayer.HeldItem;
+            return Main.mouseItem.IsNotAirS() ? Main.mouseItem : Main.LocalPlayer.HeldItem;
         }
         set
         {
@@ -100,14 +96,7 @@ public static partial class TigerUtils
             {
                 return;
             }
-            if (value == null)
-            {
-                LocalRealHeldItem = new();
-            }
-            else
-            {
-                LocalRealHeldItem = value;
-            }
+            LocalRealHeldItem = value ?? new();
 
         }
     }
@@ -137,11 +126,7 @@ public static partial class TigerUtils
         {
             int floor = (int)Math.Floor(x);
             double delta = x - floor;
-            if (rand.NextDouble() < delta)
-            {
-                return floor + 1;
-            }
-            return floor;
+            return rand.NextDouble() < delta ? floor + 1 : floor;
         }
         /// <summary>
         /// 将double转化为bool
@@ -320,7 +305,7 @@ public static partial class TigerClasses
         public TextGetter(Func<string> stringGetterValue) => StringGetterValue = stringGetterValue;
         #endregion
         #region Vars
-        enum TextGetterType
+        private enum TextGetterType
         {
             None,
             String,
@@ -328,13 +313,13 @@ public static partial class TigerClasses
             StringGetter
         }
         [FieldOffset(8)]
-        TextGetterType Type;
+        private TextGetterType Type;
         [FieldOffset(0)]
-        string? stringValue;
+        private string? stringValue;
         [FieldOffset(0)]
-        LocalizedText? localizedTextValue;
+        private LocalizedText? localizedTextValue;
         [FieldOffset(0)]
-        Func<string>? stringGetterValue;
+        private Func<string>? stringGetterValue;
         #endregion
         #region 设置与获取值
         public readonly bool IsNone => Type == TextGetterType.None;
@@ -367,7 +352,7 @@ public static partial class TigerClasses
         public static implicit operator TextGetter(Func<string> stringGetterValue) => new(stringGetterValue);
         #endregion
         #region 运算符重载
-        static public TextGetter operator |(TextGetter left, TextGetter right) => left.IsNone ? right : left;
+        public static TextGetter operator |(TextGetter left, TextGetter right) => left.IsNone ? right : left;
         #endregion
     }
     /// <summary>
@@ -385,7 +370,7 @@ public static partial class TigerClasses
         public Texture2DGetter(Func<Texture2D> texture2DGetterValue) => Texture2DGetterValue = texture2DGetterValue;
         #endregion
         #region Vars
-        enum Texture2DGetterType
+        private enum Texture2DGetterType
         {
             None,
             Texture2D,
@@ -393,13 +378,13 @@ public static partial class TigerClasses
             Texture2DGetter
         }
         [FieldOffset(8)]
-        Texture2DGetterType Type;
+        private Texture2DGetterType Type;
         [FieldOffset(0)]
-        Texture2D? texture2DValue;
+        private Texture2D? texture2DValue;
         [FieldOffset(0)]
-        Asset<Texture2D>? assetOfTexture2DValue;
+        private Asset<Texture2D>? assetOfTexture2DValue;
         [FieldOffset(0)]
-        Func<Texture2D>? texture2DGetterValue;
+        private Func<Texture2D>? texture2DGetterValue;
         #endregion
         #region 设置与获取值
         public readonly bool IsNone => Type == Texture2DGetterType.None;
@@ -412,7 +397,7 @@ public static partial class TigerClasses
         };
         public void SetTexturePath(string texturePath)
         {
-            if (ModContent.RequestIfExists<Texture2D>(texturePath, out var texture))
+            if (ModContent.RequestIfExists<Texture2D>(texturePath, out Asset<Texture2D>? texture))
             {
                 AssetOfTexture2DValue = texture;
             }
@@ -440,7 +425,7 @@ public static partial class TigerClasses
         public static implicit operator Texture2DGetter(Func<Texture2D> texture2DGetterValue) => new(texture2DGetterValue);
         #endregion
         #region 运算符重载
-        static public Texture2DGetter operator |(Texture2DGetter left, Texture2DGetter right) => left.IsNone ? right : left;
+        public static Texture2DGetter operator |(Texture2DGetter left, Texture2DGetter right) => left.IsNone ? right : left;
         #endregion
     }
 }
@@ -453,7 +438,7 @@ public static partial class TigerExtensions
     /// </summary>
     public static void SetWithDefault<T>(this TagCompound tag, string key, T? value, T? defaultValue = default, bool replace = false) where T : IEquatable<T>
     {
-        if (value == null && defaultValue == null || value?.Equals(defaultValue) == true)
+        if ((value == null && defaultValue == null) || value?.Equals(defaultValue) == true)
         {
             return;
         }
@@ -657,9 +642,9 @@ public static partial class TigerExtensions
         {
             return;
         }
-        foreach (var (k, v) in dictValue)
+        foreach ((string k, object v) in dictValue)
         {
-            if (dictionary.TryGetValue(k, out var val))
+            if (dictionary.TryGetValue(k, out T? val))
             {
                 fromTag(val, (TagCompound)v);
             }
@@ -688,9 +673,9 @@ public static partial class TigerExtensions
         {
             return;
         }
-        foreach (var (k, v) in dictValue)
+        foreach ((string k, object v) in dictValue)
         {
-            if (dictionary.TryGetValue(k, out var val))
+            if (dictionary.TryGetValue(k, out T? val))
             {
                 fromTag(val, (TagCompound)v);
             }
@@ -703,7 +688,7 @@ public static partial class TigerExtensions
     public static void SaveListData<T>(this TagCompound tag, string key, IList<T> list, Func<T, TagCompound?> toTag)
     {
         bool needSave = false;
-        var data = list.Select(e => toTag(e).WithAction(t => needSave.AssignIf(t?.Count > 0, true))).ToList();
+        List<TagCompound?> data = list.Select(e => toTag(e).WithAction(t => needSave.AssignIf(t?.Count > 0, true))).ToList();
         if (needSave)
         {
             tag[key] = data;
@@ -717,7 +702,7 @@ public static partial class TigerExtensions
         }
         foreach (int i in Math.Min(list.Count, listData.Count))
         {
-            var ld = listData[i];
+            TagCompound? ld = listData[i];
             if (ld != null)
             {
                 fromTag(list[i], ld);
@@ -834,7 +819,7 @@ public static partial class TigerExtensions
         }
         if (item.DamageType == DamageClass.Ranged && Main.player[Main.myPlayer].shroomiteStealth)
         {
-            item.knockBack *= 1f + (1f - Main.player[Main.myPlayer].stealth) * 0.5f;
+            item.knockBack *= 1f + ((1f - Main.player[Main.myPlayer].stealth) * 0.5f);
         }
         int num2 = 30;
         int oneDropLogo = -1;
@@ -950,14 +935,7 @@ public static partial class TigerExtensions
                         " "
                     ]);
                 }
-                if (!item.buy)
-                {
-                    texts[numTooltips] = Lang.tip[49].Value + " " + text;
-                }
-                else
-                {
-                    texts[numTooltips] = Lang.tip[50].Value + " " + text;
-                }
+                texts[numTooltips] = !item.buy ? Lang.tip[49].Value + " " + text : Lang.tip[50].Value + " " + text;
                 names[numTooltips] = "Price";
                 numTooltips++;
             }
@@ -1075,11 +1053,7 @@ public static partial class TigerExtensions
     {
         rand ??= DefaultUnifiedRandomGetter();
         int length = enumerable.Count();
-        if (length == 0)
-        {
-            return default;
-        }
-        return enumerable.ElementAt(rand.Next(length));
+        return length == 0 ? default : enumerable.ElementAt(rand.Next(length));
     }
     /// <summary>
     /// 需确保<paramref name="enumerable"/>不会变化长度且长度非0
@@ -1159,11 +1133,7 @@ public static partial class TigerExtensions
     {
         rand ??= DefaultUnifiedRandomGetter();
         T[] list = [.. enumerable];
-        if (list.Length == 0)
-        {
-            return default;
-        }
-        return list[rand.Next(list.Length)];
+        return list.Length == 0 ? default : list[rand.Next(list.Length)];
     }
     public static T? RandomS<T>(this IEnumerable<T> enumerable, Func<T, double> weight, UnifiedRandom? rand = null, bool uncheckNegative = false)
     {
@@ -1288,11 +1258,7 @@ public static partial class TigerExtensions
         : [.. list.Select(t => GetRight(totalWeight += w = weight(t).WithMin(0), w))];
         double randDouble = rand.NextDouble() * totalWeight;
         int index = Range(list.Count).FirstOrDefault(i => weights[i] > randDouble || TigerUtils.Do(randDouble -= weights[i]), -1);
-        if (index == -1)
-        {
-            return default;
-        }
-        return list.ElementAt(index);
+        return index == -1 ? default : list.ElementAt(index);
     }
     public static T? RandomS<T>(this IList<T> list, Func<T, float> weight, UnifiedRandom? rand = null, bool uncheckNegative = false)
     {
@@ -1303,11 +1269,7 @@ public static partial class TigerExtensions
         : [.. list.Select(t => GetRight(totalWeight += w = weight(t).WithMin(0), w))];
         float randFloat = rand.NextFloat() * totalWeight;
         int index = Range(list.Count).FirstOrDefault(i => weights[i] > randFloat || TigerUtils.Do(randFloat -= weights[i]), -1);
-        if (index == -1)
-        {
-            return default;
-        }
-        return list.ElementAt(index);
+        return index == -1 ? default : list.ElementAt(index);
     }
     public static T? RandomS<T>(this IList<T> list, Func<T, int> weight, UnifiedRandom? rand = null, bool uncheckNegative = false)
     {
@@ -1318,16 +1280,12 @@ public static partial class TigerExtensions
         : [.. list.Select(t => GetRight(totalWeight += w = weight(t).WithMin(0), w))];
         int randInt = rand.Next(totalWeight);
         int index = Range(list.Count).FirstOrDefault(i => weights[i] > randInt || TigerUtils.Do(randInt -= weights[i]), -1);
-        if (index == -1)
-        {
-            return default;
-        }
-        return list.ElementAt(index);
+        return index == -1 ? default : list.ElementAt(index);
     }
     #endregion
     #region UnifiedRandom
     public static double NextDouble(this UnifiedRandom rand, double maxValue) => rand.NextDouble() * maxValue;
-    public static double NextDouble(this UnifiedRandom rand, double minValue, double maxValue) => rand.NextDouble() * (maxValue - minValue) + minValue;
+    public static double NextDouble(this UnifiedRandom rand, double minValue, double maxValue) => (rand.NextDouble() * (maxValue - minValue)) + minValue;
     /// <summary>
     /// 会有<paramref name="p"/>的概率得到<see langword="true"/>
     /// </summary>

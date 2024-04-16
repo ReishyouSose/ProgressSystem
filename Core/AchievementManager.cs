@@ -13,7 +13,7 @@ public class AchievementManager : ModSystem
     #region Test
     public override void OnModLoad()
     {
-        var page = AchievementPage.Create(ModInstance, "Achievements");
+        AchievementPage page = AchievementPage.Create(ModInstance, "Achievements");
         Achievement.Create(page, ModInstance, "First", requirements: [new SubmitRequirement()], rewards: [new ItemReward(ItemID.SilverCoin, 20)]);
         Achievement.Create(page, ModInstance, "Workbench", predecessorNames: ["Wood"],
             requirements: [new CraftItemRequirement(ItemID.WorkBench)],
@@ -106,11 +106,13 @@ public class AchievementManager : ModSystem
     {
         HookInPostInitialize();
     }
-    static void HookInPostInitialize()
+
+    private static void HookInPostInitialize()
     {
         MonoModHooks.Add(typeof(ItemLoader).GetMethod("FinishSetup", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static), OnItemLoaderFinishSetup);
     }
-    static void OnItemLoaderFinishSetup(Action orig)
+
+    private static void OnItemLoaderFinishSetup(Action orig)
     {
         orig();
         PostInitialize();

@@ -57,7 +57,7 @@ public class CraftItemRequirement : Requirement
     }
     private void ListenCraftItem(Item item, RecipeItemCreationContext context)
     {
-        if (ItemType > 0 && item.type != ItemType || Condition?.Invoke(item) == false)
+        if ((ItemType > 0 && item.type != ItemType) || Condition?.Invoke(item) == false)
         {
             return;
         }

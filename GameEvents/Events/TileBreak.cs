@@ -26,7 +26,7 @@ public class TileBreak : CountInt
         return @event;
     }
 
-    public override void Load(TagCompound tag)
+    public override void LoadData(TagCompound tag)
     {
         if (tag.TryGet(nameof(IsCompleted), out bool isCompleted))
         {
@@ -34,29 +34,15 @@ public class TileBreak : CountInt
         }
         if (tag.TryGet(nameof(Type), out string type))
         {
-            if (int.TryParse(type, out int num))
-            {
-                Type = num;
-            }
-            else
-            {
-                if (ModContent.TryFind(type, out ModTile modTile))
-                {
-                    Type = modTile.Type;
-                }
-                else
-                {
-                    Type = -1;
-                }
-            }
+            Type = int.TryParse(type, out int num) ? num : ModContent.TryFind(type, out ModTile modTile) ? modTile.Type : -1;
         }
-        base.Load(tag);
+        base.LoadData(tag);
     }
-    public override void Save(TagCompound tag)
+    public override void SaveData(TagCompound tag)
     {
         tag[nameof(IsCompleted)] = IsCompleted;
         tag[nameof(Type)] = Type >= TileID.Count ? TileLoader.GetTile(Type).FullName : Type.ToString();
-        base.Save(tag);
+        base.SaveData(tag);
     }
     public void TryComplete(Player player, int x, int y, Tile tile)
     {
@@ -67,9 +53,9 @@ public class TileBreak : CountInt
     }
     public override IEnumerable<ConstructInfoTable<GameEvent>> GetConstructInfoTables()
     {
-        var table = new ConstructInfoTable<GameEvent>(t =>
+        ConstructInfoTable<GameEvent> table = new ConstructInfoTable<GameEvent>(t =>
         {
-            var e = t.GetEnumerator();
+            IEnumerator<ConstructInfoTable<GameEvent>.Entry> e = t.GetEnumerator();
             e.MoveNext();
             int type = e.Current.GetValue<int>();
             e.MoveNext();

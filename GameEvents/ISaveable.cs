@@ -3,7 +3,7 @@
 public interface ISaveable
 {
 
-    public abstract void Save(TagCompound tag);
+    public abstract void SaveData(TagCompound tag);
 
-    public abstract void Load(TagCompound tag);
+    public abstract void LoadData(TagCompound tag);
 }

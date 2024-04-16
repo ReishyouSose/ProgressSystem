@@ -56,7 +56,10 @@ namespace ProgressSystem.UIEditor.ExtraUI
             Events.OnLeftDown += evt =>
             {
                 if (!dragging)
+                {
                     dragging = true;
+                }
+
                 oldlocal = Main.MouseScreen;
                 GEEditor.GEPos.Remove(pos);
                 color = Color.White * 0.75f;
@@ -96,9 +99,15 @@ namespace ProgressSystem.UIEditor.ExtraUI
                     }
                     SetCenter(mouse - origin, false);
                     if (Info.Left.Pixel < 0)
+                    {
                         Info.Left.Pixel = 0;
+                    }
+
                     if (Info.Top.Pixel < 0)
+                    {
                         Info.Top.Pixel = 0;
+                    }
+
                     Calculation();
                 }
                 oldlocal = mouse;
@@ -126,7 +135,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
             }
             if (adsorption != null)
             {
-                sb.SimpleDraw(Tex, adsorption.Value * 80 + ParentElement.HitBox(false).TopLeft(), null, Vector2.Zero, color: Color.White * 0.5f);
+                sb.SimpleDraw(Tex, (adsorption.Value * 80) + ParentElement.HitBox(false).TopLeft(), null, Vector2.Zero, color: Color.White * 0.5f);
             }
             ChatManager.DrawColorCodedStringWithShadow(sb, FontAssets.MouseText.Value, pos.ToString(),
                 hitbox.TopLeft() + new Vector2(0, 55), Color.White, 0, Vector2.Zero, Vector2.One, -1, 1.5f);

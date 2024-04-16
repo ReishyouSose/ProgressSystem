@@ -113,7 +113,7 @@ public class Achievement
     {
         predecessors?.ForEach(p => p.successors.Remove(this));
         predecessors = null;
-        _predecessorNames = predecessorNames == null ? [] : [..predecessorNames.Select(p => (p, isFullName))];
+        _predecessorNames = predecessorNames == null ? [] : [.. predecessorNames.Select(p => (p, isFullName))];
     }
     /// <summary>
     /// 添加一个前置
@@ -126,7 +126,7 @@ public class Achievement
             (_predecessorNames ??= []).Add((predecessorName, isFullName));
             return;
         }
-        var predecessor = isFullName ? Page.Get(predecessorName) : Page.GetByName(predecessorName);
+        Achievement? predecessor = isFullName ? Page.Get(predecessorName) : Page.GetByName(predecessorName);
         if (predecessor == null)
         {
             return;
@@ -149,9 +149,9 @@ public class Achievement
             _predecessorNames.Remove((predecessorName, isFullName));
             return;
         }
-        foreach (var i in predecessors.Count)
+        foreach (int i in predecessors.Count)
         {
-            var predecessor = predecessors[i];
+            Achievement predecessor = predecessors[i];
             if (predecessor.Name != predecessorName)
             {
                 continue;
@@ -272,12 +272,14 @@ public class Achievement
         Texture2DGetter texture = default,
         Vector2? defaultPosition = null)
     {
-        Achievement achievement = new();
-        achievement.Mod = mod;
-        achievement.Page = page;
-        achievement.Name = name;
-        achievement.LocalizedKey = string.Join('.', page.FullName, name);
-        achievement.TexturePath = string.Join('/', page.Name, name);
+        Achievement achievement = new()
+        {
+            Mod = mod,
+            Page = page,
+            Name = name,
+            LocalizedKey = string.Join('.', page.FullName, name),
+            TexturePath = string.Join('/', page.Name, name)
+        };
 
         achievement.SetPredecessorNames(predecessorNames, isPredecessorFullName);
         achievement.Requirements = new(achievement, requirements);
@@ -371,7 +373,7 @@ public class Achievement
         {
             UnlockSafe();
         }
-        
+
     }
 
     public Func<bool> CompleteCondition;
@@ -397,7 +399,7 @@ public class Achievement
             CompleteSafe();
         }
     }
-    
+
     public Func<bool> CloseCondition;
     public bool DefaultCloseCondition()
     {
@@ -474,9 +476,9 @@ public class Achievement
 
     public override string ToString()
     {
-        var requirementsString = string.Join(",\n    ", Requirements.Select(r => r.ToString()));
-        var rewardsString = string.Join(",\n    ", Rewards.Select(r => r.ToString()));
-        var predecessorsString = string.Join(",\n    ", Predecessors.Select(r => r.FullName));
+        string requirementsString = string.Join(",\n    ", Requirements.Select(r => r.ToString()));
+        string rewardsString = string.Join(",\n    ", Rewards.Select(r => r.ToString()));
+        string predecessorsString = string.Join(",\n    ", Predecessors.Select(r => r.FullName));
         return $"""
             {FullName}: {State}, {nameof(Predecessors)}: [{predecessorsString}], {nameof(Requirements)}: [
                 {requirementsString}

@@ -48,7 +48,7 @@ public class KillNPCRequirement : Requirement
     }
     private void ListenKillNPC(NPC npc)
     {
-        if (NPCType > 0 && npc.type != NPCType || Condition?.Invoke(npc) == false)
+        if ((NPCType > 0 && npc.type != NPCType) || Condition?.Invoke(npc) == false)
         {
             return;
         }

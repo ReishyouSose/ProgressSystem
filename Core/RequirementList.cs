@@ -7,7 +7,7 @@ public class RequirementList(Achievement achievement, IEnumerable<Requirement>? 
     private readonly Achievement Achievement = achievement;
 
     private readonly List<Requirement> data = requirements == null ? [] : [.. requirements.Select(r => r.WithAction(r => r.Initialize(achievement)))];
-    
+
     public int Count => data.Count;
     public bool IsReadOnly => false;
 
@@ -35,7 +35,7 @@ public class RequirementList(Achievement achievement, IEnumerable<Requirement>? 
         data.Insert(index, requirement);
         requirement.Initialize(Achievement);
     }
-    
+
     public bool Contains(Requirement requirement) => data.Contains(requirement);
     public int IndexOf(Requirement requirement) => data.IndexOf(requirement);
     public IEnumerator<Requirement> GetEnumerator() => data.GetEnumerator();

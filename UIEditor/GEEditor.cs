@@ -80,7 +80,10 @@ namespace ProgressSystem.UIEditor
                 tag[X] = x;
                 tag[Y] = y;
                 tag[Name] = constructName;
-                if (extraInfo != null) tag[Extra] = extraInfo;
+                if (extraInfo != null)
+                {
+                    tag[Extra] = extraInfo;
+                }
             }
             public static GEData LoadData(TagCompound tag) => new(tag.GetFloat(X), tag.GetFloat(Y),
                 tag.GetString(Name), tag.TryGet(Extra, out string extra) ? extra : null);
@@ -98,7 +101,11 @@ namespace ProgressSystem.UIEditor
             {
                 LoadProgress();
             }
-            if (Main.gameMenu) return;
+            if (Main.gameMenu)
+            {
+                return;
+            }
+
             Info.IsVisible = true;
             RemoveAll();
 
@@ -155,7 +162,11 @@ namespace ProgressSystem.UIEditor
             bool first = false;
             foreach (Mod mod in ModLoader.Mods)
             {
-                if (!mod.HasAsset("icon")) continue;
+                if (!mod.HasAsset("icon"))
+                {
+                    continue;
+                }
+
                 datas.TryAdd(mod.Name, []);
                 string modName = mod.Name;
                 UIModSlot modSlot = new(RUIHelper.T2D(modName + "/icon"), modName) { hoverText = mod.DisplayName };
@@ -172,10 +183,10 @@ namespace ProgressSystem.UIEditor
                     indexList.ClearAllElements();
                     EditMod = modSlot.modName;
                     ClearTemp();
-                    if (datas.TryGetValue(modSlot.modName, out var modPages))
+                    if (datas.TryGetValue(modSlot.modName, out Dictionary<string, Dictionary<GameEvent, GEData>>? modPages))
                     {
                         bool firstPage = false;
-                        foreach (var (page, ges) in modPages)
+                        foreach ((string page, Dictionary<GameEvent, GEData> ges) in modPages)
                         {
                             UIText pageName = new(page);
                             pageName.SetSize(pageName.TextSize);
@@ -196,10 +207,10 @@ namespace ProgressSystem.UIEditor
                 if (!first)
                 {
                     modSlot.Events.LeftDown(modSlot);
-                    var innerUIE = indexList.expandView.InnerUIE;
+                    List<BaseUIElement> innerUIE = indexList.expandView.InnerUIE;
                     if (innerUIE.Any())
                     {
-                        var firstIndex = innerUIE[0];
+                        BaseUIElement firstIndex = innerUIE[0];
                         firstIndex.Events.LeftDown(firstIndex);
                         first = true;
                     }
@@ -292,9 +303,9 @@ namespace ProgressSystem.UIEditor
             deleteProgress.Events.OnMouseOut += evt => deleteProgress.color = Color.White;
             deleteProgress.Events.OnLeftDown += evt =>
             {
-                if (datas.TryGetValue(EditMod, out var pages) && pages.ContainsKey(EditPage))
+                if (datas.TryGetValue(EditMod, out Dictionary<string, Dictionary<GameEvent, GEData>>? pages) && pages.ContainsKey(EditPage))
                 {
-                    var inner = indexList.expandView.InnerUIE;
+                    List<BaseUIElement> inner = indexList.expandView.InnerUIE;
                     inner.Remove(x => x is UIText index && index.text == EditPage);
                     datas[EditMod].Remove(EditPage);
                     if (inner.Any())
@@ -440,7 +451,7 @@ namespace ProgressSystem.UIEditor
                 text.AppendLine();
                 text.Append("对应BuffID：" + item.buffType);
                 ChatManager.DrawColorCodedStringWithShadow(sb, FontAssets.MouseText.Value, text.ToString(),
-                    itemSlot.HitBox().BottomLeft() + Vector2.UnitY * 5, Color.White, 0, Vector2.Zero, Vector2.One);
+                    itemSlot.HitBox().BottomLeft() + (Vector2.UnitY * 5), Color.White, 0, Vector2.Zero, Vector2.One);
             };
             Register(itemSlot);
 
@@ -473,12 +484,12 @@ namespace ProgressSystem.UIEditor
 
             typeSelector.expandView.autoPos[0] = true;
 
-            foreach (var ge in ModContent.GetContent<GameEvent>())
+            foreach (GameEvent ge in ModContent.GetContent<GameEvent>())
             {
-                var tables = ge.GetConstructInfoTables();
-                foreach (var constructInfo in tables)
+                IEnumerable<ConstructInfoTable<GameEvent>> tables = ge.GetConstructInfoTables();
+                foreach (ConstructInfoTable<GameEvent> constructInfo in tables)
                 {
-                    var data = constructInfo;
+                    ConstructInfoTable<GameEvent> data = constructInfo;
                     string label = data.Name;
                     UIText type = new(label is null ? "Anonymous" : label.Split('.')[^1]);
                     type.SetSize(type.TextSize);
@@ -488,7 +499,7 @@ namespace ProgressSystem.UIEditor
                     typeSelector.AddElement(type);
                 }
             }
-            var inner = typeSelector.expandView.InnerUIE;
+            List<BaseUIElement> inner = typeSelector.expandView.InnerUIE;
             UIText firstConstruct = inner[0] as UIText;
             typeSelector.ChangeShowElement(firstConstruct);
             firstConstruct.Events.LeftDown(firstConstruct);
@@ -500,7 +511,11 @@ namespace ProgressSystem.UIEditor
             LeftCtrl = state.IsKeyDown(Keys.LeftControl);
             LeftAlt = state.IsKeyDown(Keys.LeftAlt);
             bool pressS = state.IsKeyDown(Keys.S);
-            if (!pressS) trySave = false;
+            if (!pressS)
+            {
+                trySave = false;
+            }
+
             if (!trySave && LeftCtrl && pressS)
             {
                 SaveProgress();
@@ -511,8 +526,8 @@ namespace ProgressSystem.UIEditor
             if (dragging || collision != null)
             {
                 Point target = Main.MouseScreen.ToPoint();
-                var eh = eventView.Hscroll;
-                var ev = eventView.Vscroll;
+                HorizontalScrollbar eh = eventView.Hscroll;
+                VerticalScrollbar ev = eventView.Vscroll;
                 if (target.X > eventView.Right && eh.Real < 1)
                 {
                     eh.MoveView(target.X - eventView.Right, 15);
@@ -620,7 +635,10 @@ namespace ProgressSystem.UIEditor
                     frameSelect.Remove(ge);
                     ge.selected = false;
                 }
-                else ge.selected = frameSelect.Add(ge);
+                else
+                {
+                    ge.selected = frameSelect.Add(ge);
+                }
             }
             else if (frameSelect.Any())
             {
@@ -646,7 +664,10 @@ namespace ProgressSystem.UIEditor
                             ge.selected = false;
                         }
                         else
+                        {
                             ge.selected = frameSelect.Add(ge);
+                        }
+
                         interacted.Add(ge);
                     }
                 }
@@ -666,14 +687,18 @@ namespace ProgressSystem.UIEditor
             }
         }
 
-        static string CurrentSaveVersion = "1.0.0.0";
+        private static string CurrentSaveVersion = "1.0.0.0";
         private void SaveProgress()
         {
             string root = Path.Combine(Main.SavePath, "Mods", ProgressSystem.Instance.Name);
             Directory.CreateDirectory(root);
             foreach ((string modName, Dictionary<string, Dictionary<GameEvent, GEData>> pages) in datas)
             {
-                if (!pages.Any()) continue;
+                if (!pages.Any())
+                {
+                    continue;
+                }
+
                 Directory.CreateDirectory(Path.Combine(root, modName));
                 foreach ((string pageName, Dictionary<GameEvent, GEData> ges) in pages)
                 {
@@ -682,9 +707,9 @@ namespace ProgressSystem.UIEditor
                     writer.Write(CurrentSaveVersion);
                     TagCompound tag = [];
                     List<TagCompound> subTags = [];
-                    foreach (var (ge, data) in ges)
+                    foreach ((GameEvent ge, GEData data) in ges)
                     {
-                        var subtag = GEManager.Save(ge);
+                        TagCompound? subtag = GEManager.Save(ge);
                         if (subtag != null)
                         {
                             data.SaveData(subtag);
@@ -705,12 +730,12 @@ namespace ProgressSystem.UIEditor
                 return;
             }
             string[] modDirs = Directory.GetDirectories(root);
-            foreach (var modDir in modDirs)
+            foreach (string modDir in modDirs)
             {
                 string modName = Path.GetFileName(modDir);
                 datas[modName] = [];
                 string[] pageFiles = Directory.GetFiles(modDir);
-                foreach (var pageFile in pageFiles)
+                foreach (string pageFile in pageFiles)
                 {
                     string pageName = Path.GetFileNameWithoutExtension(pageFile);
                     datas[modName][pageName] = [];
@@ -734,14 +759,15 @@ namespace ProgressSystem.UIEditor
                 }
             }
         }
-        void LoadPage_1_0_0_0(Stream stream, string modName, string pageName)
+
+        private void LoadPage_1_0_0_0(Stream stream, string modName, string pageName)
         {
-            var tag = TagIO.FromStream(stream);
+            TagCompound tag = TagIO.FromStream(stream);
             if (tag.TryGet("data", out List<TagCompound> tags))
             {
-                foreach (var data in tags)
+                foreach (TagCompound data in tags)
                 {
-                    var ge = GEManager.Load(data);
+                    GameEvent? ge = GEManager.Load(data);
                     if (ge != null)
                     {
                         datas[modName][pageName].Add(ge, GEData.LoadData(data));
@@ -764,7 +790,7 @@ namespace ProgressSystem.UIEditor
         {
             EditPage = pageName;
             ClearTemp();
-            foreach (var (ge, data) in datas[EditMod][EditPage])
+            foreach ((GameEvent ge, GEData data) in datas[EditMod][EditPage])
             {
                 Vector2 pos = data.Pos;
                 UIGESlot slot = new(ge, pos);
@@ -786,7 +812,11 @@ namespace ProgressSystem.UIEditor
                 UIGESlot ge = new(task);
                 RegisterEventToGESlot(ge);
                 Vector2 pos = Vector2.Zero;
-                while (GEPos.Contains(pos)) pos.X++;
+                while (GEPos.Contains(pos))
+                {
+                    pos.X++;
+                }
+
                 ge.pos = pos;
                 ge.SetPos(pos * 80);
                 GEPos.Add(pos);
@@ -798,8 +828,8 @@ namespace ProgressSystem.UIEditor
         }
         private void RegisterEventToGESlot(UIGESlot ge)
         {
-            var ev = eventView.Vscroll;
-            var eh = eventView.Hscroll;
+            VerticalScrollbar ev = eventView.Vscroll;
+            HorizontalScrollbar eh = eventView.Hscroll;
             ge.Events.OnMouseOver += evt =>
             {
                 ev.canDrag = false;
@@ -839,7 +869,7 @@ namespace ProgressSystem.UIEditor
             constructPanel.Info.SetMargin(10);
             dataView.AddElement(constructPanel);
             int innerY = 0;
-            foreach (var info in data)
+            foreach (ConstructInfoTable<GameEvent>.Entry info in data)
             {
                 UIText name = new(info.Name ?? "Anonymous");
                 name.SetPos(0, innerY);
@@ -865,7 +895,10 @@ namespace ProgressSystem.UIEditor
                         info.SetValue(text);
                         legal.ChangeText(info.IsMet ? ("合法值：" + info.GetValue()) : "不合法");
                     }
-                    else legal.ChangeText(info.Important ? "可以为空" : "不可为空");
+                    else
+                    {
+                        legal.ChangeText(info.Important ? "可以为空" : "不可为空");
+                    }
                 };
                 valueInputBg.Register(valueInputer);
 
@@ -888,7 +921,7 @@ namespace ProgressSystem.UIEditor
         {
             if (text.Any())
             {
-                if (datas.TryGetValue(EditMod, out var mod))
+                if (datas.TryGetValue(EditMod, out Dictionary<string, Dictionary<GameEvent, GEData>>? mod))
                 {
                     if (mod.ContainsKey(text))
                     {

@@ -41,7 +41,8 @@ public class AchievementPage
     /// <summary>
     /// 在初始化时就会调用一次
     /// </summary>
-    public virtual void Reset() {
+    public virtual void Reset()
+    {
         Achievements.Values.ForeachDo(a => a.Reset());
         OnResetStatic?.Invoke(this);
         OnReset?.Invoke();
@@ -257,7 +258,7 @@ public class AchievementPage
     /// <returns>找到的成就, 若没有这个名字的成就, 则返回<see langword="null"/></returns>
     public Achievement? Get(string achievementFullName)
     {
-        return Achievements.TryGetValue(achievementFullName, out var result) ? result : null;
+        return Achievements.TryGetValue(achievementFullName, out Achievement? result) ? result : null;
     }
 
     /// <summary>
@@ -308,17 +309,21 @@ public class AchievementPage
 
     #region 存取数据
     // TODO: 存取 Page 自身的数据
-    public virtual void SaveDataInWorld(TagCompound tag) {
+    public virtual void SaveDataInWorld(TagCompound tag)
+    {
         tag.SaveDictionaryData("Achievements", Achievements, (a, t) => a.SaveDataInWorld(t));
     }
-    public virtual void LoadDataInWorld(TagCompound tag) {
+    public virtual void LoadDataInWorld(TagCompound tag)
+    {
         tag.LoadDictionaryData("Achievements", Achievements, (a, t) => a.LoadDataInWorld(t));
     }
-    public virtual void SaveDataInPlayer(TagCompound tag) {
+    public virtual void SaveDataInPlayer(TagCompound tag)
+    {
         tag.SetWithDefault("State", State.ToString(), StateEnum.Locked.ToString());
         tag.SaveDictionaryData("Achievements", Achievements, (a, t) => a.SaveDataInPlayer(t));
     }
-    public virtual void LoadDataInPlayer(TagCompound tag) {
+    public virtual void LoadDataInPlayer(TagCompound tag)
+    {
         if (Enum.TryParse(tag.GetWithDefault("State", StateEnum.Locked.ToString()), out StateEnum state))
         {
             State = state;
@@ -329,10 +334,12 @@ public class AchievementPage
 
     #region 网络同步
     // TODO: Page 自身的网络同步
-    public virtual void NetSend(BinaryWriter writer) {
+    public virtual void NetSend(BinaryWriter writer)
+    {
         Achievements.Values.ForeachDo(a => a.NetSend(writer));
     }
-    public virtual void NetReceive(BinaryReader reader) {
+    public virtual void NetReceive(BinaryReader reader)
+    {
         Achievements.Values.ForeachDo(a => a.NetReceive(reader));
     }
     #endregion

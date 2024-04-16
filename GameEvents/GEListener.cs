@@ -1,4 +1,4 @@
-﻿using ProgressSystem.GameEvents.Events;
+﻿using System.Collections.ObjectModel;
 using Terraria.ObjectData;
 
 namespace ProgressSystem.GameEvents;
@@ -16,21 +16,36 @@ public static class GEListener
     public delegate void OnPickItemDelegate(Player player, Item item);
     public delegate void OnLocalPlayerKillNPCDelegate(NPC npc);
     public delegate void OnDamageStatisticsDelegate(Player player, int damage);
+    public delegate void OnDistanceStatisticsDelegate(Player player, float distance);
+    public delegate void OnPlayerResetDelegate(Player player);
+    public delegate void OnStatisticInventoryDelegate(Player player, ReadOnlyDictionary<int, int> invItems);
+    public delegate void OnPlayerHurtDelegate(Player player, Player.HurtInfo hurtInfo);
+    public delegate void OnManaCostStatisticsDelegate(Player player, int cost);
 
-    public static event OnNPCKilledDelegate? 
+    public static event OnNPCKilledDelegate?
         OnNPCKilled;
-    public static event OnCreateItemDelegate? 
+    public static event OnCreateItemDelegate?
         OnCreateItem;
-    public static event OnTileBreakDelegate? 
+    public static event OnTileBreakDelegate?
         OnTileBreak;
-    public static event OnBuyItemDelegate? 
+    public static event OnBuyItemDelegate?
         OnBuyItem;
-    public static event OnConsumeItemDelegate? 
+    public static event OnConsumeItemDelegate?
         OnConsumeItem;
-    public static event OnPickItemDelegate? 
+    public static event OnPickItemDelegate?
         OnPickItem;
     public static event OnDamageStatisticsDelegate?
         OnDamageStatistics;
+    public static event OnDistanceStatisticsDelegate?
+        OnDistanceStatistics;
+    public static event OnPlayerResetDelegate?
+        OnPlayerReset;
+    public static event OnStatisticInventoryDelegate?
+        OnStatisticInventory;
+    public static event OnPlayerHurtDelegate?
+        OnPlayerHurt;
+    public static event OnManaCostStatisticsDelegate?
+        OnManaCostStatistics;
 
     public delegate void OnLocalPlayerCreateItemDelegate(Item item, ItemCreationContext context);
     public delegate void OnLocalPlayerCraftItemDelegate(Item item, RecipeItemCreationContext context);
@@ -39,20 +54,25 @@ public static class GEListener
     public delegate void OnLocalPlayerConsumeItemDelegate(Item item);
     public delegate void OnLocalPlayerPickItemDelegate(Item item);
 
-    public static event OnLocalPlayerKillNPCDelegate? 
+    public static event OnLocalPlayerKillNPCDelegate?
         OnLocalPlayerKillNPC;
-    public static event OnLocalPlayerCreateItemDelegate? 
+    public static event OnLocalPlayerCreateItemDelegate?
         OnLocalPlayerCreateItem;
-    public static event OnLocalPlayerCraftItemDelegate? 
+    public static event OnLocalPlayerCraftItemDelegate?
         OnLocalPlayerCraftItem;
-    public static event OnLocalPlayerBreakTileDelegate? 
+    public static event OnLocalPlayerBreakTileDelegate?
         OnLocalPlayerBreakTile;
-    public static event OnLocalPlayerBuyItemDelegate? 
+    public static event OnLocalPlayerBuyItemDelegate?
         OnLocalPlayerBuyItem;
-    public static event OnLocalPlayerConsumeItemDelegate? 
+    public static event OnLocalPlayerConsumeItemDelegate?
         OnLocalPlayerConsumeItem;
-    public static event OnLocalPlayerPickItemDelegate? 
+    public static event OnLocalPlayerPickItemDelegate?
         OnLocalPlayerPickItem;
+
+    static GEListener()
+    {
+        OnPlayerReset += ListenStatisticInventory;
+    }
 
     /// <summary>
     /// Set this hook in <see cref="GlobalNPC.HitEffect(NPC, NPC.HitInfo)"/> when <see cref="NPC.life"/> less than 1 if in server 
@@ -84,7 +104,7 @@ public static class GEListener
     }
     internal static void ListenTileBreak(Player player, int x, int y, Tile tile)
     {
-        var data = TileObjectData.GetTileData(tile);
+        TileObjectData? data = TileObjectData.GetTileData(tile);
         if (data is null)
         {
             OnTileBreak?.Invoke(player, x, y, tile);
@@ -142,5 +162,34 @@ public static class GEListener
     internal static void ListenDamage(Player player, int damage)
     {
         OnDamageStatistics?.Invoke(player, damage);
+    }
+    internal static void ListenPlayerMove(Player player, float moveDistance)
+    {
+        OnDistanceStatistics?.Invoke(player, moveDistance);
+    }
+    internal static void ListenStatisticInventory(Player player)
+    {
+        Dictionary<int, int> invItems = [];
+        foreach (Item? item in player.inventory)
+        {
+            if (invItems.ContainsKey(item.type))
+            {
+                invItems[item.type] += item.stack;
+            }
+            else
+            {
+                invItems[item.type] = item.stack;
+            }
+        }
+        ReadOnlyDictionary<int, int> dic = new(invItems);
+        OnStatisticInventory?.Invoke(player, dic);
+    }
+    internal static void ListenManaCost(Player player, int manaConsumed)
+    {
+        OnManaCostStatistics?.Invoke(player, manaConsumed);
+    }
+    internal static void ListenPlayerHurt(Player player, Player.HurtInfo hurtInfo)
+    {
+        OnPlayerHurt?.Invoke(player, hurtInfo);
     }
 }
