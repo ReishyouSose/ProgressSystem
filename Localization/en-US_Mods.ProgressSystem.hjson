@@ -36,54 +36,6 @@ Achievements: {
 	ProgressSystem: {
 		TestPage: {
 			First: {
-				DisplayName: First
-				Tooltip: The first achievement to achieve
-				Description: ""
-			}
-
-			Workbench: {
-				DisplayName: Workbench
-				Tooltip: Craft a workbench
-				Description: ""
-			}
-
-			WoodTools: {
-				DisplayName: Wood Tools
-				Tooltip: Craft some wood tools
-				Description: ""
-			}
-
-			Wood: {
-				DisplayName: Wood
-				Tooltip: Pick wood
-				Description: ""
-			}
-
-			House: {
-				DisplayName: House
-				Tooltip: Make a house
-				Description: ""
-			}
-
-			Slime: {
-				DisplayName: Slime
-				Tooltip: Kill a slime
-				Description: ""
-			}
-
-			Torch: {
-				DisplayName: Torch
-				Tooltip: Craft a torch
-				Description: ""
-			}
-
-			TestCreate.Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.TestCreate.Description
-		}
-	}
-
-	ProgressSystem: {
-		TestPage: {
-			First: {
 				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.First.DisplayName
 				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.First.Tooltip
 				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.First.Description
@@ -124,6 +76,8 @@ Achievements: {
 				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Torch.Tooltip
 				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Torch.Description
 			}
+
+			TestCreate.Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.TestCreate.Description
 		}
 	}
 }

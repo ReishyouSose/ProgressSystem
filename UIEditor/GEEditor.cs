@@ -86,6 +86,7 @@ namespace ProgressSystem.UIEditor
         /// 检测是否已按下ctrl + S
         /// </summary>
         private bool trySave;
+        private bool tryDelete;
         public override void OnInitialization()
         {
             base.OnInitialization();
@@ -116,6 +117,16 @@ namespace ProgressSystem.UIEditor
                 SaveProgress();
                 trySave = true;
                 ChangeSaveState(true);
+            }
+            if (!tryDelete && state.IsKeyDown(Keys.Delete))
+            {
+                foreach (UIAchSlot slot in frameSelect)
+                {
+                    AchPos.Remove(slot.pos);
+                    EditingPage.Achievements.Remove(slot.ach.FullName);
+                    achView.RemoveElement(slot);
+                }
+
             }
             if (dragging || collision != null)
             {
@@ -254,26 +265,7 @@ namespace ProgressSystem.UIEditor
                 string text = achNameInputer.Text;
                 if (text.Any())
                 {
-                    if (EditingPage.Achievements.TryGetValue(string.Join('.', editingMod.Name, text), out Achievement ach))
-                        ach.Requirements.Clear();
-                    else
-                    {
-                        ach = Achievement.Create(EditingPage, editingMod, text);
-
-                        // 在创建的同时添加到面板上
-                        ////////////////////////////////////////////////////////
-                        // tiger 写的, 如果有什么纰漏请修改                   //
-                        UIAchSlot slot = new(ach, ach.Position);              //
-                        RegisterEventToGESlot(slot);                          //
-                        AchPos.Add(ach.Position ?? Vector2.Zero);             //
-                        achView.AddElement(slot);                             //
-                        // 在编辑器中编辑过的东西需要设置ShouldSaveStaticData //
-                        ach.ShouldSaveStaticData = true;                      //
-                        //                                                    //
-                        ////////////////////////////////////////////////////////
-                    }
-
-                    EditingPage.Achievements.Remove(editingAch.ach.Name);
+                    EditingPage.Achievements.Remove(editingAch.ach.FullName);
                     Achievement ach = Achievement.Create(EditingPage, editingMod, text);
                     foreach (UIRequireText require in conditionView.InnerUIE.Cast<UIRequireText>())
                     {
@@ -516,12 +508,10 @@ namespace ProgressSystem.UIEditor
             {
                 Point mouse = (Main.MouseScreen - achView.ChildrenElements[0].HitBox(false).TopLeft()).ToPoint();
                 Vector2 pos = new(mouse.X / 80, mouse.Y / 80);
+                if (AchPos.Contains(pos)) return;
                 string name = BaseName;
                 int i = 1;
-                while (EditingPage.Achievements.ContainsKey(editingMod.Name + "." + name + i))
-                {
-                    i++;
-                }
+                while (EditingPage.Achievements.ContainsKey(editingMod.Name + "." + name + i)) i++;
                 Achievement ach = Achievement.Create(EditingPage, editingMod, name + i);
                 ach.Position = pos;
                 UIAchSlot slot = new(ach, pos);
@@ -862,6 +852,14 @@ namespace ProgressSystem.UIEditor
                 AchPos.Remove(ge.pos);
                 achView.InnerUIE.Remove(ge);
                 ChangeSaveState(false);
+            };
+            ge.ReDraw = sb =>
+            {
+                ge.DrawSelf(sb);
+                if (ge.ach == editingAch.ach)
+                {
+                    RUIHelper.DrawRec(sb, ge.HitBox().Modified(4, 4, -8, -8), 2f, Color.SkyBlue);
+                }
             };
         }
         private void RegisterRequireDataPanel(ConstructInfoTable<Requirement> data)

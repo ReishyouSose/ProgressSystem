@@ -9,6 +9,15 @@ namespace ProgressSystem.UIEditor.ExtraUI
         public readonly UIAchSlot end = end;
         private readonly static Color pink = Color.Pink;
         private readonly static Color blue = Color.Blue;
+        public override void Update(GameTime gt)
+        {
+            base.Update(gt);
+            if (start.ParentElement == null || end.ParentElement == null)
+            {
+                ParentElement.Remove(this);
+                end.ach.RemovePredecessor(start.ach.FullName, true);
+            }
+        }
         public override void DrawSelf(SpriteBatch sb)
         {
             Vector2 startPos = start.Center();
