@@ -49,7 +49,49 @@ public class AchievementManager : ModSystem, IWithStaticData
     private static readonly Dictionary<string, AchievementPage> pages = [];
     public static IReadOnlyDictionary<Mod, Dictionary<string, AchievementPage>> PagesByMod => pagesByMod;
     private static readonly Dictionary<Mod, Dictionary<string, AchievementPage>> pagesByMod = [];
-    internal static bool AddPage(AchievementPage page)
+    /// <summary>
+    /// 尝试添加一个页面
+    /// </summary>
+    /// <param name="forceAdd">如果有同名页则替换它</param>
+    /// <returns>是否成功添加</returns>
+    public static bool TryAddPage(AchievementPage page, bool forceAdd = false)
+    {
+        if (pages.TryGetValue(page.FullName, out var existingPage))
+        {
+            if (existingPage == page)
+            {
+                return true;
+            }
+            if (forceAdd)
+            {
+                pages[page.FullName] = page;
+                pagesByMod[page.Mod][page.Name] = page;
+                return true;
+            }
+            return false;
+        }
+        pages.Add(page.FullName, page);
+        if (!pagesByMod.TryGetValue(page.Mod, out var modPages))
+        {
+            modPages = [];
+            pagesByMod.Add(page.Mod, modPages);
+        }
+        modPages.Add(page.Name, page);
+        return true;
+    }
+    public static bool RemovePage(AchievementPage page)
+    {
+        if (!pages.Remove(page.FullName))
+        {
+            return false;
+        }
+        pagesByMod[page.Mod].Remove(page.Name);
+        return true;
+    }
+    /// <summary>
+    /// 在保证没有同名页时才能调用此方法以添加页面, 否则会报错
+    /// </summary>
+    internal static void AddPage(AchievementPage page)
     {
         pages.Add(page.FullName, page);
         if (!pagesByMod.TryGetValue(page.Mod, out var modPages))
@@ -57,14 +99,7 @@ public class AchievementManager : ModSystem, IWithStaticData
             modPages = [];
             pagesByMod.Add(page.Mod, modPages);
         }
-        return modPages.TryAdd(page.Name, page);
-    }
-    internal static bool RemovePage(AchievementPage page)
-    {
-        bool remove = pagesByMod[page.Mod].Remove(page.Name);
-        if (!remove) return false;
-        return pages.Remove(page.FullName);
-
+        modPages.Add(page.Name, page);
     }
 
     public static void PostInitialize()
@@ -167,6 +202,7 @@ public class AchievementManager : ModSystem, IWithStaticData
         Start();
     }
 
+    public static bool AfterPostSetup { get; private set; }
     #region 钩子
     public override void Load()
     {
@@ -181,6 +217,10 @@ public class AchievementManager : ModSystem, IWithStaticData
     {
         orig();
         PostInitialize();
+    }
+    public override void Unload()
+    {
+        AfterPostSetup = false;
     }
     #endregion
 }
@@ -211,6 +251,8 @@ public class AchievementPlayerManager : ModPlayer
     public override void LoadData(TagCompound tag)
     {
         loadedData = tag;
+        var cs = ModContent.GetInstance<CraftItemRequirement>().GetConstructInfoTables();
+        ;
     }
     private TagCompound? loadedData;
 }

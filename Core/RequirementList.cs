@@ -2,7 +2,7 @@
 
 namespace ProgressSystem.Core;
 
-public class RequirementList(Achievement achievement, IEnumerable<Requirement>? requirements) : IList<Requirement>, IReadOnlyList<Requirement>
+public class RequirementList(Achievement achievement, IEnumerable<Requirement>? requirements = null) : IList<Requirement>, IReadOnlyList<Requirement>
 {
     private readonly Achievement Achievement = achievement;
 

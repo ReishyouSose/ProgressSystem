@@ -347,7 +347,6 @@ public class AchievementPage : IWithStaticData
     #endregion
 
     #region 存取数据
-    // TODO: 存取 Page 自身的数据
     public virtual void SaveDataInWorld(TagCompound tag)
     {
         tag.SaveDictionaryData("Achievements", Achievements, (a, t) => a.SaveDataInWorld(t));
@@ -377,7 +376,13 @@ public class AchievementPage : IWithStaticData
     public virtual void LoadStaticData(TagCompound tag)
     {
         this.LoadStaticDataTemplate(fullName => Achievements.TryGetValue(fullName, out var a) ? a : null,
-            (a, m, n) => { a.Mod = m; a.Name = n; }, Achievements.Add, "Achievements", tag);
+            (a, m, n) => {
+                a.Mod = m;
+                a.Name = n;
+                a.Page = this;
+                a.LocalizedKey = string.Join('.', FullName, n);
+                a.TexturePath = string.Join('/', Name, n);
+            }, Achievements.Add, "Achievements", tag);
     }
     #endregion
 

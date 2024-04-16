@@ -113,7 +113,7 @@ public static class StaticDataHelper
         {
             return null;
         }
-        T? result = (T?)Activator.CreateInstance(type);
+        T? result = (T?)Activator.CreateInstance(type, true);
         if (result == null)
         {
             return null;
