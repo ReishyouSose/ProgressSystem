@@ -253,9 +253,25 @@ namespace ProgressSystem.UIEditor
                 string text = achNameInputer.Text;
                 if (text.Any())
                 {
-                    if (EditingPage.Achievements.TryGetValue(text, out Achievement ach))
+                    if (EditingPage.Achievements.TryGetValue(string.Join('.', editingMod.Name, text), out Achievement ach))
                         ach.Requirements.Clear();
-                    else ach = Achievement.Create(EditingPage, editingMod, text);
+                    else
+                    {
+                        ach = Achievement.Create(EditingPage, editingMod, text);
+
+                        // 在创建的同时添加到面板上
+                        ////////////////////////////////////////////////////////
+                        // tiger 写的, 如果有什么纰漏请修改                   //
+                        UIAchSlot slot = new(ach, ach.Position);              //
+                        RegisterEventToGESlot(slot);                          //
+                        AchPos.Add(ach.Position ?? Vector2.Zero);             //
+                        achView.AddElement(slot);                             //
+                        // 在编辑器中编辑过的东西需要设置ShouldSaveStaticData //
+                        ach.ShouldSaveStaticData = true;                      //
+                        //                                                    //
+                        ////////////////////////////////////////////////////////
+                    }
+
                     foreach (UIRequireText require in conditionView.InnerUIE.Cast<UIRequireText>())
                     {
                         ach.Requirements.Add(require.requirement);
@@ -753,7 +769,7 @@ namespace ProgressSystem.UIEditor
                 if (path.EndsWith(".dat"))
                 {
                     var splitedPath = path.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-                    directory = string.Join(Path.PathSeparator, splitedPath[..^1]);
+                    directory = string.Join(Path.DirectorySeparatorChar, splitedPath[..^1]);
                 }
                 else
                 {
@@ -789,7 +805,7 @@ namespace ProgressSystem.UIEditor
             {
                 UIAchSlot slot = new(ach, ach.Position);
                 RegisterEventToGESlot(slot);
-                AchPos.Add(ach.Position.Value);
+                AchPos.Add(ach.Position ?? Vector2.Zero);
                 achView.AddElement(slot);
             }
         }

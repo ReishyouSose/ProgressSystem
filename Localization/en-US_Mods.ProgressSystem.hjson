@@ -25,11 +25,16 @@ Requirements: {
 		DisplayName: Pick Item
 		Tooltip: ""
 	}
+
+	AllOfRequirements.DisplayName: All Of Requirements
+	AnyOfRequirements.DisplayName: Any Of Requirements
+	EmptyRequirement.DisplayName: Empty Requirement
+	SomeOfRequirements.DisplayName: Some Of Requirements
 }
 
 Achievements: {
-	TestPage: {
-		Achievements: {
+	ProgressSystem: {
+		TestPage: {
 			First: {
 				DisplayName: First
 				Tooltip: The first achievement to achieve
@@ -71,6 +76,8 @@ Achievements: {
 				Tooltip: Craft a torch
 				Description: ""
 			}
+
+			TestCreate.Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.TestCreate.Description
 		}
 	}
 }

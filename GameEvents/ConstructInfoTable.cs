@@ -169,6 +169,7 @@ namespace ProgressSystem.GameEvents
                 {
                     table.AddEntry(new(p));
                 }
+                table.Close();
                 tables.Add(table);
             }
             return true;

@@ -10,7 +10,7 @@
             delete.SetCenter(20, 0, 0, 0.5f);
             Register(delete);
 
-            UIText text = new(requirement.ToString());
+            UIText text = new(requirement.DisplayName.Value ?? requirement.GetType().Name);
             text.SetPos(20, 0);
             text.SetMaxWidth(130);
             SetSize(0, text.TextSize.Y, 1);

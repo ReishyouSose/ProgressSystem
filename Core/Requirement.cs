@@ -53,19 +53,7 @@ public abstract class Requirement : IWithStaticData, ILoadable
     public virtual void Initialize(Achievement achievement)
     {
         Achievement = achievement;
-        // TODO
-        if (DisplayName.IsNone)
-        {
-            Tooltip = achievement.Mod.GetLocalization($"Requirements.{GetType().Name}.DisplayName".FormatWith(DisplayNameArgs));
-        }
-        if (DisplayName.IsNone)
-        {
-            Tooltip = achievement.Mod.GetLocalization($"Requirements.{GetType().Name}.Tooltip".FormatWith(TooltipArgs));
-        }
-        if (Texture.IsNone)
-        {
-            Texture = $"{achievement.Mod.Name}/Assets/Textures/Requirements/{GetType().Name}";
-        }
+        InitializeByDefinedMod();
     }
     public virtual IEnumerable<ConstructInfoTable<Requirement>> GetConstructInfoTables()
     {
@@ -298,7 +286,30 @@ public abstract class Requirement : IWithStaticData, ILoadable
         return $"{GetType().Name}: {nameof(Completed)}: {Completed}, {nameof(Listening)}: {Listening}";
     }
 
-    public virtual void Load(Mod mod) { }
+    /// <summary>
+    /// 获取对应类型的条件的定义在哪个mod
+    /// </summary>
+    public static IReadOnlyDictionary<Type, Mod> DefinedMod => definedMod;
+    protected static Dictionary<Type, Mod> definedMod = [];
+    public virtual void Load(Mod mod) {
+        definedMod.Add(GetType(), mod);
+        InitializeByDefinedMod(mod);
+    }
+    protected virtual void InitializeByDefinedMod(Mod? mod = null)
+    {
+        mod ??= definedMod[GetType()];
+        if (DisplayName.IsNone)
+        {
+            DisplayName |= mod.GetLocalization($"Requirements.{GetType().Name}.DisplayName".FormatWith(DisplayNameArgs));
+        }
+        if (DisplayName.IsNone)
+        {
+            Tooltip = mod.GetLocalization($"Requirements.{GetType().Name}.Tooltip".FormatWith(TooltipArgs));
+        }
+        Texture |= $"{mod.Name}/Assets/Textures/Requirements/{GetType().Name}";
+        Texture |= $"{mod.Name}/Assets/Textures/Requirements/Default";
+        Texture |= $"{mod.Name}/Assets/Textures/Default";
+    }
 
     public virtual void Unload() { }
 }

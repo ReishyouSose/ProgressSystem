@@ -2,7 +2,7 @@
 
 namespace ProgressSystem.Core;
 
-public class RewardList(Achievement achievement, IEnumerable<Reward>? rewards) : IList<Reward>, IReadOnlyList<Reward>
+public class RewardList(Achievement achievement, IEnumerable<Reward>? rewards = null) : IList<Reward>, IReadOnlyList<Reward>
 {
     private readonly Achievement Achievement = achievement;
 

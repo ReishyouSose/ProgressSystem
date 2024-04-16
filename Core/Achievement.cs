@@ -291,7 +291,7 @@ public class Achievement : IWithStaticData
     /// <summary>
     /// 奖励
     /// </summary>
-    public RewardList Rewards = null!;
+    public RewardList Rewards;
 
     public delegate void OnGetAllRewardDelegate(bool allReceived);
     public event OnGetAllRewardDelegate? OnGetAllReward;
@@ -393,6 +393,8 @@ public class Achievement : IWithStaticData
         UnlockCondition = DefaultUnlockCondition;
         CompleteCondition = DefaultCompleteCondition;
         GetSourceRect = DefaultGetSourceRect;
+        Requirements = new(this);
+        Rewards = new(this);
     }
 
     public void PostInitialize()
@@ -445,7 +447,18 @@ public class Achievement : IWithStaticData
     {
         return PredecessorCountNeeded < 0 ? State.IsClosed() : State.IsCompleted();
     }
+    public virtual void CheckState()
+    {
+        if (ReachedStableState())
+        {
+            return;
+        }
+        TryUnlock();
+        TryComplete();
+        TryClose();
+    }
 
+    #region 解锁
     public Func<bool> UnlockCondition;
     public bool DefaultUnlockCondition()
     {
@@ -471,7 +484,9 @@ public class Achievement : IWithStaticData
         }
 
     }
+    #endregion
 
+    #region 完成
     public Func<bool> CompleteCondition;
     public bool DefaultCompleteCondition()
     {
@@ -502,7 +517,9 @@ public class Achievement : IWithStaticData
             CompleteSafe();
         }
     }
+    #endregion
 
+    #region 关闭
     public Func<bool> CloseCondition;
     public bool DefaultCloseCondition()
     {
@@ -527,17 +544,25 @@ public class Achievement : IWithStaticData
             CloseSafe();
         }
     }
+    #endregion
 
-    public virtual void CheckState()
+    #region 重复
+    public bool Repeatable;
+    public virtual void TryRepeat()
     {
-        if (ReachedStableState())
+        if (!Repeatable && State != StateEnum.Completed)
         {
             return;
         }
-        TryUnlock();
-        TryComplete();
-        TryClose();
+        RepeatSafe();
     }
+    public virtual void RepeatSafe()
+    {
+        Reset();
+        Start();
+    }
+    #endregion
+
     #endregion
 
     #region 数据存取
@@ -578,6 +603,7 @@ public class Achievement : IWithStaticData
             tag.SetWithDefaultN("RequirementCountNeeded", RequirementCountNeeded);
             tag.SetWithDefaultN("PredecessorCountNeeded", PredecessorCountNeeded);
             tag.SetWithDefault("NeedSubmit", NeedSubmit);
+            tag.SetWithDefault("Repeatable", Repeatable);
         });
     }
     public virtual void LoadStaticData(TagCompound tag)
@@ -614,6 +640,7 @@ public class Achievement : IWithStaticData
             RequirementCountNeeded = tag.GetWithDefaultN<int>("RequirementCountNeeded");
             PredecessorCountNeeded = tag.GetWithDefaultN<int>("PredecessorCountNeeded");
             tag.GetWithDefault("NeedSubmit", out NeedSubmit);
+            tag.GetWithDefault("Repeatable", out Repeatable);
             Requirements.Clear();
         });
     }
