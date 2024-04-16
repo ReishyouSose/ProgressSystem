@@ -1,8 +1,10 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using ProgressSystem.Core;
 using ProgressSystem.GameEvents;
 using ProgressSystem.UIEditor.ExtraUI;
+using RUIModule;
+using System.Diagnostics;
+using System.IO;
 using System.Text;
 using Terraria.GameContent;
 using Terraria.UI.Chat;
@@ -53,6 +55,8 @@ namespace ProgressSystem.UIEditor
         private UIVnlPanel editPanel;
         private UIVnlPanel pagePanel;
         private UIInputBox pageInputer;
+        private UIInputBox achNameInputer;
+        private UIInputBox savePathInputer;
         private UIDropDownList<UIText> pageList;
         /// <summary>
         /// 用于判定包含的GE鼠标碰撞箱
@@ -63,6 +67,7 @@ namespace ProgressSystem.UIEditor
         /// 选中的作为前置的Ach
         /// </summary>
         private UIAchSlot preSetting;
+        private UIAchSlot editingAch;
         private UIText saveTip;
         private static bool LeftShift;
         private static bool LeftCtrl;
@@ -93,7 +98,7 @@ namespace ProgressSystem.UIEditor
             frameSelect = [];
             interacted = [];
 
-            RegisterCreateAchPanel();
+            RegisterEditPagePanel();
             RegisterEditAchPanel();
             RegisterNewPagePanel();
         }
@@ -149,6 +154,10 @@ namespace ProgressSystem.UIEditor
                     bool allMet = true;
                     foreach (UIAchSlot ge in frameSelect)
                     {
+                        AchPos.Remove(ge.pos);
+                    }
+                    foreach (UIAchSlot ge in frameSelect)
+                    {
                         Vector2 newPos = ge.pos + offset;
                         if (newPos.X < 0)
                         {
@@ -160,7 +169,8 @@ namespace ProgressSystem.UIEditor
                             allMet = false;
                             break;
                         }
-                        if (AchPos.Contains(ge.pos + offset))
+                        Vector2 pos = ge.pos + offset;
+                        if (AchPos.Contains(pos))
                         {
                             allMet = false;
                             break;
@@ -170,7 +180,6 @@ namespace ProgressSystem.UIEditor
                     {
                         foreach (UIAchSlot ge in frameSelect)
                         {
-                            AchPos.Remove(ge.pos);
                             ge.pos += offset;
                             AchPos.Add(ge.pos);
                             ge.SetPos(ge.pos * 80);
@@ -181,45 +190,52 @@ namespace ProgressSystem.UIEditor
                 }
             }
         }
-        private void RegisterCreateAchPanel()
+        private void RegisterEditAchPanel()
         {
             UIVnlPanel newAchBg = new(430, 300) { canDrag = true };
             newAchBg.SetCenter(newAchBg.Width / 2, 0, 0, 0.5f);
             newAchBg.Info.SetMargin(10);
             Register(newAchBg);
 
-            UIVnlPanel dataPanel = new(200, 0);
+            UIVnlPanel dataPanel = new(0, 0);
             dataPanel.SetPos(0, 40);
-            dataPanel.SetSize(200, -40, 0, 1);
+            dataPanel.SetSize(250, -40, 0, 1);
             newAchBg.Register(dataPanel);
 
-            dataView = new() { spaceY = 5 };
+            dataView = new() { spaceY = 10 };
             dataView.autoPos[0] = true;
-            dataView.SetSize(-30, 0, 1, 1);
+            dataView.SetPos(10, 10);
+            dataView.SetSize(-40, -20, 1, 1);
             dataPanel.Register(dataView);
 
-            VerticalScrollbar dataVsroll = new(28, canDrag: false);
-            dataView.SetVerticalScrollbar(dataVsroll);
-            dataPanel.Register(dataVsroll);
+            VerticalScrollbar dataV = new(28, false, false);
+            dataV.Info.Top.Pixel += 5;
+            dataV.Info.Height.Pixel -= 10;
+            dataView.SetVerticalScrollbar(dataV);
+            dataPanel.Register(dataV);
 
             UIVnlPanel conditionPanel = new(0, 0);
-            conditionPanel.SetSize(200, -65, 0, 1);
-            conditionPanel.SetPos(210, 40);
+            conditionPanel.SetSize(150, -65, 0, 1);
+            conditionPanel.SetPos(260, 40);
+            conditionPanel.Info.SetMargin(10);
             newAchBg.Register(conditionPanel);
 
             conditionView = new();
+            conditionView.SetSize(-20, 0, 1, 1);
+            conditionView.autoPos[0] = true;
             conditionPanel.Register(conditionView);
 
             VerticalScrollbar cdsV = new();
+            cdsV.Info.Left.Pixel += 10;
             conditionView.SetVerticalScrollbar(cdsV);
             conditionPanel.Register(cdsV);
 
             UIVnlPanel achNameInputBg = new(0, 0);
-            achNameInputBg.SetSize(200, 30);
-            achNameInputBg.SetPos(210, 0);
+            achNameInputBg.SetSize(150, 30);
+            achNameInputBg.SetPos(260, 0);
             newAchBg.Register(achNameInputBg);
 
-            UIInputBox achNameInputer = new("输入成就名");
+            achNameInputer = new("输入成就名");
             achNameInputer.SetSize(-40, 0, 1, 1);
             achNameInputBg.Register(achNameInputer);
 
@@ -228,23 +244,26 @@ namespace ProgressSystem.UIEditor
             clearName.Events.OnLeftDown += evt => achNameInputer.ClearText();
             achNameInputBg.Register(clearName);
 
-            UIText newAch = new("添加至进度组");
-            newAch.SetSize(newAch.TextSize);
-            newAch.SetCenter(0, -5, 0.75f, 1);
-            newAch.HoverToGold();
-            newAch.Events.OnLeftDown += evt =>
+            UIText saveChange = new("保存更改");
+            saveChange.SetSize(saveChange.TextSize);
+            saveChange.SetCenter(-75, -5, 1, 1);
+            saveChange.HoverToGold();
+            saveChange.Events.OnLeftDown += evt =>
             {
                 string text = achNameInputer.Text;
                 if (text.Any())
                 {
-                    Achievement ach = Achievement.Create(EditingPage, editingMod, text);
+                    if (EditingPage.Achievements.TryGetValue(text, out Achievement ach))
+                        ach.Requirements.Clear();
+                    else ach = Achievement.Create(EditingPage, editingMod, text);
                     foreach (UIRequireText require in conditionView.InnerUIE.Cast<UIRequireText>())
                     {
                         ach.Requirements.Add(require.requirement);
                     }
+                    ChangeSaveState(false);
                 }
             };
-            newAchBg.Register(newAch);
+            newAchBg.Register(saveChange);
 
             UIDropDownList<UIText> constrcutList = new(newAchBg, dataPanel, x =>
             {
@@ -254,14 +273,13 @@ namespace ProgressSystem.UIEditor
             })
             { buttonXoffset = 10 };
 
-            constrcutList.showArea.SetSize(200, 30);
+            constrcutList.showArea.SetSize(250, 30);
 
             constrcutList.expandArea.SetPos(0, 40);
-            constrcutList.expandArea.SetSize(200, 150);
+            constrcutList.expandArea.SetSize(250, 150);
 
             constrcutList.expandView.autoPos[0] = true;
             constrcutList.expandView.Vscroll.canDrag = false;
-
 
             foreach (var require in ModContent.GetContent<Requirement>())
             {
@@ -282,7 +300,7 @@ namespace ProgressSystem.UIEditor
             var inner = constrcutList.expandView.InnerUIE;
             constrcutList.ChangeShowElement(0);
         }
-        private void RegisterEditAchPanel()
+        private void RegisterEditPagePanel()
         {
             editPanel = new(1000, 800);
             editPanel.SetCenter(0, 0, 0.55f, 0.5f);
@@ -339,7 +357,7 @@ namespace ProgressSystem.UIEditor
             eventPanel.SetSize(-110, -40, 1, 1, false);
             editPanel.Register(eventPanel);
 
-            UIDropDownList<UIText> indexList = new(editPanel, eventPanel, x =>
+            pageList = new(editPanel, eventPanel, x =>
             {
                 UIText text = new(x.text);
                 text.SetPos(10, 5);
@@ -347,36 +365,36 @@ namespace ProgressSystem.UIEditor
             })
             { buttonXoffset = 10 };
 
-            indexList.showArea.SetPos(110, 0);
-            indexList.showArea.SetSize(200, 30);
+            pageList.showArea.SetPos(110, 0);
+            pageList.showArea.SetSize(200, 30);
 
-            indexList.expandArea.SetPos(110, 30);
-            indexList.expandArea.SetSize(200, 100);
+            pageList.expandArea.SetPos(110, 30);
+            pageList.expandArea.SetSize(200, 100);
 
-            indexList.expandView.autoPos[0] = true;
+            pageList.expandView.autoPos[0] = true;
 
-            /*bool first = false;
+
             foreach (Mod mod in ModLoader.Mods)
             {
-                if (!mod.HasAsset("icon")) continue;
+                if (mod.Side != ModSide.Both || !mod.HasAsset("icon")) continue;
                 string modName = mod.Name;
                 UIModSlot modSlot = new(RUIHelper.T2D(modName + "/icon"), modName) { hoverText = mod.DisplayName };
                 modSlot.ReDraw = sb =>
                 {
                     modSlot.DrawSelf(sb);
-                    if (EditMod == modSlot.modName)
+                    if (editingMod.Name == modSlot.modName)
                     {
                         RUIHelper.DrawRec(sb, modSlot.HitBox(), 5f, Color.Red);
                     }
                 };
                 modSlot.Events.OnLeftDown += evt =>
                 {
-                    indexList.ClearAllElements();
-                    EditMod = modSlot.modName;
+                    pageList.ClearAllElements();
+                    editingMod = ModLoader.GetMod(modSlot.modName);
                     ClearTemp();
-                    if (datas.TryGetValue(modSlot.modName, out var modPages))
+                    if (AchievementManager.PagesByMod.TryGetValue(editingMod, out var modPages))
                     {
-                        bool firstPage = false;
+                        bool have = false;
                         foreach (var (page, ges) in modPages)
                         {
                             UIText pageName = new(page);
@@ -384,31 +402,22 @@ namespace ProgressSystem.UIEditor
                             pageName.Events.OnMouseOver += evt => pageName.color = Color.Gold;
                             pageName.Events.OnMouseOut += evt => pageName.color = Color.White;
                             pageName.Events.OnLeftDown += evt => LoadGEs(pageName.text);
-                            indexList.AddElement(pageName);
-                            if (!firstPage)
-                            {
-                                indexList.ChangeShowElement(pageName);
-                                EditPage = page;
-                                firstPage = true;
-                            }
+                            pageList.AddElement(pageName);
+                            have = true;
+                        }
+                        if (have)
+                        {
+                            pageList.ChangeShowElement(0);
+                            pageList.expandView.InnerUIE[0].Events.LeftDown(null);
                         }
                     }
                 };
                 groupView.AddElement(modSlot);
-                if (!first)
-                {
-                    modSlot.Events.LeftDown(modSlot);
-                    var innerUIE = indexList.expandView.InnerUIE;
-                    if (innerUIE.Any())
-                    {
-                        var firstIndex = innerUIE[0];
-                        firstIndex.Events.LeftDown(firstIndex);
-                        first = true;
-                    }
-                }
-            }*/
+            }
+            groupView.InnerUIE[0].Events.LeftDown(null);
+
             UIText newProgress = new("新建进度表");
-            newProgress.SetPos(groupFilter.Width + indexList.showArea.Width + 20, 5);
+            newProgress.SetPos(groupFilter.Width + pageList.showArea.Width + 20, 5);
             newProgress.SetSize(newProgress.TextSize);
             newProgress.Events.OnMouseOver += evt => newProgress.color = Color.Gold;
             newProgress.Events.OnMouseOut += evt => newProgress.color = Color.White;
@@ -421,36 +430,23 @@ namespace ProgressSystem.UIEditor
             editPanel.Register(newProgress);
 
             UIText deleteProgress = new("删除进度表");
-            deleteProgress.SetPos(groupFilter.Width + indexList.showArea.Width + newProgress.Width + 30, 5);
+            deleteProgress.SetPos(groupFilter.Width + pageList.showArea.Width + newProgress.Width + 30, 5);
             deleteProgress.SetSize(deleteProgress.TextSize);
             deleteProgress.Events.OnMouseOver += evt => deleteProgress.color = Color.Gold;
             deleteProgress.Events.OnMouseOut += evt => deleteProgress.color = Color.White;
             deleteProgress.Events.OnLeftDown += evt =>
             {
-                /*if (datas.TryGetValue(EditMod, out var pages) && pages.ContainsKey(EditPage))
+                if (AchievementManager.RemovePage(EditingPage))
                 {
-                    var inner = indexList.expandView.InnerUIE;
-                    inner.Remove(x => x is UIText index && index.text == EditPage);
-                    datas[EditMod].Remove(EditPage);
-                    if (inner.Any())
-                    {
-                        UIText firstIndex = inner[0] as UIText;
-                        indexList.ChangeShowElement(firstIndex);
-                        firstIndex.Events.LeftDown(firstIndex);
-                    }
-                    else
-                    {
-                        indexList.showArea.RemoveAll();
-                    }
+                    pageList.ChangeShowElement(0);
                     ClearTemp();
-                }*/
-                ClearTemp();
+                }
             };
             editPanel.Register(deleteProgress);
 
             saveTip = new("已保存", Color.Green);
             saveTip.SetSize(saveTip.TextSize);
-            saveTip.SetPos(groupFilter.Width + indexList.showArea.Width +
+            saveTip.SetPos(groupFilter.Width + pageList.showArea.Width +
                 newProgress.Width + deleteProgress.Width + 40, 5);
             saveTip.Events.OnLeftDown += evt =>
             {
@@ -458,6 +454,33 @@ namespace ProgressSystem.UIEditor
                 ChangeSaveState(true);
             };
             editPanel.Register(saveTip);
+
+            UIVnlPanel savePathInputBg = new(350, 30);
+            savePathInputBg.SetPos(-360, 0, 1);
+            editPanel.Register(savePathInputBg);
+
+            savePathInputer = new("输入保存路径");
+            savePathInputer.SetSize(-40, 0, 1, 1);
+            savePathInputBg.Register(savePathInputer);
+
+            UIAdjust selectSavePath = new(AssetLoader.VnlAdjust)
+            {
+                hoverText = "打开资源管理器选择复制路径"
+            };
+            selectSavePath.SetCenter(-30, 0, 1, 0.5f);
+            selectSavePath.Events.OnLeftDown += evt =>
+            {
+                Main.QueueMainThreadAction(() =>
+                {
+                    Process.Start("explorer.exe", "/select");
+                });
+            };
+            savePathInputBg.Register(selectSavePath);
+
+            UIClose clearSavePath = new();
+            clearSavePath.SetCenter(-10, 0, 1, 0.5f);
+            clearSavePath.Events.OnLeftDown += evt => savePathInputer.ClearText();
+            savePathInputBg.Register(clearSavePath);
 
             achView = new();
             achView.SetSize(-20, -20, 1, 1);
@@ -595,6 +618,7 @@ namespace ProgressSystem.UIEditor
                     pageName.Events.OnLeftDown += evt => LoadGEs(pageName.text);
                     pageList.AddElement(pageName);
                     pageList.ChangeShowElement(pageName);
+                    AchievementPage.Create(editingMod, editingPage);
                     ClearTemp();
                     SaveProgress();
                 }
@@ -661,6 +685,18 @@ namespace ProgressSystem.UIEditor
                 Point mouse = (Main.MouseScreen - achView.ChildrenElements[0].HitBox(false).TopLeft()).ToPoint();
                 selectedStart = new(mouse.X / 80, mouse.Y / 80);
             }
+            editingAch = ge;
+            achNameInputer.Text = ge.ach.Name;
+            conditionView.ClearAllElements();
+            foreach (Requirement require in editingAch.ach.Requirements)
+            {
+                UIRequireText req = new(require);
+                req.delete.Events.OnLeftDown += evt =>
+                {
+                    conditionView.InnerUIE.Remove(req);
+                };
+                conditionView.AddElement(req);
+            }
             dragging = true;
         }
         private void GESlotUpdate(BaseUIElement uie)
@@ -703,12 +739,14 @@ namespace ProgressSystem.UIEditor
         {
             try
             {
-                // TODO: 提供 path
-                // path 默认情况下储存在 ModSources/ProgressSystem/Achievements.dat
-                string path = string.Empty;
+                string path = savePathInputer.Text;
+                if (path == null || !File.Exists(path))
+                {
+                    path = string.Empty;
+                }
 
                 string directory;
-                if (path == null || path == string.Empty)
+                if (path == string.Empty)
                 {
                     path = Path.Combine(Main.SavePath, "ModSources", ModName);
                 }
@@ -720,40 +758,11 @@ namespace ProgressSystem.UIEditor
                 else
                 {
                     directory = path;
-                    path = string.Join(Path.PathSeparator, path, "Achievements.dat");
+                    path = string.Join(Path.DirectorySeparatorChar, path, "Achievements.dat");
                 }
                 Directory.CreateDirectory(directory);
                 using var stream = File.OpenWrite(path);
                 AchievementManager.SaveStaticDataToStream(stream);
-                
-                /*
-                string root = Path.Combine(Main.SavePath, "Mods", ProgressSystem.Instance.Name);
-                Directory.CreateDirectory(root);
-                foreach ((string modName, Dictionary<string, Dictionary<GameEvent, GEData>> pages) in datas)
-                {
-                    if (!pages.Any()) continue;
-                    Directory.CreateDirectory(Path.Combine(root, modName));
-                    foreach ((string pageName, Dictionary<GameEvent, GEData> ges) in pages)
-                    {
-                        using FileStream stream = File.OpenWrite(Path.Combine(root, modName, pageName + ".dat"));
-                        using BinaryWriter writer = new(stream);
-                        writer.Write(CurrentSaveVersion);
-                        TagCompound tag = [];
-                        List<TagCompound> subTags = [];
-                        foreach (var (ge, data) in ges)
-                        {
-                            var subtag = GEManager.Save(ge);
-                            if (subtag != null)
-                            {
-                                data.SaveData(subtag);
-                                subTags.Add(subtag);
-                            }
-                        }
-                        tag["data"] = subTags;
-                        TagIO.ToStream(tag, stream);
-                    }
-                }
-                */
                 Main.NewText("保存成功");
             }
             catch
@@ -776,17 +785,13 @@ namespace ProgressSystem.UIEditor
         {
             editingPage = pageName;
             ClearTemp();
-            /*foreach (var (ge, data) in datas[EditMod][EditPage])
+            foreach (Achievement ach in EditingPage.Achievements.Values)
             {
-                Vector2 pos = data.Pos;
-                UIAchSlot slot = new(ge, pos);
+                UIAchSlot slot = new(ach, ach.Position);
                 RegisterEventToGESlot(slot);
-                AchPos.Add(pos);
-                eventView.AddElement(slot);
-            }*/
-        }
-        private void AddCondition(ConstructInfoTable<Requirement> constructData, UIContainerPanel conditionView)
-        {
+                AchPos.Add(ach.Position.Value);
+                achView.AddElement(slot);
+            }
         }
         private void RegisterEventToGESlot(UIAchSlot ge)
         {
@@ -847,14 +852,15 @@ namespace ProgressSystem.UIEditor
 
                 UIInputBox valueInputer = new("类型为" + info.Type.Name);
                 valueInputer.SetSize(-40, 0, 1, 1);
+                var bind = info;
                 valueInputer.OnInputText += text =>
                 {
                     if (text.Any())
                     {
-                        info.SetValue(text);
-                        legal.ChangeText(info.IsMet ? ("合法值：" + info.GetValue()) : "不合法");
+                        bind.SetValue(text);
+                        legal.ChangeText(bind.IsMet ? ("合法值：" + bind.GetValue()) : "不合法");
                     }
-                    else legal.ChangeText(info.Important ? "可以为空" : "不可为空");
+                    else legal.ChangeText(bind.Important ? "可以为空" : "不可为空");
                 };
                 valueInputBg.Register(valueInputer);
 
@@ -873,14 +879,18 @@ namespace ProgressSystem.UIEditor
             {
                 if (data.TryConstruct(out Requirement condition))
                 {
+                    int count = conditionView.InnerUIE.Count;
                     UIRequireText require = new(condition);
-                    require.SetMaxWidth(conditionView.InnerWidth);
-                    require.SetSize(require.TextSize);
+                    require.delete.Events.OnLeftDown += evt =>
+                    {
+                        conditionView.InnerUIE.Remove(require);
+                    };
                     conditionView.AddElement(require);
                 }
             };
             constructPanel.Register(create);
             constructPanel.SetSize(0, innerY + 48, 1);
+            dataView.Calculation();
         }
         private void MatchPageName(string text, UIText report)
         {

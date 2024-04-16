@@ -119,7 +119,7 @@ public class Achievement : IWithStaticData
     {
         predecessors?.ForEach(p => p.successors.Remove(this));
         predecessors = null;
-        _predecessorNames = predecessorNames == null ? [] : [..predecessorNames.Select(p => (p, isFullName))];
+        _predecessorNames = predecessorNames == null ? [] : [.. predecessorNames.Select(p => (p, isFullName))];
     }
     /// <summary>
     /// 添加一个前置
@@ -382,7 +382,7 @@ public class Achievement : IWithStaticData
         {
             UnlockSafe();
         }
-        
+
     }
 
     public Func<bool> CompleteCondition;
@@ -408,7 +408,7 @@ public class Achievement : IWithStaticData
             CompleteSafe();
         }
     }
-    
+
     public Func<bool> CloseCondition;
     public bool DefaultCloseCondition()
     {

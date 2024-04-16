@@ -49,14 +49,22 @@ public class AchievementManager : ModSystem, IWithStaticData
     private static readonly Dictionary<string, AchievementPage> pages = [];
     public static IReadOnlyDictionary<Mod, Dictionary<string, AchievementPage>> PagesByMod => pagesByMod;
     private static readonly Dictionary<Mod, Dictionary<string, AchievementPage>> pagesByMod = [];
-    internal static void AddPage(AchievementPage page)
+    internal static bool AddPage(AchievementPage page)
     {
         pages.Add(page.FullName, page);
-        if (!pagesByMod.ContainsKey(page.Mod))
+        if (!pagesByMod.TryGetValue(page.Mod, out var modPages))
         {
-            pagesByMod.Add(page.Mod, []);
+            modPages = [];
+            pagesByMod.Add(page.Mod, modPages);
         }
-        pagesByMod[page.Mod].Add(page.Name, page);
+        return modPages.TryAdd(page.Name, page);
+    }
+    internal static bool RemovePage(AchievementPage page)
+    {
+        bool remove = pagesByMod[page.Mod].Remove(page.Name);
+        if (!remove) return false;
+        return pages.Remove(page.FullName);
+
     }
 
     public static void PostInitialize()
