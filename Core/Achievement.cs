@@ -1,6 +1,6 @@
+using Microsoft.Xna.Framework.Graphics;
 using ProgressSystem.Core.StaticData;
 using ProgressSystem.GameEvents;
-using System;
 using System.IO;
 using Terraria.Localization;
 
@@ -135,11 +135,11 @@ public class Achievement : IWithStaticData
     /// 自定义绘制
     /// 返回 false 以取消原本的绘制
     /// </summary>
-    public virtual bool PreDraw()   // TODO: 填入参数
+    public virtual bool PreDraw(SpriteBatch sb, Rectangle slotRectangle)
     {
         return true;
     }
-    public virtual void PostDraw() { }  // TODO: 填入参数
+    public virtual void PostDraw(SpriteBatch sb, Rectangle slotRectangle) { }
 
     #endregion
 

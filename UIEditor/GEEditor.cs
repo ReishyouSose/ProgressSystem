@@ -13,6 +13,7 @@ namespace ProgressSystem.UIEditor
 {
     public class GEEditor : ContainerElement
     {
+        private const string BaseName = "成就";
         internal static GEEditor Ins;
         /// <summary>
         /// 当前进度组GESlot位置
@@ -199,7 +200,7 @@ namespace ProgressSystem.UIEditor
 
             UIVnlPanel dataPanel = new(0, 0);
             dataPanel.SetPos(0, 40);
-            dataPanel.SetSize(250, -40, 0, 1);
+            dataPanel.SetSize(230, -40, 0, 1);
             newAchBg.Register(dataPanel);
 
             dataView = new() { spaceY = 10 };
@@ -215,13 +216,13 @@ namespace ProgressSystem.UIEditor
             dataPanel.Register(dataV);
 
             UIVnlPanel conditionPanel = new(0, 0);
-            conditionPanel.SetSize(150, -65, 0, 1);
-            conditionPanel.SetPos(260, 40);
+            conditionPanel.SetSize(170, -65, 0, 1);
+            conditionPanel.SetPos(240, 40);
             conditionPanel.Info.SetMargin(10);
             newAchBg.Register(conditionPanel);
 
             conditionView = new();
-            conditionView.SetSize(-20, 0, 1, 1);
+            conditionView.SetSize(-10, 0, 1, 1);
             conditionView.autoPos[0] = true;
             conditionPanel.Register(conditionView);
 
@@ -231,8 +232,8 @@ namespace ProgressSystem.UIEditor
             conditionPanel.Register(cdsV);
 
             UIVnlPanel achNameInputBg = new(0, 0);
-            achNameInputBg.SetSize(150, 30);
-            achNameInputBg.SetPos(260, 0);
+            achNameInputBg.SetSize(170, 30);
+            achNameInputBg.SetPos(240, 0);
             newAchBg.Register(achNameInputBg);
 
             achNameInputer = new("输入成就名");
@@ -246,20 +247,20 @@ namespace ProgressSystem.UIEditor
 
             UIText saveChange = new("保存更改");
             saveChange.SetSize(saveChange.TextSize);
-            saveChange.SetCenter(-75, -5, 1, 1);
+            saveChange.SetCenter(-85, -5, 1, 1);
             saveChange.HoverToGold();
             saveChange.Events.OnLeftDown += evt =>
             {
                 string text = achNameInputer.Text;
                 if (text.Any())
                 {
-                    if (EditingPage.Achievements.TryGetValue(text, out Achievement ach))
-                        ach.Requirements.Clear();
-                    else ach = Achievement.Create(EditingPage, editingMod, text);
+                    EditingPage.Achievements.Remove(editingAch.ach.Name);
+                    Achievement ach = Achievement.Create(EditingPage, editingMod, text);
                     foreach (UIRequireText require in conditionView.InnerUIE.Cast<UIRequireText>())
                     {
                         ach.Requirements.Add(require.requirement);
                     }
+                    editingAch.ach = ach;
                     ChangeSaveState(false);
                 }
             };
@@ -273,10 +274,10 @@ namespace ProgressSystem.UIEditor
             })
             { buttonXoffset = 10 };
 
-            constrcutList.showArea.SetSize(250, 30);
+            constrcutList.showArea.SetSize(230, 30);
 
             constrcutList.expandArea.SetPos(0, 40);
-            constrcutList.expandArea.SetSize(250, 150);
+            constrcutList.expandArea.SetSize(230, 150);
 
             constrcutList.expandView.autoPos[0] = true;
             constrcutList.expandView.Vscroll.canDrag = false;
@@ -401,7 +402,7 @@ namespace ProgressSystem.UIEditor
                             pageName.SetSize(pageName.TextSize);
                             pageName.Events.OnMouseOver += evt => pageName.color = Color.Gold;
                             pageName.Events.OnMouseOut += evt => pageName.color = Color.White;
-                            pageName.Events.OnLeftDown += evt => LoadGEs(pageName.text);
+                            pageName.Events.OnLeftDown += evt => LoadPage(pageName.text);
                             pageList.AddElement(pageName);
                             have = true;
                         }
@@ -491,6 +492,23 @@ namespace ProgressSystem.UIEditor
                     preSetting.preSetting = false;
                     preSetting = null;
                 }
+            };
+            achView.Events.OnLeftDoubleClick += evt =>
+            {
+                Point mouse = (Main.MouseScreen - achView.ChildrenElements[0].HitBox(false).TopLeft()).ToPoint();
+                Vector2 pos = new(mouse.X / 80, mouse.Y / 80);
+                string name = BaseName;
+                int i = 1;
+                while (EditingPage.Achievements.ContainsKey(editingMod.Name + "." + name + i))
+                {
+                    i++;
+                }
+                Achievement ach = Achievement.Create(EditingPage, editingMod, name + i);
+                ach.Position = pos;
+                UIAchSlot slot = new(ach, pos);
+                RegisterEventToGESlot(slot);
+                slot.SetPos(pos * 80);
+                achView.AddElement(slot);
             };
             achView.Events.OnRightDown += evt =>
             {
@@ -615,7 +633,7 @@ namespace ProgressSystem.UIEditor
                     pageName.SetSize(pageName.TextSize);
                     pageName.Events.OnMouseOver += evt => pageName.color = Color.Gold;
                     pageName.Events.OnMouseOut += evt => pageName.color = Color.White;
-                    pageName.Events.OnLeftDown += evt => LoadGEs(pageName.text);
+                    pageName.Events.OnLeftDown += evt => LoadPage(pageName.text);
                     pageList.AddElement(pageName);
                     pageList.ChangeShowElement(pageName);
                     AchievementPage.Create(editingMod, editingPage);
@@ -781,7 +799,7 @@ namespace ProgressSystem.UIEditor
             achView?.Vscroll.ForceSetPixel(0);
             achView?.Hscroll.ForceSetPixel(0);
         }
-        private void LoadGEs(string pageName)
+        private void LoadPage(string pageName)
         {
             editingPage = pageName;
             ClearTemp();
@@ -821,7 +839,7 @@ namespace ProgressSystem.UIEditor
             ge.Events.OnUpdate += GESlotUpdate;
             ge.Events.OnRightDoubleClick += evt =>
             {
-                AchievementManager.PagesByMod[editingMod][editingPage].Achievements.Remove(ge.ach.Name);
+                AchievementManager.PagesByMod[editingMod][editingPage].Achievements.Remove(ge.ach.FullName);
                 AchPos.Remove(ge.pos);
                 achView.InnerUIE.Remove(ge);
                 ChangeSaveState(false);

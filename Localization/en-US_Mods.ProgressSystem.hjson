@@ -73,4 +73,50 @@ Achievements: {
 			}
 		}
 	}
+
+	ProgressSystem: {
+		TestPage: {
+			First: {
+				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.First.DisplayName
+				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.First.Tooltip
+				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.First.Description
+			}
+
+			Workbench: {
+				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Workbench.DisplayName
+				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Workbench.Tooltip
+				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Workbench.Description
+			}
+
+			WoodTools: {
+				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.WoodTools.DisplayName
+				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.WoodTools.Tooltip
+				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.WoodTools.Description
+			}
+
+			Wood: {
+				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Wood.DisplayName
+				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Wood.Tooltip
+				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Wood.Description
+			}
+
+			House: {
+				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.House.DisplayName
+				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.House.Tooltip
+				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.House.Description
+			}
+
+			Slime: {
+				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Slime.DisplayName
+				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Slime.Tooltip
+				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Slime.Description
+			}
+
+			Torch: {
+				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Torch.DisplayName
+				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Torch.Tooltip
+				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Torch.Description
+			}
+		}
+	}
 }

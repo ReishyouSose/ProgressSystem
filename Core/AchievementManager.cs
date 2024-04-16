@@ -17,7 +17,7 @@ public class AchievementManager : ModSystem, IWithStaticData
     public override void OnModLoad()
     {
         var page = AchievementPage.Create(ModInstance, "TestPage");
-        Achievement.Create(page, ModInstance, "First", requirements: [new SubmitRequirement()], rewards: [new ItemReward(ItemID.SilverCoin, 20)]);
+        Achievement.Create(page, ModInstance, "First", rewards: [new ItemReward(ItemID.SilverCoin, 20)]).NeedSubmit = true;
         Achievement.Create(page, ModInstance, "Workbench", predecessorNames: ["Wood"],
             requirements: [new CraftItemRequirement(ItemID.WorkBench)],
             rewards: [new ItemReward(ItemID.Wood, 100)]);

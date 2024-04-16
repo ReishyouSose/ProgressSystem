@@ -1,5 +1,4 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
-using ProgressSystem.Core;
 using RUIModule;
 using Terraria.GameContent;
 using Terraria.UI.Chat;
@@ -38,7 +37,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
         public UIAchSlot(Achievement ach = null, Vector2? pos = null) : base(AssetLoader.Slot)
         {
             this.ach = ach;
-            (Icon, frame) = (ach.Texture.Value, null);
+            (Icon, frame) = (ach.Texture.Value, ach.SourceRect);
             if (pos != null)
             {
                 this.pos = pos.Value;
@@ -120,10 +119,14 @@ namespace ProgressSystem.UIEditor.ExtraUI
                 RUIHelper.DrawRec(sb, HitBox(), 2, Color.Red, false);
             }
             Rectangle hitbox = HitBox();
-            if (Icon != null)
+            if (ach.PreDraw(sb, hitbox))
             {
-                sb.SimpleDraw(Icon, hitbox.Center(), frame, Icon.Size() / 2f * (frame?.Size().AutoScale() ?? 1), color: color);
+                if (Icon != null)
+                {
+                    sb.SimpleDraw(Icon, hitbox.Center(), frame, Icon.Size() / 2f * (frame?.Size().AutoScale() ?? 1), color: color);
+                }
             }
+            ach.PostDraw(sb, hitbox);
             if (adsorption != null)
             {
                 sb.SimpleDraw(Tex, adsorption.Value * 80 + ParentElement.HitBox(false).TopLeft(), null, Vector2.Zero, color: Color.White * 0.5f);
