@@ -7,7 +7,7 @@ namespace ProgressSystem.GameEvents
     public class SpecializeAutoConstructAttribute : Attribute
     {
         public bool Disabled { get; set; }
-        public bool EnableEvenNonpublic { get; set; }
+        public bool EnableEvenNonPublic { get; set; }
     }
 
     public class ConstructInfoTable<T> : IEnumerable<ConstructInfoTable<T>.Entry>
@@ -139,19 +139,19 @@ namespace ProgressSystem.GameEvents
             foreach (var c in cs)
             {
                 var paras = c.GetCustomAttribute<SpecializeAutoConstructAttribute>();
-                bool disableForNonpublic = !c.IsPublic;
+                bool disableForNonPublic = !c.IsPublic;
                 if (paras != null)
                 {
                     if (paras.Disabled)
                     {
                         continue;
                     }
-                    if (paras.EnableEvenNonpublic)
+                    if (paras.EnableEvenNonPublic)
                     {
-                        disableForNonpublic = false;
+                        disableForNonPublic = false;
                     }
                 }
-                if (disableForNonpublic)
+                if (disableForNonPublic)
                 {
                     continue;
                 }

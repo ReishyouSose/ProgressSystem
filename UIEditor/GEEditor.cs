@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Input;
 using ProgressSystem.Core;
 using ProgressSystem.GameEvents;
 using ProgressSystem.UIEditor.ExtraUI;
+using System.IO;
 using System.Text;
 using Terraria.GameContent;
 using Terraria.UI.Chat;
@@ -237,7 +238,11 @@ namespace ProgressSystem.UIEditor
                 string text = achNameInputer.Text;
                 if (text.Any())
                 {
-                    Achievement ach = Achievement.Create(EditingPage, editingMod, text);
+                    Main.NewText(Achievement.TryCreate(EditingPage, editingMod, text, out var ach) ? "添加成功" : "添加失败，页面内有同名成就");
+                    if (ach == null)
+                    {
+                        return;
+                    }
                     foreach (UIRequireText require in conditionView.InnerUIE.Cast<UIRequireText>())
                     {
                         ach.Requirements.Add(require.requirement);

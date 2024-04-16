@@ -385,7 +385,7 @@ public static partial class TigerClasses
         public Texture2DGetter(string texturePath) => SetTexturePath(texturePath);
         public Texture2DGetter(Texture2D texture2DValue) => Texture2DValue = texture2DValue;
         public Texture2DGetter(Asset<Texture2D> assetOfTexture2DValue) => AssetOfTexture2DValue = assetOfTexture2DValue;
-        public Texture2DGetter(Func<Texture2D> texture2DGetterValue) => Texture2DGetterValue = texture2DGetterValue;
+        public Texture2DGetter(Func<Texture2D?> texture2DGetterValue) => Texture2DGetterValue = texture2DGetterValue;
         #endregion
         #region Vars
         enum Texture2DGetterType
@@ -402,7 +402,7 @@ public static partial class TigerClasses
         [FieldOffset(0)]
         Asset<Texture2D>? assetOfTexture2DValue;
         [FieldOffset(0)]
-        Func<Texture2D>? texture2DGetterValue;
+        Func<Texture2D?>? texture2DGetterValue;
         [FieldOffset(8)]
         string? assetPath;
         #endregion
@@ -442,7 +442,7 @@ public static partial class TigerClasses
             readonly get => Type == Texture2DGetterType.AssetOfTexture2D ? assetOfTexture2DValue : null;
             set => (Type, assetOfTexture2DValue, assetPath) = (Texture2DGetterType.AssetOfTexture2D, value, null);
         }
-        public Func<Texture2D>? Texture2DGetterValue
+        public Func<Texture2D?>? Texture2DGetterValue
         {
             readonly get => Type == Texture2DGetterType.Texture2DGetter ? texture2DGetterValue : null;
             set => (Type, texture2DGetterValue) = (Texture2DGetterType.Texture2DGetter, value);
@@ -454,7 +454,7 @@ public static partial class TigerClasses
         public static implicit operator Texture2DGetter(string? texturePath) =>  texturePath == null ? default : new(texturePath);
         public static implicit operator Texture2DGetter(Texture2D? texture2DValue) =>  texture2DValue == null ? default : new(texture2DValue);
         public static implicit operator Texture2DGetter(Asset<Texture2D>? assetOfTexture2DValue) =>  assetOfTexture2DValue == null ? default : new(assetOfTexture2DValue);
-        public static implicit operator Texture2DGetter(Func<Texture2D>? texture2DGetterValue) =>  texture2DGetterValue == null ? default : new(texture2DGetterValue);
+        public static implicit operator Texture2DGetter(Func<Texture2D?>? texture2DGetterValue) =>  texture2DGetterValue == null ? default : new(texture2DGetterValue);
         public override readonly string ToString() => Value?.ToString() ?? string.Empty;
         #endregion
         #region 运算符重载
@@ -503,11 +503,10 @@ public static partial class TigerExtensions
     /// </summary>
     public static void SetWithDefaultN<T>(this TagCompound tag, string key, T value, T defaultValue = default, bool replace = false) where T : struct
     {
-        if (value.Equals(defaultValue) == true)
+        if (value.Equals(defaultValue) != true)
         {
-            return;
+            tag.Set(key, value, replace);
         }
-        tag.Set(key, value, replace);
     }
 
     public static Func<Item?, bool> ItemCheckDefault => i => i == null || i.IsAir;

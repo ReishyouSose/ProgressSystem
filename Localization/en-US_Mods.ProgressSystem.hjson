@@ -28,7 +28,7 @@ Requirements: {
 }
 
 Achievements: {
-	ProgressSystem: {
+	TestPage: {
 		Achievements: {
 			First: {
 				DisplayName: First
