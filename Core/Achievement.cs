@@ -261,6 +261,12 @@ public class Achievement : IWithStaticData
     /// </summary>
     public RequirementList Requirements = null!;
 
+    /// <summary>
+    /// <br/>需要多少个条件才能完成此任务
+    /// <br/>默认 <see langword="null"/> 代表需要所有条件完成
+    /// <br/>如果此值大于条件数, 那么以条件数为准
+    /// <br/>例如 1 代表只需要任意条件完成即可
+    /// </summary>
     public int? RequirementCountNeeded;
 
     #region 提交
@@ -467,7 +473,14 @@ public class Achievement : IWithStaticData
     }
 
     public Func<bool> CompleteCondition;
-    public bool DefaultCompleteCondition() => (!NeedSubmit || InSubmitting) && Requirements.All(r => r.Completed);
+    public bool DefaultCompleteCondition()
+    {
+        return (!NeedSubmit || InSubmitting) &&
+            (!RequirementCountNeeded.HasValue || RequirementCountNeeded.Value > Requirements.Count ?
+            Requirements.All(r => r.Completed) :
+            Requirements.Sum(r => r.Completed.ToInt()) >= RequirementCountNeeded);
+    }
+
     public static event Action<Achievement>? OnCompleteStatic;
     public event Action? OnComplete;
     public virtual void CompleteSafe()
