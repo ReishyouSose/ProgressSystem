@@ -10,7 +10,7 @@ namespace ProgressSystem.Core;
 /// 达成成就所需的条件
 /// 继承它的非抽象类需要有一个无参构造 (用以读取静态数据)
 /// </summary>
-public abstract class Requirement : IWithStaticData
+public abstract class Requirement : IWithStaticData, ILoadable
 {
     public Achievement Achievement = null!;
     public TextGetter DisplayName;
@@ -297,6 +297,10 @@ public abstract class Requirement : IWithStaticData
     {
         return $"{GetType().Name}: {nameof(Completed)}: {Completed}, {nameof(Listening)}: {Listening}";
     }
+
+    public void Load(Mod mod) { }
+
+    public void Unload() { }
 }
 public abstract class RequirementCombination : Requirement
 {

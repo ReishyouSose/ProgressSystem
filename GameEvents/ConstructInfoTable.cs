@@ -1,5 +1,4 @@
-﻿using MonoMod.Utils;
-using System.Collections;
+﻿using System.Collections;
 using System.Reflection;
 
 namespace ProgressSystem.GameEvents
@@ -123,9 +122,9 @@ namespace ProgressSystem.GameEvents
         {
             return Create(@delegate.Method, extraInfo);
         }
-        public static bool TryAutoCreate<TResult>(Type type, string? extraInfo,out List<ConstructInfoTable<TResult>> tables)
+        public static bool TryAutoCreate<TResult>(Type type, string? extraInfo, out List<ConstructInfoTable<TResult>> tables)
         {
-            if (type.IsAssignableTo(typeof(TResult)))
+            if (!type.IsAssignableTo(typeof(TResult)))
             {
                 throw new ArgumentException($"Type {type.FullName} is not assignable to {typeof(TResult).FullName}");
             }

@@ -4,7 +4,7 @@ using Terraria.GameContent;
 
 namespace ProgressSystem.UIEditor.ExtraUI;
 
-public class UIGECollision : BaseUIElement
+public class UIAchCollision : BaseUIElement
 {
     public Rectangle selector;
     public override void OnInitialization()

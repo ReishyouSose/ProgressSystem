@@ -3,10 +3,10 @@ using Terraria.GameContent;
 
 namespace ProgressSystem.UIEditor.ExtraUI
 {
-    public class UIRequireLine(UIGESlot start, UIGESlot end) : BaseUIElement
+    public class UIRequireLine(UIAchSlot start, UIAchSlot end) : BaseUIElement
     {
-        public readonly UIGESlot start = start;
-        public readonly UIGESlot end = end;
+        public readonly UIAchSlot start = start;
+        public readonly UIAchSlot end = end;
         private readonly static Color pink = Color.Pink;
         private readonly static Color blue = Color.Blue;
         public override void DrawSelf(SpriteBatch sb)

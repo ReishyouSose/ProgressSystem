@@ -42,7 +42,8 @@ public class AchievementPage : IWithStaticData
     /// <summary>
     /// 在初始化时就会调用一次
     /// </summary>
-    public virtual void Reset() {
+    public virtual void Reset()
+    {
         Achievements.Values.ForeachDo(a => a.Reset());
         OnResetStatic?.Invoke(this);
         OnReset?.Invoke();
@@ -276,7 +277,7 @@ public class AchievementPage : IWithStaticData
     /// <returns>是否成功添加(当此成就页内有同名成就时失败)</returns>
     public void AddF(Achievement achievement)
     {
-        Achievements.Add(achievement.FullName, achievement);
+        Main.NewText(Achievements.TryAdd(achievement.FullName, achievement) ? "添加成功" : "添加失败，页面内有同名成就");
     }
     /// <summary>
     /// 向此成就页添加一个成就
@@ -347,17 +348,21 @@ public class AchievementPage : IWithStaticData
 
     #region 存取数据
     // TODO: 存取 Page 自身的数据
-    public virtual void SaveDataInWorld(TagCompound tag) {
+    public virtual void SaveDataInWorld(TagCompound tag)
+    {
         tag.SaveDictionaryData("Achievements", Achievements, (a, t) => a.SaveDataInWorld(t));
     }
-    public virtual void LoadDataInWorld(TagCompound tag) {
+    public virtual void LoadDataInWorld(TagCompound tag)
+    {
         tag.LoadDictionaryData("Achievements", Achievements, (a, t) => a.LoadDataInWorld(t));
     }
-    public virtual void SaveDataInPlayer(TagCompound tag) {
+    public virtual void SaveDataInPlayer(TagCompound tag)
+    {
         tag.SetWithDefault("State", State.ToString(), StateEnum.Locked.ToString());
         tag.SaveDictionaryData("Achievements", Achievements, (a, t) => a.SaveDataInPlayer(t));
     }
-    public virtual void LoadDataInPlayer(TagCompound tag) {
+    public virtual void LoadDataInPlayer(TagCompound tag)
+    {
         if (Enum.TryParse(tag.GetWithDefault("State", StateEnum.Locked.ToString()), out StateEnum state))
         {
             State = state;
@@ -378,10 +383,12 @@ public class AchievementPage : IWithStaticData
 
     #region 网络同步
     // TODO: Page 自身的网络同步
-    public virtual void NetSend(BinaryWriter writer) {
+    public virtual void NetSend(BinaryWriter writer)
+    {
         Achievements.Values.ForeachDo(a => a.NetSend(writer));
     }
-    public virtual void NetReceive(BinaryReader reader) {
+    public virtual void NetReceive(BinaryReader reader)
+    {
         Achievements.Values.ForeachDo(a => a.NetReceive(reader));
     }
     #endregion

@@ -1,14 +1,14 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
-using ProgressSystem.GameEvents;
+using ProgressSystem.Core;
 using RUIModule;
 using Terraria.GameContent;
 using Terraria.UI.Chat;
 
 namespace ProgressSystem.UIEditor.ExtraUI
 {
-    public class UIGESlot : UIImage
+    public class UIAchSlot : UIImage
     {
-        public GameEvent ge;
+        public Achievement ach;
         private bool dragging;
         private Vector2 oldlocal;
         private readonly Texture2D Icon;
@@ -34,11 +34,11 @@ namespace ProgressSystem.UIEditor.ExtraUI
         /// </summary>
         public bool preSetting;
         public HashSet<UIRequireLine> postGE;
-        public IReadOnlySet<UIGESlot> PostGE => postGE.Select(x => x.end).ToHashSet();
-        public UIGESlot(GameEvent ge = null, Vector2? pos = null) : base(AssetLoader.Slot)
+        public IReadOnlySet<UIAchSlot> PostGE => postGE.Select(x => x.end).ToHashSet();
+        public UIAchSlot(Achievement ach = null, Vector2? pos = null) : base(AssetLoader.Slot)
         {
-            this.ge = ge;
-            (Icon, frame) = ge.DrawData();
+            this.ach = ach;
+            (Icon, frame) = (ach.Texture.Value, null);
             if (pos != null)
             {
                 this.pos = pos.Value;
@@ -58,7 +58,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
                 if (!dragging)
                     dragging = true;
                 oldlocal = Main.MouseScreen;
-                GEEditor.GEPos.Remove(pos);
+                GEEditor.AchPos.Remove(pos);
                 color = Color.White * 0.75f;
             };
             Events.OnLeftUp += evt =>
@@ -67,7 +67,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
                 if (adsorption != null)
                 {
                     SetPos(pos * 80);
-                    GEEditor.GEPos.Add(pos);
+                    GEEditor.AchPos.Add(pos);
                     adsorption = null;
                 }
                 color = Color.White;
@@ -89,7 +89,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
                     x = Math.Max(x, 0);
                     y = Math.Max(y, 0);
                     Vector2 p = new(x, y);
-                    if (!GEEditor.GEPos.Contains(p))
+                    if (!GEEditor.AchPos.Contains(p))
                     {
                         adsorption = new(x, y);
                         pos = adsorption.Value;
