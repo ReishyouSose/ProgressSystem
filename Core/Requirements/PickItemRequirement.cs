@@ -78,7 +78,7 @@ public class PickItemRequirement : Requirement
     }
     private void ListenPickItem(Item item)
     {
-        if (ItemType > 0 && item.type != ItemType || Condition?.Invoke(item) == false)
+        if ((ItemType > 0 && item.type != ItemType) || Condition?.Invoke(item) == false)
         {
             return;
         }

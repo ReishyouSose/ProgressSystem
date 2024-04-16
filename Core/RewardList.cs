@@ -7,7 +7,7 @@ public class RewardList(Achievement achievement, IEnumerable<Reward>? rewards = 
     private readonly Achievement Achievement = achievement;
 
     private readonly List<Reward> data = rewards == null ? [] : [.. rewards.Select(r => r.WithAction(r => r.Initialize(achievement)))];
-    
+
     public int Count => data.Count;
     public bool IsReadOnly => false;
 
@@ -35,7 +35,7 @@ public class RewardList(Achievement achievement, IEnumerable<Reward>? rewards = 
         data.Insert(index, reward);
         reward.Initialize(Achievement);
     }
-    
+
     public bool Contains(Reward reward) => data.Contains(reward);
     public int IndexOf(Reward reward) => data.IndexOf(reward);
     public IEnumerator<Reward> GetEnumerator() => data.GetEnumerator();

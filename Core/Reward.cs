@@ -10,11 +10,13 @@ public abstract class Reward
     /// </summary>
     /// <returns>是否全部获取</returns>
     public abstract bool Receive();
-    public virtual void SaveData(TagCompound tag) {
+    public virtual void SaveData(TagCompound tag)
+    {
         tag.SetWithDefault("Received", Received);
     }
-    public virtual void LoadData(TagCompound tag) {
-        if(tag.GetWithDefault("Received", out bool received))
+    public virtual void LoadData(TagCompound tag)
+    {
+        if (tag.GetWithDefault("Received", out bool received))
         {
             Received = received;
         }
@@ -57,7 +59,7 @@ public class ItemReward(Item item) : Reward
         {
             return true;
         }
-        var item = Item.Clone();
+        Item item = Item.Clone();
         item.stack = leftStack;
         // TODO: Entity Source
         // TODO: 直接给玩家背包塞东西

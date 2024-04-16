@@ -21,8 +21,16 @@ public class UIAchCollision : BaseUIElement
         int t = (int)Info.Top.Pixel;
         int r = mouse.X;
         int b = mouse.Y;
-        if (l > r) (l, r) = (r, l);
-        if (t > b) (t, b) = (b, t);
+        if (l > r)
+        {
+            (l, r) = (r, l);
+        }
+
+        if (t > b)
+        {
+            (t, b) = (b, t);
+        }
+
         selector = new(l + origin.X, t + origin.Y, r - l, b - t);
     }
     public override void DrawSelf(SpriteBatch sb)

@@ -23,9 +23,9 @@
         }
         public override IEnumerable<ConstructInfoTable<GameEvent>> GetConstructInfoTables()
         {
-            var table = new ConstructInfoTable<GameEvent>(t =>
+            ConstructInfoTable<GameEvent> table = new ConstructInfoTable<GameEvent>(t =>
             {
-                var e = t.GetEnumerator();
+                IEnumerator<ConstructInfoTable<GameEvent>.Entry> e = t.GetEnumerator();
                 e.MoveNext();
                 GameEvent[] innerEvents = e.Current.GetValue<GameEvent[]>();
                 return new GEUIWrapper(innerEvents);

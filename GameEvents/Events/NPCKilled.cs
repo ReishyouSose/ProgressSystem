@@ -37,7 +37,7 @@ public class NPCKilled : CountInt
         return @event;
     }
 
-    public override void Load(TagCompound tag)
+    public override void LoadData(TagCompound tag)
     {
         if (tag.TryGet(nameof(IsCompleted), out bool isCompleted))
         {
@@ -45,38 +45,17 @@ public class NPCKilled : CountInt
         }
         if (tag.TryGet(nameof(Type), out string type))
         {
-            if (int.TryParse(type, out int num))
-            {
-                Type = num;
-            }
-            else
-            {
-                if (ModContent.TryFind(type, out ModNPC modNPC))
-                {
-                    Type = modNPC.Type;
-                }
-                else
-                {
-                    Type = -1;
-                }
-            }
+            Type = int.TryParse(type, out int num) ? num : ModContent.TryFind(type, out ModNPC modNPC) ? modNPC.Type : -1;
         }
-        if(tag.TryGet(nameof(NetID), out int netID))
-        {
-            NetID = netID;
-        }
-        else
-        {
-            NetID = -1;
-        }
-        base.Load(tag);
+        NetID = tag.TryGet(nameof(NetID), out int netID) ? netID : -1;
+        base.LoadData(tag);
     }
-    public override void Save(TagCompound tag)
+    public override void SaveData(TagCompound tag)
     {
         tag[nameof(IsCompleted)] = IsCompleted;
         tag[nameof(Type)] = Type >= NPCID.Count ? NPCLoader.GetNPC(Type).FullName : Type.ToString();
         tag[nameof(NetID)] = NetID;
-        base.Save(tag);
+        base.SaveData(tag);
     }
     public override (Texture2D, Rectangle?) DrawData()
     {
@@ -85,7 +64,7 @@ public class NPCKilled : CountInt
         int frame = Math.Max(Main.npcFrameCount[Type], 1);
         return (tex, new Rectangle(0, 0, tex.Width, tex.Height / frame));
     }
-    public void TryComplete(Player player, NPC npc)
+    public void TryComplete(Player? player, NPC npc)
     {
         if (NetID != -1 && npc.netID != NetID)
         {
@@ -98,9 +77,9 @@ public class NPCKilled : CountInt
     }
     public override IEnumerable<ConstructInfoTable<GameEvent>> GetConstructInfoTables()
     {
-        var table = new ConstructInfoTable<GameEvent>(t =>
+        ConstructInfoTable<GameEvent> table = new ConstructInfoTable<GameEvent>(t =>
         {
-            var e = t.GetEnumerator();
+            IEnumerator<ConstructInfoTable<GameEvent>.Entry> e = t.GetEnumerator();
             e.MoveNext();
             int type = e.Current.GetValue<int>();
             e.MoveNext();

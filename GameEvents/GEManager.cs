@@ -1,10 +1,8 @@
-﻿using System.Xml.Schema;
-
-namespace ProgressSystem.GameEvents;
+﻿namespace ProgressSystem.GameEvents;
 
 public static class GEManager
 {
-    static Dictionary<string, GameEvent> _events = [];
+    private static Dictionary<string, GameEvent> _events = [];
     public static bool Register(string uniqueLabel, GameEvent gameEvent, bool cover = true)
     {
         if (cover)
@@ -28,7 +26,7 @@ public static class GEManager
                 ["Type"] = gameEvent.GetType().FullName
             };
             TagCompound data = [];
-            sge.Save(data);
+            sge.SaveData(data);
             tag["data"] = data;
         }
         return tag;
@@ -46,13 +44,13 @@ public static class GEManager
                     ge = (GameEvent?)Activator.CreateInstance(e.GetType());
                     if (ge is not null)
                     {
-                        ((ISaveable)ge).Load(data);
+                        ((ISaveable)ge).LoadData(data);
                         return ge;
                     }
                 }
             }
         }
-        catch(Exception e)
+        catch (Exception)
         {
             ge = null;
         }

@@ -2,7 +2,6 @@
 public class PickItem : CountInt
 {
     public int Type { get; private set; }
-    public float Progress => Math.Clamp(Count / (float)Target, 0, 1);
     public static PickItem Create(int type, int target = 1)
     {
         target = Math.Max(target, 1);
@@ -25,7 +24,7 @@ public class PickItem : CountInt
         SetUp(@event);
         return @event;
     }
-    public override void Load(TagCompound tag)
+    public override void LoadData(TagCompound tag)
     {
         if (tag.TryGet(nameof(IsCompleted), out bool isCompleted))
         {
@@ -33,29 +32,15 @@ public class PickItem : CountInt
         }
         if (tag.TryGet(nameof(Type), out string type))
         {
-            if (int.TryParse(type, out int num))
-            {
-                Type = num;
-            }
-            else
-            {
-                if (ModContent.TryFind(type, out ModItem modItem))
-                {
-                    Type = modItem.Type;
-                }
-                else
-                {
-                    Type = -1;
-                }
-            }
+            Type = int.TryParse(type, out int num) ? num : ModContent.TryFind(type, out ModItem modItem) ? modItem.Type : -1;
         }
-        base.Load(tag);
+        base.LoadData(tag);
     }
-    public override void Save(TagCompound tag)
+    public override void SaveData(TagCompound tag)
     {
         tag[nameof(IsCompleted)] = IsCompleted;
         tag[nameof(Type)] = Type >= ItemID.Count ? ItemLoader.GetItem(Type).FullName : Type.ToString();
-        base.Save(tag);
+        base.SaveData(tag);
     }
     public void TryComplete(Player player, Item item)
     {
@@ -66,9 +51,9 @@ public class PickItem : CountInt
     }
     public override IEnumerable<ConstructInfoTable<GameEvent>> GetConstructInfoTables()
     {
-        var table = new ConstructInfoTable<GameEvent>(t =>
+        ConstructInfoTable<GameEvent> table = new ConstructInfoTable<GameEvent>(t =>
         {
-            var e = t.GetEnumerator();
+            IEnumerator<ConstructInfoTable<GameEvent>.Entry> e = t.GetEnumerator();
             e.MoveNext();
             int type = e.Current.GetValue<int>();
             e.MoveNext();

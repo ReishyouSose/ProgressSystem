@@ -2,7 +2,7 @@
 
 public class AnyCompleted : GameEvent
 {
-    GameEvent[] _events;
+    private GameEvent[] _events;
     public AnyCompleted(params GameEvent[] events)
     {
         _events = events;
@@ -24,9 +24,9 @@ public class AnyCompleted : GameEvent
     }
     public override IEnumerable<ConstructInfoTable<GameEvent>> GetConstructInfoTables()
     {
-        var table = new ConstructInfoTable<GameEvent>(t =>
+        ConstructInfoTable<GameEvent> table = new ConstructInfoTable<GameEvent>(t =>
         {
-            var e = t.GetEnumerator();
+            IEnumerator<ConstructInfoTable<GameEvent>.Entry> e = t.GetEnumerator();
             e.MoveNext();
             GameEvent[] events = e.Current.GetValue<GameEvent[]>();
             return new AnyCompleted(events);

@@ -209,11 +209,13 @@ public class AchievementManager : ModSystem, IWithStaticData
         Instance = this;
         HookInPostInitialize();
     }
-    static void HookInPostInitialize()
+
+    private static void HookInPostInitialize()
     {
         MonoModHooks.Add(typeof(ItemLoader).GetMethod("FinishSetup", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static), OnItemLoaderFinishSetup);
     }
-    static void OnItemLoaderFinishSetup(Action orig)
+
+    private static void OnItemLoaderFinishSetup(Action orig)
     {
         orig();
         PostInitialize();

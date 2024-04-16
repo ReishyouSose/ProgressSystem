@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ProgressSystem.GameEvents.Events
+﻿namespace ProgressSystem.GameEvents.Events
 {
     public class DamageStatistics : CountInt
     {
@@ -14,9 +8,9 @@ namespace ProgressSystem.GameEvents.Events
             target = Math.Max(target, 1);
             DamageStatistics @event = new()
             {
-                _target = target
+                _target = target,
+                ResetEveryTime = resetEveryTime
             };
-            @event.ResetEveryTime = resetEveryTime;
             return @event;
         }
         public static void SetUp(DamageStatistics @event)
@@ -41,13 +35,19 @@ namespace ProgressSystem.GameEvents.Events
         }
         public override IEnumerable<ConstructInfoTable<GameEvent>> GetConstructInfoTables()
         {
-            var table = new ConstructInfoTable<GameEvent>(t =>
+            ConstructInfoTable<GameEvent> table = new ConstructInfoTable<GameEvent>(t =>
             {
-                var e = t.GetEnumerator();
+                IEnumerator<ConstructInfoTable<GameEvent>.Entry> e = t.GetEnumerator();
                 e.MoveNext();
-                var ge = Create(e.Current.GetValue<int>());
+                int target = e.Current.GetValue<int>();
+                e.MoveNext();
+                bool resetEveryTime = e.Current.GetValue<bool>();
+                DamageStatistics ge = Create(target, resetEveryTime);
                 return ge;
             }, nameof(DamageStatistics));
+            table.AddEntry(new(typeof(int), "target"));
+            table.AddEntry(new(typeof(bool), "resetEveryTime", false));
+            table.Close();
             yield return table;
             yield break;
         }

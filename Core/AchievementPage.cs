@@ -297,7 +297,7 @@ public class AchievementPage : IWithStaticData
     /// <returns>找到的成就, 若没有这个名字的成就, 则返回<see langword="null"/></returns>
     public Achievement? Get(string achievementFullName)
     {
-        return Achievements.TryGetValue(achievementFullName, out var result) ? result : null;
+        return Achievements.TryGetValue(achievementFullName, out Achievement? result) ? result : null;
     }
 
     /// <summary>
