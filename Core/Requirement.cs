@@ -394,6 +394,7 @@ public abstract class RequirementCombination : Requirement
 public class AllOfRequirements : RequirementCombination
 {
     public AllOfRequirements(IEnumerable<Requirement> requirements) : base(requirements) { }
+    [SpecializeAutoConstruct(EnableEvenNonPublic = true)]
     protected AllOfRequirements() : base() { }
     protected override void ElementComplete(int elementIndex)
     {
@@ -406,6 +407,7 @@ public class AllOfRequirements : RequirementCombination
 public class AnyOfRequirements : RequirementCombination
 {
     public AnyOfRequirements(IEnumerable<Requirement> requirements) : base(requirements) { }
+    [SpecializeAutoConstruct(EnableEvenNonPublic = true)]
     protected AnyOfRequirements() : base() { }
     protected override void ElementComplete(int elementIndex)
     {
@@ -415,6 +417,11 @@ public class AnyOfRequirements : RequirementCombination
 public class SomeOfRequirements : RequirementCombination
 {
     public SomeOfRequirements(IEnumerable<Requirement> requirements, int count) : base(requirements)
+    {
+        Count = count;
+    }
+    [SpecializeAutoConstruct(EnableEvenNonPublic = true)]
+    protected SomeOfRequirements(int count) : base()
     {
         Count = count;
     }

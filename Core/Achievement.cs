@@ -1,5 +1,6 @@
 using ProgressSystem.Core.StaticData;
 using ProgressSystem.GameEvents;
+using System;
 using System.IO;
 using Terraria.Localization;
 
@@ -78,9 +79,21 @@ public class Achievement : IWithStaticData
     /// </summary>
     public Texture2DGetter Texture
     {
-        get => !_texture.IsNone ? _texture : _texture = $"{Mod.Name}/Assets/Textures/Achievements/{TexturePath}";
+        get
+        {
+            if (!_texture.IsNone)
+            {
+                return _texture;
+            }
+            _texture = $"{Mod.Name}/Assets/Textures/Achievements/{TexturePath}";
+            return !_texture.IsNone ? _texture : (_texture = $"{Mod.Name}/Assets/Textures/Achievements/Default");
+        }
+
         set => _texture = value;
     }
+    public Rectangle? SourceRect => GetSourceRect();
+    public Func<Rectangle?> GetSourceRect;
+    public static Rectangle? DefaultGetSourceRect() => null;
 
     protected TextGetter _displayName;
     protected TextGetter _tooltip;
@@ -91,6 +104,43 @@ public class Achievement : IWithStaticData
     /// 在 UI 上的位置, 当为空时 UI 上的默认排列则自动给出
     /// </summary>
     public Vector2? Position;
+
+    #region 以条件的图片作为成就的图片
+    public void SetTextureToRequirementTexture(int index)
+    {
+        _useRequirementTextureIndex = index;
+        Texture = new(() => Requirements.GetS(index)?.Texture.Value);
+    }
+    public int? UseRequirementTextureIndex
+    {
+        get => _useRequirementTextureIndex;
+        set
+        {
+            if (_useRequirementTextureIndex == value)
+            {
+                return;
+            }
+            _useRequirementTextureIndex = value;
+            if (value.HasValue)
+            {
+                int index = value.Value;
+                Texture = new(() => Requirements.GetS(index)?.Texture.Value);
+            }
+        }
+    }
+    protected int? _useRequirementTextureIndex;
+    #endregion
+
+    /// <summary>
+    /// 自定义绘制
+    /// 返回 false 以取消原本的绘制
+    /// </summary>
+    public virtual bool PreDraw()   // TODO: 填入参数
+    {
+        return true;
+    }
+    public virtual void PostDraw() { }  // TODO: 填入参数
+
     #endregion
 
     #region 前后置相关
@@ -210,6 +260,31 @@ public class Achievement : IWithStaticData
     /// 条件
     /// </summary>
     public RequirementList Requirements = null!;
+
+    /// <summary>
+    /// <br/>需要多少个条件才能完成此任务
+    /// <br/>默认 <see langword="null"/> 代表需要所有条件完成
+    /// <br/>如果此值大于条件数, 那么以条件数为准
+    /// <br/>例如 1 代表只需要任意条件完成即可
+    /// </summary>
+    public int? RequirementCountNeeded;
+
+    #region 提交
+    public bool NeedSubmit;
+
+    public void Submit()
+    {
+        if (State != StateEnum.Unlocked)
+        {
+            return;
+        }
+        InSubmitting = true;
+        TryComplete();
+        InSubmitting = false;
+    }
+    protected bool InSubmitting;
+    #endregion
+
     #endregion
 
     #region 奖励
@@ -298,6 +373,17 @@ public class Achievement : IWithStaticData
         page.AddF(achievement);
         return achievement;
     }
+    public static bool TryCreate(AchievementPage page, Mod mod, string name, out Achievement? achievement)
+    {
+        string fullName = string.Join('.', mod.Name, name);
+        if (page.Achievements.ContainsKey(fullName))
+        {
+            achievement = null;
+            return false;
+        }
+        achievement = Create(page, mod, name);
+        return true;
+    }
 
     protected Achievement()
     {
@@ -306,6 +392,7 @@ public class Achievement : IWithStaticData
         IsPredecessorsMet = DefaultIsPredecessorsMet;
         UnlockCondition = DefaultUnlockCondition;
         CompleteCondition = DefaultCompleteCondition;
+        GetSourceRect = DefaultGetSourceRect;
     }
 
     public void PostInitialize()
@@ -386,7 +473,14 @@ public class Achievement : IWithStaticData
     }
 
     public Func<bool> CompleteCondition;
-    public bool DefaultCompleteCondition() => Requirements.All(r => r.Completed);
+    public bool DefaultCompleteCondition()
+    {
+        return (!NeedSubmit || InSubmitting) &&
+            (!RequirementCountNeeded.HasValue || RequirementCountNeeded.Value > Requirements.Count ?
+            Requirements.All(r => r.Completed) :
+            Requirements.Sum(r => r.Completed.ToInt()) >= RequirementCountNeeded);
+    }
+
     public static event Action<Achievement>? OnCompleteStatic;
     public event Action? OnComplete;
     public virtual void CompleteSafe()
@@ -480,6 +574,10 @@ public class Achievement : IWithStaticData
             tag.SetWithDefault("Tooltip", Tooltip.StringValue);
             tag.SetWithDefault("Texture", Texture.AssetPath);
             tag.SetWithDefault("Position", Position ?? Vector2.Zero);
+            tag.SetWithDefaultN("UseRequirementTextureIndex", UseRequirementTextureIndex);
+            tag.SetWithDefaultN("RequirementCountNeeded", RequirementCountNeeded);
+            tag.SetWithDefaultN("PredecessorCountNeeded", PredecessorCountNeeded);
+            tag.SetWithDefault("NeedSubmit", NeedSubmit);
         });
     }
     public virtual void LoadStaticData(TagCompound tag)
@@ -512,6 +610,10 @@ public class Achievement : IWithStaticData
             }
             Texture = tag.GetWithDefault<string>("Texture");
             Position = tag.GetWithDefault<Vector2>("Position");
+            UseRequirementTextureIndex = tag.GetWithDefaultN<int>("UseRequirementTextureIndex");
+            RequirementCountNeeded = tag.GetWithDefaultN<int>("RequirementCountNeeded");
+            PredecessorCountNeeded = tag.GetWithDefaultN<int>("PredecessorCountNeeded");
+            tag.GetWithDefault("NeedSubmit", out NeedSubmit);
             Requirements.Clear();
         });
     }

@@ -249,7 +249,7 @@ public class AchievementPage : IWithStaticData
             {
                 i += 1;
             }
-            e.Current.Position = new(i / sqrt, i % sqrt);
+            e.Current.Position = new(i % sqrt, i / sqrt);
             i += 1;
         }
     }
@@ -277,7 +277,7 @@ public class AchievementPage : IWithStaticData
     /// <returns>是否成功添加(当此成就页内有同名成就时失败)</returns>
     public void AddF(Achievement achievement)
     {
-        Main.NewText(Achievements.TryAdd(achievement.FullName, achievement) ? "添加成功" : "添加失败，页面内有同名成就");
+        Achievements.Add(achievement.FullName, achievement);
     }
     /// <summary>
     /// 向此成就页添加一个成就

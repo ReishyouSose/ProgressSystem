@@ -137,3 +137,6 @@ dotnet_style_qualification_for_property = false:silent
 dotnet_style_qualification_for_method = false:silent
 dotnet_style_qualification_for_event = false:silent
 end_of_line = crlf
+
+# IDE0017: 简化对象初始化
+dotnet_diagnostic.IDE0017.severity = none

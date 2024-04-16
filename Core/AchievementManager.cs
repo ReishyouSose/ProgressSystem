@@ -16,7 +16,7 @@ public class AchievementManager : ModSystem, IWithStaticData
     #region Test
     public override void OnModLoad()
     {
-        var page = AchievementPage.Create(ModInstance, "Achievements");
+        var page = AchievementPage.Create(ModInstance, "TestPage");
         Achievement.Create(page, ModInstance, "First", requirements: [new SubmitRequirement()], rewards: [new ItemReward(ItemID.SilverCoin, 20)]);
         Achievement.Create(page, ModInstance, "Workbench", predecessorNames: ["Wood"],
             requirements: [new CraftItemRequirement(ItemID.WorkBench)],
@@ -180,8 +180,6 @@ public class AchievementManager : ModSystem, IWithStaticData
     static void OnItemLoaderFinishSetup(Action orig)
     {
         orig();
-        // var table = CraftItemRequirement.
-        var tables = ModContent.GetContent<Requirement>().First().GetConstructInfoTables();
         PostInitialize();
     }
     #endregion
