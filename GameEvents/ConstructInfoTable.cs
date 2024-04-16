@@ -7,6 +7,7 @@ namespace ProgressSystem.GameEvents
     public class SpecializeAutoConstructAttribute : Attribute
     {
         public bool Disabled { get; set; }
+        public bool EnableEvenNonpublic { get; set; }
     }
 
     public class ConstructInfoTable<T> : IEnumerable<ConstructInfoTable<T>.Entry>
@@ -138,12 +139,21 @@ namespace ProgressSystem.GameEvents
             foreach (var c in cs)
             {
                 var paras = c.GetCustomAttribute<SpecializeAutoConstructAttribute>();
+                bool disableForNonpublic = !c.IsPublic;
                 if (paras != null)
                 {
                     if (paras.Disabled)
                     {
                         continue;
                     }
+                    if (paras.EnableEvenNonpublic)
+                    {
+                        disableForNonpublic = false;
+                    }
+                }
+                if (disableForNonpublic)
+                {
+                    continue;
                 }
 
                 ConstructInfoTable<TResult> table = new((t) =>
@@ -159,6 +169,7 @@ namespace ProgressSystem.GameEvents
                 {
                     table.AddEntry(new(p));
                 }
+                tables.Add(table);
             }
             return true;
         }

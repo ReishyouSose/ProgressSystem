@@ -1,5 +1,6 @@
 ﻿using ProgressSystem.Core.Requirements;
 using ProgressSystem.Core.StaticData;
+using System.IO;
 using System.Reflection;
 
 namespace ProgressSystem.Core;
@@ -60,6 +61,8 @@ public class AchievementManager : ModSystem, IWithStaticData
 
     public static void PostInitialize()
     {
+        LoadStaticDataFromAllLoadedMod();
+
         Pages.Values.ForeachDo(p => p.PostInitialize());
     }
     #region 存取数据
@@ -77,6 +80,7 @@ public class AchievementManager : ModSystem, IWithStaticData
     public bool ShouldSaveStaticData { get => false; set { } }
     public static void SaveStaticDataStatic(TagCompound tag) => Instance.SaveStaticData(tag);
     public static void LoadStaticDataStatic(TagCompound tag) => Instance.LoadStaticData(tag);
+    public static event Action? OnStaticDataLoaded;
     public void SaveStaticData(TagCompound tag)
     {
         this.SaveStaticDataTemplate(Pages.Values, p => p.FullName, "Pages", tag);
@@ -85,6 +89,41 @@ public class AchievementManager : ModSystem, IWithStaticData
     {
         this.LoadStaticDataTemplate(fullName => Pages.TryGetValue(fullName, out var p) ? p : null,
             (p, m, n) => { p.Mod = m; p.Name = n; }, (f, p) => AddPage(p), "Pages", tag);
+    }
+    const string StaticDataFileIdentifier = "AchievementStaticDataForProgressSystem";
+    private static void LoadStaticDataFromAllLoadedMod()
+    {
+        foreach (var mod in ModLoader.Mods)
+        {
+            var dataPaths = mod.GetFileNames()?.Where(s => s.EndsWith(".dat"));
+            if (dataPaths == null)
+            {
+                continue;
+            }
+            foreach (var dataPath in dataPaths)
+            {
+                using var stream = mod.GetFileStream(dataPath, true);
+                var tag = TagIO.FromStream(stream);
+                if (!tag.TryGet("type", out string identifier) || identifier != StaticDataFileIdentifier)
+                {
+                    continue;
+                }
+                if (!tag.TryGet("data", out object data) || data is not TagCompound dataTag)
+                {
+                    continue;
+                }
+                LoadStaticDataStatic(dataTag);
+            }
+        }
+        OnStaticDataLoaded?.Invoke();
+    }
+    public static void SaveStaticDataToStream(Stream stream)
+    {
+        TagCompound dataTag = [], tag = [];
+        SaveStaticDataStatic(dataTag);
+        tag["data"] = dataTag;
+        tag["type"] = StaticDataFileIdentifier;
+        TagIO.ToStream(tag, stream);
     }
     #endregion
     public override void OnWorldLoad()
@@ -133,6 +172,8 @@ public class AchievementManager : ModSystem, IWithStaticData
     static void OnItemLoaderFinishSetup(Action orig)
     {
         orig();
+        // var table = CraftItemRequirement.
+        var tables = ModContent.GetContent<Requirement>().First().GetConstructInfoTables();
         PostInitialize();
     }
     #endregion

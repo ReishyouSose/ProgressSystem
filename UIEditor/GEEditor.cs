@@ -703,6 +703,57 @@ namespace ProgressSystem.UIEditor
         {
             try
             {
+                // TODO: 提供 path
+                // path 默认情况下储存在 ModSources/ProgressSystem/Achievements.dat
+                string path = string.Empty;
+
+                string directory;
+                if (path == null || path == string.Empty)
+                {
+                    path = Path.Combine(Main.SavePath, "ModSources", ModName);
+                }
+                if (path.EndsWith(".dat"))
+                {
+                    var splitedPath = path.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    directory = string.Join(Path.PathSeparator, splitedPath[..^1]);
+                }
+                else
+                {
+                    directory = path;
+                    path = string.Join(Path.PathSeparator, path, "Achievements.dat");
+                }
+                Directory.CreateDirectory(directory);
+                using var stream = File.OpenWrite(path);
+                AchievementManager.SaveStaticDataToStream(stream);
+                
+                /*
+                string root = Path.Combine(Main.SavePath, "Mods", ProgressSystem.Instance.Name);
+                Directory.CreateDirectory(root);
+                foreach ((string modName, Dictionary<string, Dictionary<GameEvent, GEData>> pages) in datas)
+                {
+                    if (!pages.Any()) continue;
+                    Directory.CreateDirectory(Path.Combine(root, modName));
+                    foreach ((string pageName, Dictionary<GameEvent, GEData> ges) in pages)
+                    {
+                        using FileStream stream = File.OpenWrite(Path.Combine(root, modName, pageName + ".dat"));
+                        using BinaryWriter writer = new(stream);
+                        writer.Write(CurrentSaveVersion);
+                        TagCompound tag = [];
+                        List<TagCompound> subTags = [];
+                        foreach (var (ge, data) in ges)
+                        {
+                            var subtag = GEManager.Save(ge);
+                            if (subtag != null)
+                            {
+                                data.SaveData(subtag);
+                                subTags.Add(subtag);
+                            }
+                        }
+                        tag["data"] = subTags;
+                        TagIO.ToStream(tag, stream);
+                    }
+                }
+                */
                 Main.NewText("保存成功");
             }
             catch

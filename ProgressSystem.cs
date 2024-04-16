@@ -1,4 +1,5 @@
 global using Microsoft.Xna.Framework;
+global using ProgressSystem.Core;
 global using ProgressSystem.TheUtils;
 global using RUIModule.RUIElements;
 global using RUIModule.RUISys;

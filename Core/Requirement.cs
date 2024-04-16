@@ -298,9 +298,9 @@ public abstract class Requirement : IWithStaticData, ILoadable
         return $"{GetType().Name}: {nameof(Completed)}: {Completed}, {nameof(Listening)}: {Listening}";
     }
 
-    public void Load(Mod mod) { }
+    public virtual void Load(Mod mod) { }
 
-    public void Unload() { }
+    public virtual void Unload() { }
 }
 public abstract class RequirementCombination : Requirement
 {

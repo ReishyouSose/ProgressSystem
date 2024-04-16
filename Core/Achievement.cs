@@ -9,6 +9,8 @@ namespace ProgressSystem.Core;
 /// <br/>成就
 /// <br/>Tips: 在 UI 中修改了相关数据时需要设置 <see cref="ShouldSaveStaticData"/> 为真,
 /// <br/>对于 <see cref="AchievementPage"/> 等其它实现了 <see cref="IWithStaticData"/> 接口的也是如此
+/// <br/>修改的数据是它本身的数据时才设置, 如设置了条件但成就原来就存在的话
+/// <br/>就不需要设置 <see cref="ShouldSaveStaticData"/>, 而只需要设置条件的就好
 /// </summary>
 public class Achievement : IWithStaticData
 {
