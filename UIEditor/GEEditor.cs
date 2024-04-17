@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.CodeAnalysis;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using ProgressSystem.GameEvents;
 using ProgressSystem.UIEditor.ExtraUI;
@@ -68,7 +69,11 @@ namespace ProgressSystem.UIEditor
         /// 选中的作为前置的Ach
         /// </summary>
         private UIAchSlot preSetting;
-        private UIAchSlot editingAch;
+        private string editingAchName;
+        private Dictionary<string, UIAchSlot> slotByFullName;
+        private AchievementPage EditingPage => AchievementManager.PagesByMod[editingMod][editingPage];
+        private Achievement EditingAch => editingAchName == "" ? null : slotByFullName[editingAchName].ach;
+        private UIAchSlot EditingAchSlot => slotByFullName[editingAchName];
         private UIText saveTip;
         private static bool LeftShift;
         private static bool LeftCtrl;
@@ -81,7 +86,6 @@ namespace ProgressSystem.UIEditor
         /// 正在编辑的进度组名
         /// </summary>
         private string editingPage;
-        private AchievementPage EditingPage => AchievementManager.PagesByMod[editingMod][editingPage];
         /// <summary>
         /// 检测是否已按下ctrl + S
         /// </summary>
@@ -99,6 +103,7 @@ namespace ProgressSystem.UIEditor
             tempSelect = [];
             frameSelect = [];
             interacted = [];
+            slotByFullName = [];
 
             RegisterEditPagePanel();
             RegisterEditAchPanel();
@@ -122,9 +127,7 @@ namespace ProgressSystem.UIEditor
             {
                 foreach (UIAchSlot slot in frameSelect)
                 {
-                    AchPos.Remove(slot.pos);
-                    EditingPage.Achievements.Remove(slot.ach.FullName);
-                    achView.RemoveElement(slot);
+                    RemoveAchSlot(slot, true);
                 }
 
             }
@@ -265,14 +268,14 @@ namespace ProgressSystem.UIEditor
                 string text = achNameInputer.Text;
                 if (text.Any())
                 {
-                    EditingPage.Achievements.Remove(editingAch.ach.FullName);
+                    Vector2 pos = EditingAchSlot.pos;
+                    RemoveAchSlot(EditingAchSlot);
                     Achievement ach = Achievement.Create(EditingPage, editingMod, text);
                     foreach (UIRequireText require in conditionView.InnerUIE.Cast<UIRequireText>())
                     {
                         ach.Requirements.Add(require.requirement);
                     }
-                    editingAch.ach = ach;
-                    ChangeSaveState(false);
+                    RegisterAchSlot(ach, pos);
                 }
             };
             newAchBg.Register(saveChange);
@@ -508,22 +511,18 @@ namespace ProgressSystem.UIEditor
             {
                 Point mouse = (Main.MouseScreen - achView.ChildrenElements[0].HitBox(false).TopLeft()).ToPoint();
                 Vector2 pos = new(mouse.X / 80, mouse.Y / 80);
-                if (AchPos.Contains(pos)) return;
+                if (EditingAchSlot.pos == pos) return;
                 string name = BaseName;
                 int i = 1;
                 while (EditingPage.Achievements.ContainsKey(editingMod.Name + "." + name + i)) i++;
                 Achievement ach = Achievement.Create(EditingPage, editingMod, name + i);
-                ach.Position = pos;
-                UIAchSlot slot = new(ach, pos);
-                RegisterEventToGESlot(slot);
-                slot.SetPos(pos * 80);
-                achView.AddElement(slot);
+                RegisterAchSlot(ach, pos);
             };
             achView.Events.OnRightDown += evt =>
             {
                 collision = new();
                 achView.AddElement(collision);
-                if (!Keyboard.GetState().IsKeyDown(Keys.LeftShift))
+                if (!LeftCtrl)
                 {
                     foreach (UIAchSlot ge in frameSelect)
                     {
@@ -550,18 +549,22 @@ namespace ProgressSystem.UIEditor
                         {
                             if (preSetting != ge)
                             {
-                                if (preSetting.PostGE.Contains(ge))
+                                Achievement orig = preSetting.ach;
+                                Achievement pre = ge.ach;
+                                if (pre.Predecessors.Contains(orig))
                                 {
-                                    UIRequireLine line = preSetting.postGE.First(x => x.end == ge);
-                                    preSetting.postGE.Remove(line);
-                                    achView.RemoveElement(line);
+                                    Main.NewText("不可互为前置");
+                                    continue;
+                                }
+                                if (preSetting.PreAch.Contains(ge))
+                                {
+                                    RemoveRequireLine(orig, pre);
                                 }
                                 else
                                 {
-                                    UIRequireLine line = new(preSetting, ge);
-                                    achView.AddElement(line, 100);
-                                    preSetting.postGE.Add(line);
+                                    RegisterRequireLine(orig, pre);
                                 }
+                                ChangeSaveState(false);
                             }
                             ge.selected = false;
                         }
@@ -607,10 +610,7 @@ namespace ProgressSystem.UIEditor
             inputBg.SetCenter(0, 0, 0.5f, 0.25f);
             pagePanel.Register(inputBg);
 
-            UIText report = new("不可为空")
-            {
-                color = Color.Red
-            };
+            UIText report = new("不可为空", Color.Red);
             report.SetSize(report.TextSize);
             report.SetCenter(0, 0, 0.5f, 0.5f);
             pagePanel.Register(report);
@@ -664,9 +664,10 @@ namespace ProgressSystem.UIEditor
             };
             pagePanel.Register(cancel);
         }
-        private void GESlotLeftCheck(BaseUIElement uie)
+        private void AchSlotLeftCheck(BaseUIElement uie)
         {
             UIAchSlot ge = uie as UIAchSlot;
+            Achievement ach = ge.ach;
             if (LeftAlt)
             {
                 frameSelect.Clear();
@@ -680,17 +681,20 @@ namespace ProgressSystem.UIEditor
                 {
                     if (preSetting != ge)
                     {
-                        if (preSetting.PostGE.Contains(ge))
+                        Achievement orig = preSetting.ach;
+                        Achievement pre = ach;
+                        if (pre.Predecessors.Contains(orig))
                         {
-                            UIRequireLine line = preSetting.postGE.First(x => x.end == ge);
-                            preSetting.postGE.Remove(line);
-                            achView.RemoveElement(line);
+                            Main.NewText("不可互为前置");
+                            return;
+                        }
+                        if (preSetting.PreAch.Contains(ge))
+                        {
+                            RemoveRequireLine(orig, pre);
                         }
                         else
                         {
-                            UIRequireLine line = new(preSetting, ge);
-                            achView.AddElement(line, 100);
-                            preSetting.postGE.Add(line);
+                            RegisterRequireLine(orig, pre);
                         }
                         ChangeSaveState(false);
                     }
@@ -712,10 +716,10 @@ namespace ProgressSystem.UIEditor
                 Point mouse = (Main.MouseScreen - achView.ChildrenElements[0].HitBox(false).TopLeft()).ToPoint();
                 selectedStart = new(mouse.X / 80, mouse.Y / 80);
             }
-            editingAch = ge;
-            achNameInputer.Text = ge.ach.Name;
+            editingAchName = ach.FullName;
+            achNameInputer.Text = ach.Name;
             conditionView.ClearAllElements();
-            foreach (Requirement require in editingAch.ach.Requirements)
+            foreach (Requirement require in ach.Requirements)
             {
                 UIRequireText req = new(require);
                 req.delete.Events.OnLeftDown += evt =>
@@ -724,6 +728,8 @@ namespace ProgressSystem.UIEditor
                 };
                 conditionView.AddElement(req);
             }
+            AchPos.Remove(ge.pos);
+            ChangeEditingAch(ach);
             dragging = true;
         }
         private void GESlotUpdate(BaseUIElement uie)
@@ -732,7 +738,7 @@ namespace ProgressSystem.UIEditor
             if (collision != null)
             {
                 bool intersects = ge.HitBox().Intersects(collision.selector);
-                if (LeftShift)
+                if (LeftCtrl)
                 {
                     if (!interacted.Contains(ge) && intersects)
                     {
@@ -807,6 +813,7 @@ namespace ProgressSystem.UIEditor
             achView?.InnerUIE.RemoveAll(MatchTempGE);
             achView?.Vscroll.ForceSetPixel(0);
             achView?.Hscroll.ForceSetPixel(0);
+            slotByFullName.Clear();
         }
         private void LoadPage(string pageName)
         {
@@ -814,13 +821,19 @@ namespace ProgressSystem.UIEditor
             ClearTemp();
             foreach (Achievement ach in EditingPage.Achievements.Values)
             {
-                UIAchSlot slot = new(ach, ach.Position);
-                RegisterEventToGESlot(slot);
-                AchPos.Add(ach.Position ?? Vector2.Zero);
-                achView.AddElement(slot);
+                RegisterAchSlot(ach, ach.Position.Value, false);
             }
+            foreach (UIAchSlot slot in slotByFullName.Values)
+            {
+                Achievement orig = slot.ach;
+                foreach (Achievement pre in orig.Predecessors)
+                {
+                    RegisterRequireLine(orig, pre, false);
+                }
+            }
+            ChangeEditingAch(null);
         }
-        private void RegisterEventToGESlot(UIAchSlot ge)
+        private void RegisterEventToAchSlot(UIAchSlot ge)
         {
             var ev = achView.Vscroll;
             var eh = achView.Hscroll;
@@ -834,7 +847,7 @@ namespace ProgressSystem.UIEditor
                 ev.canDrag = true;
                 eh.canDrag = true;
             };
-            ge.Events.OnLeftDown += GESlotLeftCheck;
+            ge.Events.OnLeftDown += AchSlotLeftCheck;
             ge.Events.OnLeftUp += evt =>
             {
                 dragging = false;
@@ -844,19 +857,14 @@ namespace ProgressSystem.UIEditor
                     ge.ach.Position = ge.pos;
                     ChangeSaveState(false);
                 }
+                AchPos.Add(ge.pos);
             };
             ge.Events.OnUpdate += GESlotUpdate;
-            ge.Events.OnRightDoubleClick += evt =>
-            {
-                AchievementManager.PagesByMod[editingMod][editingPage].Achievements.Remove(ge.ach.FullName);
-                AchPos.Remove(ge.pos);
-                achView.InnerUIE.Remove(ge);
-                ChangeSaveState(false);
-            };
+            ge.Events.OnRightDoubleClick += evt => RemoveAchSlot(ge);
             ge.ReDraw = sb =>
             {
                 ge.DrawSelf(sb);
-                if (ge.ach == editingAch.ach)
+                if (ge.ach.FullName == editingAchName)
                 {
                     RUIHelper.DrawRec(sb, ge.HitBox().Modified(4, 4, -8, -8), 2f, Color.SkyBlue);
                 }
@@ -912,6 +920,11 @@ namespace ProgressSystem.UIEditor
             create.Events.OnMouseOut += evt => create.color = Color.White;
             create.Events.OnLeftDown += evt =>
             {
+                if (EditingAch == null)
+                {
+                    Main.NewText("请先选择一个成就栏位");
+                    return;
+                }
                 if (data.TryConstruct(out Requirement condition))
                 {
                     int count = conditionView.InnerUIE.Count;
@@ -967,6 +980,68 @@ namespace ProgressSystem.UIEditor
             {
                 saveTip.ChangeText("未保存");
                 saveTip.color = Color.Red;
+            }
+        }
+        private UIAchSlot RegisterAchSlot(Achievement ach, Vector2 pos, bool changeToEditing = true)
+        {
+            UIAchSlot slot = new(ach, pos);
+            RegisterEventToAchSlot(slot);
+            achView.AddElement(slot);
+            slotByFullName.Add(slot.ach.FullName, slot);
+            AchPos.Add(pos);
+            if (changeToEditing) ChangeEditingAch(ach);
+            ChangeSaveState(false);
+            return slot;
+        }
+        private void RemoveAchSlot(UIAchSlot slot, bool range = false)
+        {
+            string achName = slot.ach.FullName;
+            achView.RemoveElement(slot);
+            slotByFullName.Remove(achName);
+            if (range) slot.Info.NeedRemove = true;
+            else EditingPage.Achievements.Remove(achName);
+            AchPos.Remove(slot.pos);
+            if (editingAchName == achName)
+            {
+                ChangeEditingAch(null);
+            }
+            ChangeSaveState(false);
+        }
+        private void RegisterRequireLine(Achievement orig, Achievement pre, bool addPreToAch = true)
+        {
+            UIAchSlot start = slotByFullName[pre.FullName];
+            UIAchSlot end = slotByFullName[orig.FullName];
+            UIRequireLine line = new(start, end);
+            achView.AddElement(line, 100);
+            end.preLine.Add(line);
+            if (addPreToAch)
+            {
+                orig.AddPredecessor(pre.FullName, true);
+            }
+        }
+        private void RemoveRequireLine(Achievement orig, Achievement pre)
+        {
+            UIAchSlot me = slotByFullName[orig.FullName];
+            UIRequireLine line = me.preLine.First(x => x.start.ach == pre);
+            achView.RemoveElement(line);
+            me.preLine.Remove(line);
+            orig.RemovePredecessor(pre.FullName, true);
+        }
+        private void ChangeEditingAch(Achievement ach)
+        {
+            conditionView.ClearAllElements();
+            achNameInputer.ClearText();
+            if (ach == null) return;
+            editingAchName = ach.FullName;
+            achNameInputer.Text = ach.Name;
+            foreach (Requirement require in ach.Requirements)
+            {
+                UIRequireText text = new(require);
+                text.delete.Events.OnLeftDown += evt =>
+                {
+                    conditionView.RemoveElement(text);
+                };
+                conditionView.AddElement(text);
             }
         }
     }

@@ -32,8 +32,8 @@ namespace ProgressSystem.UIEditor.ExtraUI
         /// 正在作为前置选中
         /// </summary>
         public bool preSetting;
-        public HashSet<UIRequireLine> postGE;
-        public IReadOnlySet<UIAchSlot> PostGE => postGE.Select(x => x.end).ToHashSet();
+        public HashSet<UIRequireLine> preLine;
+        public IReadOnlySet<UIAchSlot> PreAch => preLine.Select(x => x.start).ToHashSet();
         public UIAchSlot(Achievement ach = null, Vector2? pos = null) : base(AssetLoader.Slot)
         {
             this.ach = ach;
@@ -43,7 +43,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
                 this.pos = pos.Value;
                 SetPos(this.pos * 80);
             }
-            postGE = [];
+            preLine = [];
         }
         public override void OnInitialization()
         {
@@ -60,7 +60,6 @@ namespace ProgressSystem.UIEditor.ExtraUI
                 }
 
                 oldlocal = Main.MouseScreen;
-                GEEditor.AchPos.Remove(pos);
                 color = Color.White * 0.75f;
             };
             Events.OnLeftUp += evt =>
@@ -69,7 +68,6 @@ namespace ProgressSystem.UIEditor.ExtraUI
                 if (adsorption != null)
                 {
                     SetPos(pos * 80);
-                    GEEditor.AchPos.Add(pos);
                     adsorption = null;
                 }
                 color = Color.White;

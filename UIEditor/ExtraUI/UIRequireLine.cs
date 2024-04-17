@@ -7,15 +7,15 @@ namespace ProgressSystem.UIEditor.ExtraUI
     {
         public readonly UIAchSlot start = start;
         public readonly UIAchSlot end = end;
-        private readonly static Color pink = Color.Pink;
-        private readonly static Color blue = Color.Blue;
+        private readonly static Color R = Color.Red;
+        private readonly static Color G = Color.Gold;
         public override void Update(GameTime gt)
         {
             base.Update(gt);
             if (start.ParentElement == null || end.ParentElement == null)
             {
-                ParentElement.Remove(this);
                 end.ach.RemovePredecessor(start.ach.FullName, true);
+                Info.NeedRemove = true;
             }
         }
         public override void DrawSelf(SpriteBatch sb)
@@ -28,7 +28,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
             float rot = target.ToRotation();
             for (int i = 0; i < len; i++)
             {
-                Color color = LerpColor(pink, blue, i / len);
+                Color color = LerpColor(R, G, i / len);
                 sb.Draw(TextureAssets.MagicPixel.Value, startPos + (target * i),
                     new Rectangle(0, 0, 2, 2), color, rot, Vector2.One, 2f, 0, 0);
             }

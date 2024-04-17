@@ -160,7 +160,7 @@ namespace ProgressSystem.GameEvents
                 ConstructInfoTable<TResult> table = new((t) =>
                 {
                     List<object?> objs = [];
-                    foreach (ConstructInfoTable<object>.Entry entry in t)
+                    foreach (ConstructInfoTable<TResult>.Entry entry in t)
                     {
                         objs.Add(entry.GetValue());
                     }
