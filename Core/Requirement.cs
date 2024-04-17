@@ -1,4 +1,5 @@
 ﻿using Humanizer;
+using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.StaticData;
 using ProgressSystem.GameEvents;
 using System.IO;
@@ -10,7 +11,7 @@ namespace ProgressSystem.Core;
 /// 达成成就所需的条件
 /// 继承它的非抽象类需要有一个无参构造 (用以读取静态数据)
 /// </summary>
-public abstract class Requirement : IWithStaticData, ILoadable
+public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate
 {
     public Achievement Achievement = null!;
     public TextGetter DisplayName;
@@ -41,10 +42,12 @@ public abstract class Requirement : IWithStaticData, ILoadable
             }
         };
     }
-    public Requirement(ListenTypeEnum listenType = ListenTypeEnum.None, MultiplayerTypeEnum multiplayerType = MultiplayerTypeEnum.LocalPlayer)
+    public Requirement(ListenTypeEnum listenType = ListenTypeEnum.None, MultiplayerTypeEnum multiplayerType = MultiplayerTypeEnum.LocalPlayer) : this()
     {
         ListenType = listenType;
         MultiplayerType = multiplayerType;
+    }
+    protected Requirement() {
         Reset();
     }
     /// <summary>
@@ -168,23 +171,13 @@ public abstract class Requirement : IWithStaticData, ILoadable
     }
     #endregion
     #region 多人同步
-    public virtual void NetSend(BinaryWriter writer)
-    {
-        if (MultiplayerType is MultiplayerTypeEnum.AnyPlayer or MultiplayerTypeEnum.World)
-        {
-            writer.Write(Completed);
-        }
-    }
-    public virtual void NetReceive(BinaryReader reader)
-    {
-        if (MultiplayerType is MultiplayerTypeEnum.AnyPlayer or MultiplayerTypeEnum.World)
-        {
-            if (reader.ReadBoolean())
-            {
-                CompleteSafe();
-            }
-        }
-    }
+    // TODO: 同步Completed?
+    protected bool _netUpdate;
+    public bool NetUpdate { get => _netUpdate; set => DoIf(_netUpdate = value, AchievementManager.SetNeedNetUpdate); }
+    public virtual void WriteMessageFromServer(BinaryWriter writer) { }
+    public virtual void ReceiveMessageFromServer(BinaryReader reader) { }
+    public virtual void WriteMessageFromClient(BinaryWriter writer) { }
+    public virtual void ReceiveMessageFromClient(BinaryReader reader) { }
     #endregion
     #region 监听
     public enum ListenTypeEnum
@@ -211,7 +204,7 @@ public abstract class Requirement : IWithStaticData, ILoadable
     /// </summary>
     public ListenTypeEnum ListenType;
     public bool Listening { get; protected set; }
-    public void TryBeginListen()
+    public virtual void TryBeginListen()
     {
         if (Listening || Completed)
         {
@@ -300,11 +293,11 @@ public abstract class Requirement : IWithStaticData, ILoadable
         mod ??= definedMod[GetType()];
         if (DisplayName.IsNone)
         {
-            DisplayName |= mod.GetLocalization($"Requirements.{GetType().Name}.DisplayName".FormatWith(DisplayNameArgs));
+            DisplayName |= mod.GetLocalization($"Requirements.{GetType().Name}.DisplayName").WithFormatArgs(DisplayNameArgs);
         }
         if (DisplayName.IsNone)
         {
-            Tooltip = mod.GetLocalization($"Requirements.{GetType().Name}.Tooltip".FormatWith(TooltipArgs));
+            Tooltip = mod.GetLocalization($"Requirements.{GetType().Name}.Tooltip").WithFormatArgs(TooltipArgs);
         }
         Texture |= $"{mod.Name}/Assets/Textures/Requirements/{GetType().Name}";
         Texture |= $"{mod.Name}/Assets/Textures/Requirements/Default";
@@ -313,6 +306,7 @@ public abstract class Requirement : IWithStaticData, ILoadable
 
     public virtual void Unload() { }
 }
+
 public abstract class RequirementCombination : Requirement
 {
     public List<Requirement> Requirements = [];
@@ -363,22 +357,7 @@ public abstract class RequirementCombination : Requirement
     }
     #endregion
     #region 多人同步
-    public override void NetSend(BinaryWriter writer)
-    {
-        base.NetSend(writer);
-        foreach (Requirement requirement in Requirements)
-        {
-            requirement.NetSend(writer);
-        }
-    }
-    public override void NetReceive(BinaryReader reader)
-    {
-        base.NetReceive(reader);
-        foreach (Requirement requirement in Requirements)
-        {
-            requirement.NetReceive(reader);
-        }
-    }
+    public IEnumerable<INetUpdate> GetNetUpdateChildren() => Requirements;
     #endregion
     #region 监听
     protected override void BeginListen()

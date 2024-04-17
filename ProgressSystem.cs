@@ -13,16 +13,23 @@ global using Terraria.ModLoader;
 global using Terraria.ModLoader.IO;
 global using static ProgressSystem.TheUtils.TigerClasses;
 global using static ProgressSystem.TheUtils.TigerUtils;
+using ProgressSystem.Core.NetUpdate;
+using System.IO;
 
 namespace ProgressSystem;
 
 public class ProgressSystem : Mod
 {
-    internal static ProgressSystem Instance { get; private set; }
+    internal static ProgressSystem Instance { get; private set; } = null!;
     public override void Load()
     {
         /* RUIManager.mod =*/
         Instance = this;
         AddContent<RUIManager>();
+    }
+    public override void HandlePacket(BinaryReader reader, int whoAmI)
+    {
+        int messageType = NetHandler.ReadMessageID(reader);
+        NetHandler.Handlers.GetS(messageType)?.Invoke(reader, whoAmI);
     }
 }

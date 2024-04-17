@@ -1,13 +1,8 @@
 Keybinds.check.DisplayName: check
 
 Requirements: {
-	SubmitRequirement: {
-		DisplayName: Submit
-		Tooltip: ""
-	}
-
 	CraftItemRequirement: {
-		DisplayName: Craft Item
+		DisplayName: Craft {0}
 		Tooltip: ""
 	}
 
@@ -17,12 +12,12 @@ Requirements: {
 	}
 
 	KillNPCRequirement: {
-		DisplayName: Kill NPC
+		DisplayName: Kill {0}
 		Tooltip: ""
 	}
 
 	PickItemRequirement: {
-		DisplayName: Pick Item
+		DisplayName: Pick {0}
 		Tooltip: ""
 	}
 
@@ -30,6 +25,7 @@ Requirements: {
 	AnyOfRequirements.DisplayName: Any Of Requirements
 	EmptyRequirement.DisplayName: Empty Requirement
 	SomeOfRequirements.DisplayName: Some Of Requirements
+	CraftItemInWorldRequirement.DisplayName: Mods.ProgressSystem.Requirements.CraftItemInWorldRequirement.DisplayName
 }
 
 Achievements: {
@@ -78,6 +74,36 @@ Achievements: {
 			}
 
 			TestCreate.Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.TestCreate.Description
+		}
+	}
+}
+
+Configs: {
+	ServerConfig: {
+		DisplayName: Server Config
+
+		NetUpdateFrequency: {
+			Label: Net Update Frequency
+			Tooltip: ""
+		}
+
+		DontReceiveOtherPlayerCompleteAchievementMessage: {
+			Label: Dont Receive Other Player Complete Achievement Message
+			Tooltip: ""
+		}
+	}
+
+	ClientConfig: {
+		DisplayName: Client Config
+
+		DontShowAnyAchievementMessage: {
+			Label: Dont Show Any Achievement Message
+			Tooltip: ""
+		}
+
+		DontShowOtherPlayerCompleteAchievementMessage: {
+			Label: Dont Show Other Player Complete Achievement Message
+			Tooltip: ""
 		}
 	}
 }

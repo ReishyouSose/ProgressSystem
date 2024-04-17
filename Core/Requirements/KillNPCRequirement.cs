@@ -1,4 +1,5 @@
 ﻿using ProgressSystem.GameEvents;
+using Terraria.Localization;
 
 namespace ProgressSystem.Core.Requirements;
 
@@ -7,17 +8,23 @@ public class KillNPCRequirement : Requirement
 {
     public int NPCType;
     public int Count;
-    public int CountNow;
     public Func<NPC, bool>? Condition;
-    public KillNPCRequirement(int npcType, int count = 1) : this(npcType, null, count) { }
-    public KillNPCRequirement(Func<NPC, bool> condition, int count = 1) : this(0, condition, count) { }
-    protected KillNPCRequirement(int npcType, Func<NPC, bool>? condition, int count) : base(ListenTypeEnum.OnStart)
+    public LocalizedText? ConditionDescription;
+    
+    public int CountNow;
+
+    public KillNPCRequirement(int npcType, int count = 1) : this(npcType, null, null, count) { }
+    public KillNPCRequirement(Func<NPC, bool> condition, LocalizedText conditionDescription, int count = 1) : this(0, condition, conditionDescription, count) { }
+    protected KillNPCRequirement(int npcType, Func<NPC, bool>? condition, LocalizedText? conditionDescription, int count) : base(ListenTypeEnum.OnStart)
     {
         NPCType = npcType;
         Condition = condition;
+        ConditionDescription = conditionDescription;
         Count = count;
     }
-    protected KillNPCRequirement() { }
+    protected KillNPCRequirement() : base() { }
+
+    protected override object?[] DisplayNameArgs => [ Count + " " + (NPCType > 0 ? SampleNPC(NPCType).TypeName : ConditionDescription?.Value ?? "?")];
 
     public override void Reset()
     {

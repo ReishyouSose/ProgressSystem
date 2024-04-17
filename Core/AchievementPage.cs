@@ -1,4 +1,5 @@
-﻿using ProgressSystem.Core.StaticData;
+﻿using ProgressSystem.Core.NetUpdate;
+using ProgressSystem.Core.StaticData;
 using System.IO;
 
 namespace ProgressSystem.Core;
@@ -7,7 +8,7 @@ namespace ProgressSystem.Core;
 /// 成就页
 /// 代表一个显示多个成就的界面
 /// </summary>
-public class AchievementPage : IWithStaticData
+public class AchievementPage : IWithStaticData, INetUpdate
 {
     #region Vars
     public Mod Mod = null!;
@@ -376,7 +377,8 @@ public class AchievementPage : IWithStaticData
     public virtual void LoadStaticData(TagCompound tag)
     {
         this.LoadStaticDataTemplate(fullName => Achievements.TryGetValue(fullName, out var a) ? a : null,
-            (a, m, n) => {
+            (a, m, n) =>
+            {
                 a.Mod = m;
                 a.Name = n;
                 a.Page = this;
@@ -388,14 +390,13 @@ public class AchievementPage : IWithStaticData
 
     #region 网络同步
     // TODO: Page 自身的网络同步
-    public virtual void NetSend(BinaryWriter writer)
-    {
-        Achievements.Values.ForeachDo(a => a.NetSend(writer));
-    }
-    public virtual void NetReceive(BinaryReader reader)
-    {
-        Achievements.Values.ForeachDo(a => a.NetReceive(reader));
-    }
+    protected bool _netUpdate;
+    public bool NetUpdate { get => _netUpdate; set => DoIf(_netUpdate = value, AchievementManager.SetNeedNetUpdate); }
+    public IEnumerable<INetUpdate> GetNetUpdateChildren() => Achievements.Values;
+    public virtual void WriteMessageFromServer(BinaryWriter writer) { }
+    public virtual void ReceiveMessageFromServer(BinaryReader reader) { }
+    public virtual void WriteMessageFromClient(BinaryWriter writer) { }
+    public virtual void ReceiveMessageFromClient(BinaryReader reader) { }
     #endregion
 
     public override string ToString()

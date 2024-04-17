@@ -66,15 +66,15 @@ public static partial class TigerUtils
                 {
                     return 0;
                 }
-                return val * (val - (2 * pars[0])) / (1 - (2 * pars[0]));
+                return val * (val - 2 * pars[0]) / (1 - 2 * pars[0]);
             case LerpType.Cubic:
                 //pars[0], pars[1]:三次函数的两个极点
                 if (pars.Length <= 1)
                 {
                     throw new TargetParameterCountException("pars not enough");
                 }
-                return (((val - (3 * (pars[0] + pars[1]) / 2)) * val) + (3 * pars[0] * pars[1])) * val /
-                    (1 - (3 * (pars[0] + pars[1]) / 2) + (3 * pars[0] * pars[1]));
+                return ((val - 3 * (pars[0] + pars[1]) / 2) * val + 3 * pars[0] * pars[1]) * val /
+                    (1 - 3 * (pars[0] + pars[1]) / 2 + 3 * pars[0] * pars[1]);
             case LerpType.CubicByK:
                 //pars[0], pars[1]:两处的斜率
                 //par[2], par[3](若存在):宽度和高度
@@ -92,20 +92,20 @@ public static partial class TigerUtils
                 Vector4 vc = new(0, par2, 1, 1);
                 Vector4 vd = new(1, 1, 0, 0);
                 Vector4 v0 = new(0, par3, pars[0], pars[1]);
-                global::System.Numerics.Matrix4x4 d0 = NewMatrix(va, vb, vc, vd);
-                global::System.Numerics.Matrix4x4 da = NewMatrix(v0, vb, vc, vd);
-                global::System.Numerics.Matrix4x4 db = NewMatrix(va, v0, vc, vd);
-                global::System.Numerics.Matrix4x4 dc = NewMatrix(va, vb, v0, vd);
-                global::System.Numerics.Matrix4x4 dd = NewMatrix(va, vb, vc, v0);
+                var d0 = NewMatrix(va, vb, vc, vd);
+                var da = NewMatrix(v0, vb, vc, vd);
+                var db = NewMatrix(va, v0, vc, vd);
+                var dc = NewMatrix(va, vb, v0, vd);
+                var dd = NewMatrix(va, vb, vc, v0);
                 if (d0.GetDeterminant() == 0)
                 {
                     return 0;
                 }
                 if (par3 == 0)
                 {
-                    return ((((((da.GetDeterminant() * val) + db.GetDeterminant()) * val) + dc.GetDeterminant()) * val) + dd.GetDeterminant()) / d0.GetDeterminant();
+                    return (((da.GetDeterminant() * val + db.GetDeterminant()) * val + dc.GetDeterminant()) * val + dd.GetDeterminant()) / d0.GetDeterminant();
                 }
-                return ((((((da.GetDeterminant() * val) + db.GetDeterminant()) * val) + dc.GetDeterminant()) * val) + dd.GetDeterminant()) / d0.GetDeterminant() / par3;
+                return (((da.GetDeterminant() * val + db.GetDeterminant()) * val + dc.GetDeterminant()) * val + dd.GetDeterminant()) / d0.GetDeterminant() / par3;
             case LerpType.Sin:
                 //pars[0], pars[1] : 两相位的四分之一周期数
                 if (pars.Length < 2)
@@ -165,15 +165,15 @@ public static partial class TigerUtils
                 {
                     return 0;
                 }
-                return val * (val - (2 * pars[0])) / (1 - (2 * pars[0]));
+                return val * (val - 2 * pars[0]) / (1 - 2 * pars[0]);
             case LerpType.Cubic:
                 //pars[0], pars[1]:三次函数的两个极点
                 if (pars.Length <= 1)
                 {
                     throw new TargetParameterCountException("pars not enough");
                 }
-                return (((val - (3 * (pars[0] + pars[1]) / 2)) * val) + (3 * pars[0] * pars[1])) * val /
-                    (1 - (3 * (pars[0] + pars[1]) / 2) + (3 * pars[0] * pars[1]));
+                return ((val - 3 * (pars[0] + pars[1]) / 2) * val + 3 * pars[0] * pars[1]) * val /
+                    (1 - 3 * (pars[0] + pars[1]) / 2 + 3 * pars[0] * pars[1]);
             case LerpType.CubicByK:
                 //pars[0], pars[1]:两处的斜率
                 //par[2], par[3](若存在):宽度和高度
@@ -191,27 +191,27 @@ public static partial class TigerUtils
                 Vector4 vc = NewVector4(0, par2, 1, 1);
                 Vector4 vd = NewVector4(1, 1, 0, 0);
                 Vector4 v0 = NewVector4(0, par3, pars[0], pars[1]);
-                global::System.Numerics.Matrix4x4 d0 = NewMatrix(va, vb, vc, vd);
-                global::System.Numerics.Matrix4x4 da = NewMatrix(v0, vb, vc, vd);
-                global::System.Numerics.Matrix4x4 db = NewMatrix(va, v0, vc, vd);
-                global::System.Numerics.Matrix4x4 dc = NewMatrix(va, vb, v0, vd);
-                global::System.Numerics.Matrix4x4 dd = NewMatrix(va, vb, vc, v0);
+                var d0 = NewMatrix(va, vb, vc, vd);
+                var da = NewMatrix(v0, vb, vc, vd);
+                var db = NewMatrix(va, v0, vc, vd);
+                var dc = NewMatrix(va, vb, v0, vd);
+                var dd = NewMatrix(va, vb, vc, v0);
                 if (d0.GetDeterminant() == 0)
                 {
                     return 0;
                 }
                 if (par3 == 0)
                 {
-                    return ((((((da.GetDeterminant() * val) + db.GetDeterminant()) * val) + dc.GetDeterminant()) * val) + dd.GetDeterminant()) / d0.GetDeterminant();
+                    return (((da.GetDeterminant() * val + db.GetDeterminant()) * val + dc.GetDeterminant()) * val + dd.GetDeterminant()) / d0.GetDeterminant();
                 }
-                return ((((((da.GetDeterminant() * val) + db.GetDeterminant()) * val) + dc.GetDeterminant()) * val) + dd.GetDeterminant()) / d0.GetDeterminant() / par3;
+                return (((da.GetDeterminant() * val + db.GetDeterminant()) * val + dc.GetDeterminant()) * val + dd.GetDeterminant()) / d0.GetDeterminant() / par3;
             case LerpType.Sin:
                 //pars[0], pars[1] : 两相位的四分之一周期数
                 if (pars.Length < 2)
                 {
                     throw new TargetParameterCountException("pars not enough");
                 }
-                double x1 = Math.PI / 2 * pars[0], x2 = Math.PI / 2 * pars[1], x = Lerp(x1, x2, val);
+                double x1 = (Math.PI / 2 * pars[0]), x2 = (Math.PI / 2 * pars[1]), x = Lerp(x1, x2, val);
                 double y1 = Math.Sin(x1), y2 = Math.Sin(x2), y = Math.Sin(x);
                 if ((pars[0] - pars[1]) % 4 == 0 || (pars[0] + pars[1]) % 4 == 2)
                 {
@@ -226,42 +226,42 @@ public static partial class TigerUtils
     public static float Lerp(float left, float right, float val, bool clamped = false, LerpType type = LerpType.Linear, params float[] pars)
     {
         val = NewLerpValue(val, clamped, type, pars);
-        return (left * (1 - val)) + (right * val);
+        return left * (1 - val) + right * val;
     }
     public static int Lerp(int left, int right, float val, bool clamped = false, LerpType type = LerpType.Linear, params float[] pars)
     {
         val = NewLerpValue(val, clamped, type, pars);
-        return (int)((left * (1 - val)) + (right * val));
+        return (int)(left * (1 - val) + right * val);
     }
     public static Vector2 Lerp(Vector2 left, Vector2 right, float val, bool clamped = false, LerpType type = LerpType.Linear, params float[] pars)
     {
         val = NewLerpValue(val, clamped, type, pars);
-        return (left * (1 - val)) + (right * val);
+        return left * (1 - val) + right * val;
     }
     public static Vector3 Lerp(Vector3 left, Vector3 right, float val, bool clamped = false, LerpType type = LerpType.Linear, params float[] pars)
     {
         val = NewLerpValue(val, clamped, type, pars);
-        return (left * (1 - val)) + (right * val);
+        return left * (1 - val) + right * val;
     }
     public static Vector4 Lerp(Vector4 left, Vector4 right, float val, bool clamped = false, LerpType type = LerpType.Linear, params float[] pars)
     {
         val = NewLerpValue(val, clamped, type, pars);
-        return (left * (1 - val)) + (right * val);
+        return left * (1 - val) + right * val;
     }
     public static double Lerp(double left, double right, double val, bool clamped = false, LerpType type = LerpType.Linear, params double[] pars)
     {
         val = NewLerpValue(val, clamped, type, pars);
-        return (left * (1 - val)) + (right * val);
+        return left * (1 - val) + right * val;
     }
     public static float Lerp(float left, float right, double val, bool clamped = false, LerpType type = LerpType.Linear, params double[] pars)
     {
         val = NewLerpValue(val, clamped, type, pars);
-        return (float)((left * (1 - val)) + (right * val));
+        return (float)(left * (1 - val) + right * val);
     }
     public static int Lerp(int left, int right, double val, bool clamped = false, LerpType type = LerpType.Linear, params double[] pars)
     {
         val = NewLerpValue(val, clamped, type, pars);
-        return (int)((left * (1 - val)) + (right * val));
+        return (int)(left * (1 - val) + right * val);
     }
     public static Vector2 Lerp(Vector2 left, Vector2 right, double val, bool clamped = false, LerpType type = LerpType.Linear, params double[] pars)
     {
@@ -377,14 +377,14 @@ public static partial class TigerUtils
     }
     public static IEnumerable<int> Range(int end, RangeType type = RangeType.Positive)
     {
-        if (type == RangeType.Positive || (type == RangeType.Automatic && end > 0))
+        if (type == RangeType.Positive || type == RangeType.Automatic && end > 0)
         {
             for (int i = 0; i < end; ++i)
             {
                 yield return i;
             }
         }
-        else if (type == RangeType.Negative || (type == RangeType.Automatic && end < 0))
+        else if (type == RangeType.Negative || type == RangeType.Automatic && end < 0)
         {
             for (int i = 0; i > end; --i)
             {
@@ -394,14 +394,14 @@ public static partial class TigerUtils
     }
     public static IEnumerable<int> Range(int start, int end, RangeType type = RangeType.Positive)
     {
-        if (type == RangeType.Positive || (type == RangeType.Automatic && start < end))
+        if (type == RangeType.Positive || type == RangeType.Automatic && start < end)
         {
             for (int i = start; i < end; ++i)
             {
                 yield return i;
             }
         }
-        else if (type == RangeType.Negative || (type == RangeType.Automatic && start > end))
+        else if (type == RangeType.Negative || type == RangeType.Automatic && start > end)
         {
             for (int i = start; i > end; --i)
             {
@@ -452,7 +452,7 @@ public static partial class TigerUtils
     /// </summary>
     public static IEnumerable<int> RangeN(int end, RangeType type = RangeType.Positive)
     {
-        if (type == RangeType.Positive || (type == RangeType.Automatic && end > 0))
+        if (type == RangeType.Positive || type == RangeType.Automatic && end > 0)
         {
             for (int i = 0; ; ++i)
             {
@@ -463,7 +463,7 @@ public static partial class TigerUtils
                 yield return i;
             }
         }
-        else if (type == RangeType.Negative || (type == RangeType.Automatic && end < 0))
+        else if (type == RangeType.Negative || type == RangeType.Automatic && end < 0)
         {
             for (int i = 0; ; --i)
             {
@@ -480,7 +480,7 @@ public static partial class TigerUtils
     /// </summary>
     public static IEnumerable<int> RangeN(int start, int end, RangeType type = RangeType.Positive)
     {
-        if (type == RangeType.Positive || (type == RangeType.Automatic && start < end))
+        if (type == RangeType.Positive || type == RangeType.Automatic && start < end)
         {
             for (int i = start; ; ++i)
             {
@@ -491,7 +491,7 @@ public static partial class TigerUtils
                 yield return i;
             }
         }
-        else if (type == RangeType.Negative || (type == RangeType.Automatic && start > end))
+        else if (type == RangeType.Negative || type == RangeType.Automatic && start > end)
         {
             for (int i = start; ; --i)
             {
@@ -561,14 +561,14 @@ public static partial class TigerUtils
     /// <returns>(序号, 迭代值) 其中序号从0开始</returns>
     public static IEnumerable<(int, int)> RangeWithIndex(int end, RangeType type = RangeType.Positive)
     {
-        if (type == RangeType.Positive || (type == RangeType.Automatic && end > 0))
+        if (type == RangeType.Positive || type == RangeType.Automatic && end > 0)
         {
             for (int i = 0; i < end; ++i)
             {
                 yield return (i, i);
             }
         }
-        else if (type == RangeType.Negative || (type == RangeType.Automatic && end < 0))
+        else if (type == RangeType.Negative || type == RangeType.Automatic && end < 0)
         {
             for (int i = 0; i > end; --i)
             {
@@ -579,14 +579,14 @@ public static partial class TigerUtils
     /// <returns>(序号, 迭代值) 其中序号从0开始</returns>
     public static IEnumerable<(int, int)> RangeWithIndex(int start, int end, RangeType type = RangeType.Positive)
     {
-        if (type == RangeType.Positive || (type == RangeType.Automatic && start < end))
+        if (type == RangeType.Positive || type == RangeType.Automatic && start < end)
         {
             for (int i = start; i < end; ++i)
             {
                 yield return (i - start, i);
             }
         }
-        else if (type == RangeType.Negative || (type == RangeType.Automatic && start > end))
+        else if (type == RangeType.Negative || type == RangeType.Automatic && start > end)
         {
             for (int i = start; i > end; --i)
             {
@@ -656,7 +656,7 @@ public static partial class TigerUtils
         {
             return 0;
         }
-        IEnumerator<T1>? e1 = getEnumerator1();
+        var e1 = getEnumerator1();
         if (e1?.MoveNext() != true)
         {
             return 0;
@@ -731,7 +731,7 @@ public static partial class TigerUtils
         {
             return 0;
         }
-        IEnumerator<T1>? e1 = getEnumerator1();
+        var e1 = getEnumerator1();
         if (e1 == null)
         {
             return 0;
@@ -760,7 +760,7 @@ public static partial class TigerUtils
         {
             return 0;
         }
-        IEnumerator<T1>? e1 = getEnumerator1();
+        var e1 = getEnumerator1();
         if (e1 == null)
         {
             return 0;
@@ -794,7 +794,7 @@ public static partial class TigerUtils
                 return min;
             }
             rand ??= new();
-            return min + ((max - min) * rand.NextDouble());
+            return min + (max - min) * rand.NextDouble();
         }
         public static double RandomNormal(double μ, double σ, Random? rand = null)//产生正态分布随机数
         {
@@ -802,7 +802,7 @@ public static partial class TigerUtils
             double r1 = rand.NextDouble();
             double r2 = rand.NextDouble();
             double standardNormal = Math.Sqrt(-2 * Math.Log(r1)) * Math.Sin(2 * Math.PI * r2);
-            return (standardNormal * σ) + μ;
+            return standardNormal * σ + μ;
         }
         public static double RandomNormalRangeApproximate(double min, double max, double μ, double σ, Random? rand = null, double width = 3)
         {
@@ -820,9 +820,11 @@ public static partial class TigerUtils
         /// <returns></returns>
         public static double RandomDistribution(double min, double max, double μ, double sharpness, Random? rand = null)
         {
-            return sharpness == 0
-                ? RandomAverage(min, max, rand)
-                : RandomNormalRangeApproximate(min, max, μ, Math.Max(Math.Abs(min - μ), Math.Abs(max - μ)) / sharpness, rand);
+            if (sharpness == 0)
+            {
+                return RandomAverage(min, max, rand);
+            }
+            return RandomNormalRangeApproximate(min, max, μ, Math.Max(Math.Abs(min - μ), Math.Abs(max - μ)) / sharpness, rand);
         }
         public static void RandomDistrubutionTest(double μ, double sharpness, Random? rand = null)
         {
@@ -867,7 +869,7 @@ public static partial class TigerUtils
     public static T RerollIf<T>(Func<T> randomFunc, params Func<T, bool>[] conditions)
     {
         T t = randomFunc();
-        foreach (Func<T, bool> condition in conditions)
+        foreach (var condition in conditions)
         {
             if (condition(t))
             {
@@ -879,7 +881,7 @@ public static partial class TigerUtils
     public static T RerollIf<T>(Func<T> randomFunc, params bool[] conditions)
     {
         T t = randomFunc();
-        foreach (bool condition in conditions)
+        foreach (var condition in conditions)
         {
             if (condition)
             {
@@ -1061,9 +1063,9 @@ public static partial class TigerUtils
     public static Rectangle NewRectangle(Vector2 position, Vector2 size, Vector2 anchor = default)
         => NewRectangle(position.X, position.Y, size.X, size.Y, anchor.X, anchor.Y);
     public static Rectangle NewRectangle(int x, int y, int width, int height, float anchorX, float anchorY)
-        => new((int)(x - (anchorX * width)), (int)(y - (anchorY * height)), width, height);
+        => new((int)(x - anchorX * width), (int)(y - anchorY * height), width, height);
     public static Rectangle NewRectangle(float x, float y, float width, float height, float anchorX, float anchorY)
-        => new((int)(x - (anchorX * width)), (int)(y - (anchorY * height)), (int)width, (int)height);
+        => new((int)(x - anchorX * width), (int)(y - anchorY * height), (int)width, (int)height);
     #endregion
     #region 流程简化
     #region Do
@@ -1492,43 +1494,83 @@ public static partial class TigerUtils
 
     public static TResult? GetIf<TResult>(bool condition, Func<TResult> action, TResult? defaultResult = default)
     {
-        return condition ? action.Invoke() : defaultResult;
+        if (condition)
+        {
+            return action.Invoke();
+        }
+        return defaultResult;
     }
     public static TResult? GetIf<TResult, T>(bool condition, Func<T, TResult> action, T t, TResult? defaultResult = default)
     {
-        return condition ? action.Invoke(t) : defaultResult;
+        if (condition)
+        {
+            return action.Invoke(t);
+        }
+        return defaultResult;
     }
     public static TResult? GetIf<TResult, T1, T2>(bool condition, Func<T1, T2, TResult> action, T1 t1, T2 t2, TResult? defaultResult = default)
     {
-        return condition ? action.Invoke(t1, t2) : defaultResult;
+        if (condition)
+        {
+            return action.Invoke(t1, t2);
+        }
+        return defaultResult;
     }
     public static TResult? GetIf<TResult, T1, T2, T3>(bool condition, Func<T1, T2, T3, TResult> action, T1 t1, T2 t2, T3 t3, TResult? defaultResult = default)
     {
-        return condition ? action.Invoke(t1, t2, t3) : defaultResult;
+        if (condition)
+        {
+            return action.Invoke(t1, t2, t3);
+        }
+        return defaultResult;
     }
     public static TResult? GetIf<TResult, T1, T2, T3, T4>(bool condition, Func<T1, T2, T3, T4, TResult> action, T1 t1, T2 t2, T3 t3, T4 t4, TResult? defaultResult = default)
     {
-        return condition ? action.Invoke(t1, t2, t3, t4) : defaultResult;
+        if (condition)
+        {
+            return action.Invoke(t1, t2, t3, t4);
+        }
+        return defaultResult;
     }
     public static TResult? GetIf<TResult, T1, T2, T3, T4, T5>(bool condition, Func<T1, T2, T3, T4, T5, TResult> action, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, TResult? defaultResult = default)
     {
-        return condition ? action.Invoke(t1, t2, t3, t4, t5) : defaultResult;
+        if (condition)
+        {
+            return action.Invoke(t1, t2, t3, t4, t5);
+        }
+        return defaultResult;
     }
     public static TResult? GetIf<TResult, T1, T2, T3, T4, T5, T6>(bool condition, Func<T1, T2, T3, T4, T5, T6, TResult> action, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, TResult? defaultResult = default)
     {
-        return condition ? action.Invoke(t1, t2, t3, t4, t5, t6) : defaultResult;
+        if (condition)
+        {
+            return action.Invoke(t1, t2, t3, t4, t5, t6);
+        }
+        return defaultResult;
     }
     public static TResult? GetIf<TResult, T1, T2, T3, T4, T5, T6, T7>(bool condition, Func<T1, T2, T3, T4, T5, T6, T7, TResult> action, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, TResult? defaultResult = default)
     {
-        return condition ? action.Invoke(t1, t2, t3, t4, t5, t6, t7) : defaultResult;
+        if (condition)
+        {
+            return action.Invoke(t1, t2, t3, t4, t5, t6, t7);
+        }
+        return defaultResult;
     }
     public static TResult? GetIf<TResult, T1, T2, T3, T4, T5, T6, T7, T8>(bool condition, Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult> action, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, TResult? defaultResult = default)
     {
-        return condition ? action.Invoke(t1, t2, t3, t4, t5, t6, t7, t8) : defaultResult;
+        if (condition)
+        {
+            return action.Invoke(t1, t2, t3, t4, t5, t6, t7, t8);
+        }
+        return defaultResult;
     }
     public static TResult? GetIf<TResult, T1, T2, T3, T4, T5, T6, T7, T8, T9>(bool condition, Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult> action, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, TResult? defaultResult = default)
     {
-        return condition ? action.Invoke(t1, t2, t3, t4, t5, t6, t7, t8, t9) : defaultResult;
+        if (condition)
+        {
+            return action.Invoke(t1, t2, t3, t4, t5, t6, t7, t8, t9);
+        }
+        return defaultResult;
     }
     #endregion
     #region DoIfNot & GetIfNot
@@ -1706,43 +1748,83 @@ public static partial class TigerUtils
 
     public static TResult? GetIfNot<TResult>(bool condition, Func<TResult> action, TResult? defaultResult = default)
     {
-        return !condition ? action.Invoke() : defaultResult;
+        if (!condition)
+        {
+            return action.Invoke();
+        }
+        return defaultResult;
     }
     public static TResult? GetIfNot<TResult, T>(bool condition, Func<T, TResult> action, T t, TResult? defaultResult = default)
     {
-        return !condition ? action.Invoke(t) : defaultResult;
+        if (!condition)
+        {
+            return action.Invoke(t);
+        }
+        return defaultResult;
     }
     public static TResult? GetIfNot<TResult, T1, T2>(bool condition, Func<T1, T2, TResult> action, T1 t1, T2 t2, TResult? defaultResult = default)
     {
-        return !condition ? action.Invoke(t1, t2) : defaultResult;
+        if (!condition)
+        {
+            return action.Invoke(t1, t2);
+        }
+        return defaultResult;
     }
     public static TResult? GetIfNot<TResult, T1, T2, T3>(bool condition, Func<T1, T2, T3, TResult> action, T1 t1, T2 t2, T3 t3, TResult? defaultResult = default)
     {
-        return !condition ? action.Invoke(t1, t2, t3) : defaultResult;
+        if (!condition)
+        {
+            return action.Invoke(t1, t2, t3);
+        }
+        return defaultResult;
     }
     public static TResult? GetIfNot<TResult, T1, T2, T3, T4>(bool condition, Func<T1, T2, T3, T4, TResult> action, T1 t1, T2 t2, T3 t3, T4 t4, TResult? defaultResult = default)
     {
-        return !condition ? action.Invoke(t1, t2, t3, t4) : defaultResult;
+        if (!condition)
+        {
+            return action.Invoke(t1, t2, t3, t4);
+        }
+        return defaultResult;
     }
     public static TResult? GetIfNot<TResult, T1, T2, T3, T4, T5>(bool condition, Func<T1, T2, T3, T4, T5, TResult> action, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, TResult? defaultResult = default)
     {
-        return !condition ? action.Invoke(t1, t2, t3, t4, t5) : defaultResult;
+        if (!condition)
+        {
+            return action.Invoke(t1, t2, t3, t4, t5);
+        }
+        return defaultResult;
     }
     public static TResult? GetIfNot<TResult, T1, T2, T3, T4, T5, T6>(bool condition, Func<T1, T2, T3, T4, T5, T6, TResult> action, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, TResult? defaultResult = default)
     {
-        return !condition ? action.Invoke(t1, t2, t3, t4, t5, t6) : defaultResult;
+        if (!condition)
+        {
+            return action.Invoke(t1, t2, t3, t4, t5, t6);
+        }
+        return defaultResult;
     }
     public static TResult? GetIfNot<TResult, T1, T2, T3, T4, T5, T6, T7>(bool condition, Func<T1, T2, T3, T4, T5, T6, T7, TResult> action, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, TResult? defaultResult = default)
     {
-        return !condition ? action.Invoke(t1, t2, t3, t4, t5, t6, t7) : defaultResult;
+        if (!condition)
+        {
+            return action.Invoke(t1, t2, t3, t4, t5, t6, t7);
+        }
+        return defaultResult;
     }
     public static TResult? GetIfNot<TResult, T1, T2, T3, T4, T5, T6, T7, T8>(bool condition, Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult> action, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, TResult? defaultResult = default)
     {
-        return !condition ? action.Invoke(t1, t2, t3, t4, t5, t6, t7, t8) : defaultResult;
+        if (!condition)
+        {
+            return action.Invoke(t1, t2, t3, t4, t5, t6, t7, t8);
+        }
+        return defaultResult;
     }
     public static TResult? GetIfNot<TResult, T1, T2, T3, T4, T5, T6, T7, T8, T9>(bool condition, Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult> action, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, TResult? defaultResult = default)
     {
-        return !condition ? action.Invoke(t1, t2, t3, t4, t5, t6, t7, t8, t9) : defaultResult;
+        if (!condition)
+        {
+            return action.Invoke(t1, t2, t3, t4, t5, t6, t7, t8, t9);
+        }
+        return defaultResult;
     }
     #endregion
     #region DoIfElse & GetIfElse
@@ -2140,7 +2222,7 @@ public static partial class TigerUtils
         {
             return false;
         }
-        foreach (Func<bool> action in actions)
+        foreach (var action in actions)
         {
             if (!action())
             {
@@ -2308,8 +2390,8 @@ public static partial class TigerUtils
     public static int AddN1(int a, int b) => a == -1 || b == -1 ? -1 : a + b;
     public static bool GreaterN1(int a, int b) => b != -1 && (a == -1 || a > b);
     public static bool LesserN1(int a, int b) => a != -1 && (b == -1 || a < b);
-    public static bool GreaterEqualN1(int a, int b) => a == -1 || (b != -1 && a >= b);
-    public static bool LesserEqualN1(int a, int b) => b == -1 || (a != -1 && a <= b);
+    public static bool GreaterEqualN1(int a, int b) => a == -1 || b != -1 && a >= b;
+    public static bool LesserEqualN1(int a, int b) => b == -1 || a != -1 && a <= b;
     public static int MaxN1(int a, int b) => a == -1 || b == -1 ? -1 : a >= b ? a : b;
     public static int MinN1(int a, int b) => a == -1 ? b : b == -1 ? a : a <= b ? a : b;
     #endregion
@@ -2460,23 +2542,6 @@ public static partial class TigerUtils
 
 public static partial class TigerClasses
 {
-    /// <summary>
-    /// 建议使用一个静态字段以保存一个,
-    /// 然后在实例中使用虚属性或实现接口属性获取
-    /// </summary>
-    public class ReflectionData
-    {
-        public Type type;
-        private ReflectionData(Type type)
-        {
-            this.type = type;
-        }
-        public static ReflectionData New<T>()
-        {
-            ReflectionData result = new(typeof(T));
-            return result;
-        }
-    }
     public class ValueHolder<T>(T value)
     {
         public T Value = value;
@@ -2651,7 +2716,11 @@ public static partial class TigerClasses
         }
         public override readonly bool Equals(object? obj)
         {
-            return obj != null && ((obj is UncheckedUlongTime time && Equals(time)) || obj.Equals(Value));
+            if (obj == null)
+            {
+                return false;
+            }
+            return obj is UncheckedUlongTime time && Equals(time) || obj.Equals(Value);
         }
         public override readonly int GetHashCode()
         {
@@ -2659,7 +2728,11 @@ public static partial class TigerClasses
         }
         public readonly int CompareTo(object? obj)
         {
-            return obj is UncheckedUlongTime time ? Value.CompareTo(time.Value) : Value.CompareTo(obj);
+            if (obj is UncheckedUlongTime time)
+            {
+                return Value.CompareTo(time.Value);
+            }
+            return Value.CompareTo(obj);
         }
         public readonly int CompareTo(UncheckedUlongTime other)
         {
@@ -2702,7 +2775,7 @@ public static partial class TigerExtensions
     /// </summary>
     public static T LuaAnd<T>(this T i, T o)
     {
-        return !Convert.ToBoolean(i) ? i : o;
+        return Convert.ToBoolean(i) ? o : i;
     }
     /// <summary>
     /// 若i判定为假则将o赋值给i
@@ -2799,7 +2872,7 @@ public static partial class TigerExtensions
         }
         double halfDelta = (right - left) / 2;
         double middle = left + halfDelta;
-        return middle + (halfDelta * Math.Tanh((self - middle) / halfDelta / width));
+        return middle + halfDelta * Math.Tanh((self - middle) / halfDelta / width);
     }
     /// <summary>
     /// 比较平缓的Clamp方式, 当<paramref name="self"/>在<paramref name="left"/>和<paramref name="right"/>正中间时不变
@@ -2820,7 +2893,7 @@ public static partial class TigerExtensions
         }
         double halfDelta = (right - left) / 2;
         double middle = left + halfDelta;
-        self = middle + (halfDelta * Math.Tanh((self - middle) / halfDelta / width));
+        self = middle + halfDelta * Math.Tanh((self - middle) / halfDelta / width);
         return ref self;
     }
     #endregion
@@ -2940,7 +3013,7 @@ public static partial class TigerExtensions
     {
         foreach (TSource t in enumerable)
         {
-            (bool succeeded, TResult value) = supplier(t);
+            var (succeeded, value) = supplier(t);
             if (succeeded)
             {
                 return value;
@@ -2952,7 +3025,7 @@ public static partial class TigerExtensions
     {
         foreach (TSource t in enumerable)
         {
-            (bool succeeded, TResult getValue) = supplier(t);
+            var (succeeded, getValue) = supplier(t);
             if (succeeded)
             {
                 value = getValue;
@@ -3031,8 +3104,8 @@ public static partial class TigerExtensions
     }
     public static TSource[]? ToArray<TSource>(this IEnumerable<(TSource, Exception)> source, out Exception? exception)
     {
-        List<TSource>? list = source.ToList(out exception);
-        return exception != null ? null : (list?.ToArray());
+        var list = source.ToList(out exception);
+        return exception == null ? list?.ToArray() : null;
     }
     public static List<TResult>? ConvertAll<TSource, TResult>(this List<TSource> source, ConverterWithException<TSource, TResult> converter, out Exception? e)
     {
@@ -3042,10 +3115,7 @@ public static partial class TigerExtensions
         {
             TResult element = converter(source[i], out e);
             if (e != null)
-            {
                 return default;
-            }
-
             list.Add(element);
         }
         return list;
@@ -3062,14 +3132,9 @@ public static partial class TigerExtensions
             }
             bool result = match(element, out exception);
             if (exception != null)
-            {
                 return default;
-            }
-
             if (result)
-            {
                 return element;
-            }
         }
         return default;
     }
@@ -3085,9 +3150,7 @@ public static partial class TigerExtensions
             }
             action(element, out exception);
             if (exception != null)
-            {
                 return;
-            }
         }
     }
     #endregion
@@ -3104,7 +3167,7 @@ public static partial class TigerExtensions
     {
         foreach (TSource t in enumerable)
         {
-            ValueHolder<TResult>? value = selector(t);
+            var value = selector(t);
             if (value != null)
             {
                 yield return value;
@@ -3112,17 +3175,17 @@ public static partial class TigerExtensions
         }
     }
     /// <summary>
-    /// <br/> 相比于<see cref="SelectWhere{TSource, TResult}(IEnumerable{TSource}, Func{TSource, ValueTuple{bool, TResult?}})"/>,
+    /// <br/> 相比于<see cref="SelectWhere"/>,
     /// <br/> 它会剔除空值
     /// </summary>
-    public static IEnumerable<TResult> SelectWhereN<TSource, TResult>(this IEnumerable<TSource> enumerable, Func<TSource, (bool succeeded, TResult? value)> selector)
+    public static IEnumerable<TResult> SelectWhereN<TSource, TResult>(this IEnumerable<TSource> enumerable, Func<TSource, ValueHolder<TResult?>?> selector)
     {
         foreach (TSource t in enumerable)
         {
-            (bool succeeded, TResult value) = selector(t);
-            if (succeeded && value is not null)
+            var value = selector(t);
+            if (value != null && value.Value is not null)
             {
-                yield return value;
+                yield return value.Value;
             }
         }
     }
@@ -3146,7 +3209,11 @@ public static partial class TigerExtensions
     {
         rand ??= DefaultRandomGetter();
         int length = enumerable.Count();
-        return length == 0 ? default : enumerable.ElementAt(rand.Next(length));
+        if (length == 0)
+        {
+            return default;
+        }
+        return enumerable.ElementAt(rand.Next(length));
     }
     /// <summary>
     /// 需确保<paramref name="enumerable"/>不会变化长度且长度非0
@@ -3226,7 +3293,11 @@ public static partial class TigerExtensions
     {
         rand ??= DefaultRandomGetter();
         T[] list = [.. enumerable];
-        return list.Length == 0 ? default : list[rand.Next(list.Length)];
+        if (list.Length == 0)
+        {
+            return default;
+        }
+        return list[rand.Next(list.Length)];
     }
     public static T? RandomS<T>(this IEnumerable<T> enumerable, Func<T, double> weight, Random? rand, bool uncheckNegative = false)
     {
@@ -3351,7 +3422,11 @@ public static partial class TigerExtensions
         : [.. list.Select(t => GetRight(totalWeight += w = weight(t).WithMin(0), w))];
         double randDouble = rand.NextDouble() * totalWeight;
         int index = Range(list.Count).FirstOrDefault(i => weights[i] > randDouble || TigerUtils.Do(randDouble -= weights[i]), -1);
-        return index == -1 ? default : list.ElementAt(index);
+        if (index == -1)
+        {
+            return default;
+        }
+        return list.ElementAt(index);
     }
     public static T? RandomS<T>(this IList<T> list, Func<T, float> weight, Random? rand, bool uncheckNegative = false)
     {
@@ -3362,7 +3437,11 @@ public static partial class TigerExtensions
         : [.. list.Select(t => GetRight(totalWeight += w = weight(t).WithMin(0), w))];
         float randFloat = rand.NextSingle() * totalWeight;
         int index = Range(list.Count).FirstOrDefault(i => weights[i] > randFloat || TigerUtils.Do(randFloat -= weights[i]), -1);
-        return index == -1 ? default : list.ElementAt(index);
+        if (index == -1)
+        {
+            return default;
+        }
+        return list.ElementAt(index);
     }
     public static T? RandomS<T>(this IList<T> list, Func<T, int> weight, Random? rand, bool uncheckNegative = false)
     {
@@ -3373,7 +3452,11 @@ public static partial class TigerExtensions
         : [.. list.Select(t => GetRight(totalWeight += w = weight(t).WithMin(0), w))];
         int randInt = rand.Next(totalWeight);
         int index = Range(list.Count).FirstOrDefault(i => weights[i] > randInt || TigerUtils.Do(randInt -= weights[i]), -1);
-        return index == -1 ? default : list.ElementAt(index);
+        if (index == -1)
+        {
+            return default;
+        }
+        return list.ElementAt(index);
     }
     #endregion
     public static IEnumerable<T> WithAction<T>(this IEnumerable<T> enumerable, Action<T> action)
@@ -3386,6 +3469,22 @@ public static partial class TigerExtensions
     }
     public static IEnumerator<int> GetEnumerator(this int i)
         => Range(i).GetEnumerator();
+    /// <summary>
+    /// 找到了则返回索引, 否则返回 -1
+    /// </summary>
+    public static int FindIndexOf<T>(this IEnumerable<T> enumerable, Func<T, bool> predicate)
+    {
+        int i = 0;
+        foreach (var item in enumerable)
+        {
+            if (predicate(item))
+            {
+                return i;
+            }
+            i += 1;
+        }
+        return -1;
+    }
     #endregion
     #region 数组和列表相关
     #region 打乱数组/列表
@@ -3531,13 +3630,13 @@ public static partial class TigerExtensions
         {
             return [];
         }
-        int[] result = new int[(((bitArray.Count - offset).WithMin(0) + prefix.Length - 1) / 32) + 1];
+        int[] result = new int[((bitArray.Count - offset).WithMin(0) + prefix.Length - 1) / 32 + 1];
         int i = 0;
         for (; i < prefix.Length; ++i)
         {
             if (prefix[i])
             {
-                result[i / 32] |= 1 << (i % 32);
+                result[i / 32] |= 1 << i % 32;
             }
         }
         int addonLength = (bitArray.Count - offset).WithMin(0) + prefix.Length;
@@ -3545,7 +3644,7 @@ public static partial class TigerExtensions
         {
             if (bitArray[i + offset - prefix.Length])
             {
-                result[i / 32] |= 1 << (i % 32);
+                result[i / 32] |= 1 << i % 32;
             }
         }
         return result;
@@ -3556,13 +3655,13 @@ public static partial class TigerExtensions
         {
             return [];
         }
-        byte[] result = new byte[(((bitArray.Count - offset).WithMin(0) + prefix.Length - 1) / 8) + 1];
+        byte[] result = new byte[((bitArray.Count - offset).WithMin(0) + prefix.Length - 1) / 8 + 1];
         int i = 0;
         for (; i < prefix.Length; ++i)
         {
             if (prefix[i])
             {
-                result[i / 8] |= (byte)(1 << (i % 8));
+                result[i / 8] |= (byte)(1 << i % 8);
             }
         }
         int addonLength = (bitArray.Count - offset).WithMin(0) + prefix.Length;
@@ -3570,7 +3669,7 @@ public static partial class TigerExtensions
         {
             if (bitArray[i + offset - prefix.Length])
             {
-                result[i / 8] |= (byte)(1 << (i % 8));
+                result[i / 8] |= (byte)(1 << i % 8);
             }
         }
         return result;
@@ -3581,13 +3680,13 @@ public static partial class TigerExtensions
         {
             return [];
         }
-        int[] result = new int[(((bitArray.Length - offset).WithMin(0) + prefix.Length - 1) / 32) + 1];
+        int[] result = new int[((bitArray.Length - offset).WithMin(0) + prefix.Length - 1) / 32 + 1];
         int i = 0;
         for (; i < prefix.Length; ++i)
         {
             if (prefix[i])
             {
-                result[i / 32] |= 1 << (i % 32);
+                result[i / 32] |= 1 << i % 32;
             }
         }
         int addonLength = (bitArray.Length - offset).WithMin(0) + prefix.Length;
@@ -3595,7 +3694,7 @@ public static partial class TigerExtensions
         {
             if (bitArray[i + offset - prefix.Length])
             {
-                result[i / 32] |= 1 << (i % 32);
+                result[i / 32] |= 1 << i % 32;
             }
         }
         return result;
@@ -3606,13 +3705,13 @@ public static partial class TigerExtensions
         {
             return [];
         }
-        byte[] result = new byte[(((bitArray.Length - offset).WithMin(0) + prefix.Length - 1) / 8) + 1];
+        byte[] result = new byte[((bitArray.Length - offset).WithMin(0) + prefix.Length - 1) / 8 + 1];
         int i = 0;
         for (; i < prefix.Length; ++i)
         {
             if (prefix[i])
             {
-                result[i / 8] |= (byte)(1 << (i % 8));
+                result[i / 8] |= (byte)(1 << i % 8);
             }
         }
         int addonLength = (bitArray.Length - offset).WithMin(0) + prefix.Length;
@@ -3620,7 +3719,7 @@ public static partial class TigerExtensions
         {
             if (bitArray[i + offset - prefix.Length])
             {
-                result[i / 8] |= (byte)(1 << (i % 8));
+                result[i / 8] |= (byte)(1 << i % 8);
             }
         }
         return result;
@@ -3634,7 +3733,7 @@ public static partial class TigerExtensions
         }
         foreach (int i in Range(offset, Math.Min(boolArray.Length + offset - prefix.Length, intArray.Length * 32)))
         {
-            boolArray[i - offset + prefix.Length] = (intArray[i / 32] & (1 << (i % 32))) != 0;
+            boolArray[i - offset + prefix.Length] = (intArray[i / 32] & 1 << i % 32) != 0;
         }
     }
     public static void ToBoolArray(this byte[] byteArray, bool[] boolArray, int offset = 0, params bool[] prefix)
@@ -3645,7 +3744,7 @@ public static partial class TigerExtensions
         }
         foreach (int i in Range(offset, Math.Min(boolArray.Length + offset - prefix.Length, byteArray.Length * 8)))
         {
-            boolArray[i - offset + prefix.Length] = (byteArray[i / 8] & (1 << (i % 8))) != 0;
+            boolArray[i - offset + prefix.Length] = (byteArray[i / 8] & 1 << i % 8) != 0;
         }
     }
     public static void ToBoolArray(this IList<int> intList, bool[] boolArray, int offset = 0, params bool[] prefix)
@@ -3656,7 +3755,7 @@ public static partial class TigerExtensions
         }
         foreach (int i in Range(offset, Math.Min(boolArray.Length + offset - prefix.Length, intList.Count * 32)))
         {
-            boolArray[i - offset + prefix.Length] = (intList[i / 32] & (1 << (i % 32))) != 0;
+            boolArray[i - offset + prefix.Length] = (intList[i / 32] & 1 << i % 32) != 0;
         }
     }
     public static void ToBoolArray(this IList<byte> byteList, bool[] boolArray, int offset = 0, params bool[] prefix)
@@ -3667,7 +3766,7 @@ public static partial class TigerExtensions
         }
         foreach (int i in Range(offset, Math.Min(boolArray.Length + offset - prefix.Length, byteList.Count * 8)))
         {
-            boolArray[i - offset + prefix.Length] = (byteList[i / 8] & (1 << (i % 8))) != 0;
+            boolArray[i - offset + prefix.Length] = (byteList[i / 8] & 1 << i % 8) != 0;
         }
     }
     public static void ToBoolArray(this IEnumerable<int> ints, bool[] boolArray, int offset = 0, params bool[] prefix)
@@ -3681,7 +3780,7 @@ public static partial class TigerExtensions
         {
             return;
         }
-        IEnumerator<int> enumerator = ints.GetEnumerator();
+        var enumerator = ints.GetEnumerator();
         while (offset >= 32)
         {
             if (!enumerator.MoveNext())
@@ -3695,7 +3794,7 @@ public static partial class TigerExtensions
         {
             do
             {
-                boolArray[index + offset] = (enumerator.Current & (1 << (offset++ % 32))) != 0;
+                boolArray[index + offset] = (enumerator.Current & 1 << offset++ % 32) != 0;
             } while (index < boolArrayLength && offset % 32 != 0);
         }
     }
@@ -3710,7 +3809,7 @@ public static partial class TigerExtensions
         {
             return;
         }
-        IEnumerator<byte> enumerator = bytes.GetEnumerator();
+        var enumerator = bytes.GetEnumerator();
         while (offset >= 8)
         {
             if (!enumerator.MoveNext())
@@ -3724,18 +3823,18 @@ public static partial class TigerExtensions
         {
             do
             {
-                boolArray[index + offset] = (enumerator.Current & (1 << (offset++ % 8))) != 0;
+                boolArray[index + offset] = (enumerator.Current & 1 << offset++ % 8) != 0;
             } while (index < boolArrayLength && offset % 8 != 0);
         }
     }
     public static bool[] ToBoolArray(this int[] intArray, int offset = 0, params bool[] prefix)
-        => new bool[((intArray.Length * 32) - offset).WithMin(0) + prefix.Length].WithAction(ba => intArray.ToBoolArray(ba, offset, prefix));
+        => new bool[(intArray.Length * 32 - offset).WithMin(0) + prefix.Length].WithAction(ba => intArray.ToBoolArray(ba, offset, prefix));
     public static bool[] ToBoolArray(this byte[] byteArray, int offset = 0, params bool[] prefix)
-        => new bool[((byteArray.Length * 8) - offset).WithMin(0) + prefix.Length].WithAction(ba => byteArray.ToBoolArray(ba, offset, prefix));
+        => new bool[(byteArray.Length * 8 - offset).WithMin(0) + prefix.Length].WithAction(ba => byteArray.ToBoolArray(ba, offset, prefix));
     public static bool[] ToBoolArray(this IList<int> intList, int offset = 0, params bool[] prefix)
-        => new bool[((intList.Count * 8) - offset.WithMin(0) + prefix.Length)].WithAction(ba => intList.ToBoolArray(ba, offset, prefix));
+        => new bool[(intList.Count * 8 - offset.WithMin(0) + prefix.Length)].WithAction(ba => intList.ToBoolArray(ba, offset, prefix));
     public static bool[] ToBoolArray(this IList<byte> byteList, int offset = 0, params bool[] prefix)
-        => new bool[((byteList.Count * 8) - offset).WithMin(0) + prefix.Length].WithAction(ba => byteList.ToBoolArray(ba, offset, prefix));
+        => new bool[(byteList.Count * 8 - offset).WithMin(0) + prefix.Length].WithAction(ba => byteList.ToBoolArray(ba, offset, prefix));
     public static void ToBoolList(this int[] intArray, IList<bool> boolList, int offset, params bool[] prefix)
     {
         foreach (int i in Range(Math.Min(boolList.Count, prefix.Length)))
@@ -3744,7 +3843,7 @@ public static partial class TigerExtensions
         }
         foreach (int i in Range(offset, Math.Min(boolList.Count + offset - prefix.Length, intArray.Length * 32)))
         {
-            boolList[i - offset + prefix.Length] = (intArray[i / 32] & (1 << (i % 32))) != 0;
+            boolList[i - offset + prefix.Length] = (intArray[i / 32] & 1 << i % 32) != 0;
         }
     }
     public static void ToBoolList(this byte[] byteArray, IList<bool> boolList, int offset, params bool[] prefix)
@@ -3755,7 +3854,7 @@ public static partial class TigerExtensions
         }
         foreach (int i in Range(offset, Math.Min(boolList.Count + offset - prefix.Length, byteArray.Length * 8)))
         {
-            boolList[i - offset + prefix.Length] = (byteArray[i / 8] & (1 << (i % 8))) != 0;
+            boolList[i - offset + prefix.Length] = (byteArray[i / 8] & 1 << i % 8) != 0;
         }
     }
     public static void ToBoolList(this IList<int> intList, IList<bool> boolList, int offset = 0, params bool[] prefix)
@@ -3766,7 +3865,7 @@ public static partial class TigerExtensions
         }
         foreach (int i in Range(offset, Math.Min(boolList.Count + offset - prefix.Length, intList.Count * 32)))
         {
-            boolList[i - offset + prefix.Length] = (intList[i / 32] & (1 << (i % 32))) != 0;
+            boolList[i - offset + prefix.Length] = (intList[i / 32] & 1 << i % 32) != 0;
         }
     }
     public static void ToBoolList(this IList<byte> byteList, IList<bool> boolList, int offset = 0, params bool[] prefix)
@@ -3777,7 +3876,7 @@ public static partial class TigerExtensions
         }
         foreach (int i in Range(offset, Math.Min(boolList.Count + offset - prefix.Length, byteList.Count * 8)))
         {
-            boolList[i - offset + prefix.Length] = (byteList[i / 8] & (1 << (i % 8))) != 0;
+            boolList[i - offset + prefix.Length] = (byteList[i / 8] & 1 << i % 8) != 0;
         }
     }
     public static void ToBoolList(this IEnumerable<int> ints, IList<bool> boolList, int offset = 0, params bool[] prefix)
@@ -3791,7 +3890,7 @@ public static partial class TigerExtensions
         {
             return;
         }
-        IEnumerator<int> enumerator = ints.GetEnumerator();
+        var enumerator = ints.GetEnumerator();
         while (offset >= 32)
         {
             if (!enumerator.MoveNext())
@@ -3805,7 +3904,7 @@ public static partial class TigerExtensions
         {
             do
             {
-                boolList[index + offset] = (enumerator.Current & (1 << (offset++ % 32))) != 0;
+                boolList[index + offset] = (enumerator.Current & 1 << offset++ % 32) != 0;
             } while (index < boolListCount && offset % 32 != 0);
         }
     }
@@ -3820,7 +3919,7 @@ public static partial class TigerExtensions
         {
             return;
         }
-        IEnumerator<byte> enumerator = bytes.GetEnumerator();
+        var enumerator = bytes.GetEnumerator();
         while (offset >= 8)
         {
             if (!enumerator.MoveNext())
@@ -3834,59 +3933,59 @@ public static partial class TigerExtensions
         {
             do
             {
-                boolList[index + offset] = (enumerator.Current & (1 << (offset++ % 8))) != 0;
+                boolList[index + offset] = (enumerator.Current & 1 << offset++ % 8) != 0;
             } while (index < boolListCount && offset % 8 != 0);
         }
     }
     public static List<bool> ToBoolList(this int[] intArray, int offset = 0, params bool[] prefix)
     {
-        List<bool> boolList = new(((intArray.Length * 32) - offset).WithMin(0) + prefix.Length);
+        List<bool> boolList = new((intArray.Length * 32 - offset).WithMin(0) + prefix.Length);
         foreach (bool b in prefix)
         {
             boolList.Add(b);
         }
         foreach (int i in Range(offset, intArray.Length * 32))
         {
-            boolList.Add((intArray[i / 32] & (1 << (i % 32))) != 0);
+            boolList.Add((intArray[i / 32] & 1 << i % 32) != 0);
         };
         return boolList;
     }
     public static List<bool> ToBoolList(this byte[] byteArray, int offset = 0, params bool[] prefix)
     {
-        List<bool> boolList = new(((byteArray.Length * 8) - offset).WithMin(0) + prefix.Length);
+        List<bool> boolList = new((byteArray.Length * 8 - offset).WithMin(0) + prefix.Length);
         foreach (bool b in prefix)
         {
             boolList.Add(b);
         }
         foreach (int i in Range(offset, byteArray.Length * 8))
         {
-            boolList.Add((byteArray[i / 8] & (1 << (i % 8))) != 0);
+            boolList.Add((byteArray[i / 8] & 1 << i % 8) != 0);
         };
         return boolList;
     }
     public static List<bool> ToBoolList(this IList<int> intList, int offset = 0, params bool[] prefix)
     {
-        List<bool> boolList = new(((intList.Count * 32) - offset).WithMin(0) + prefix.Length);
+        List<bool> boolList = new((intList.Count * 32 - offset).WithMin(0) + prefix.Length);
         foreach (bool b in prefix)
         {
             boolList.Add(b);
         }
         foreach (int i in Range(offset, intList.Count * 32))
         {
-            boolList.Add((intList[i / 32] & (1 << (i % 32))) != 0);
+            boolList.Add((intList[i / 32] & 1 << i % 32) != 0);
         };
         return boolList;
     }
     public static List<bool> ToBoolList(this IList<byte> byteList, int offset = 0, params bool[] prefix)
     {
-        List<bool> boolList = new(((byteList.Count * 8) - offset).WithMin(0) + prefix.Length);
+        List<bool> boolList = new((byteList.Count * 8 - offset).WithMin(0) + prefix.Length);
         foreach (bool b in prefix)
         {
             boolList.Add(b);
         }
         foreach (int i in Range(offset, byteList.Count * 8))
         {
-            boolList.Add((byteList[i / 8] & (1 << (i % 8))) != 0);
+            boolList.Add((byteList[i / 8] & 1 << i % 8) != 0);
         };
         return boolList;
     }
@@ -3902,7 +4001,7 @@ public static partial class TigerExtensions
             }
             do
             {
-                boolList.Add((i & (1 << offset++)) != 0);
+                boolList.Add((i & 1 << offset++) != 0);
             } while (offset < 32);
             offset = 0;
         }
@@ -3920,7 +4019,7 @@ public static partial class TigerExtensions
             }
             do
             {
-                boolList.Add((i & (1 << offset++)) != 0);
+                boolList.Add((i & 1 << offset++) != 0);
             } while (offset < 8);
             offset = 0;
         }
@@ -4080,8 +4179,28 @@ public static partial class TigerExtensions
     public static T? GetF<T>(this object?[] array, int index) => (T?)array[index];
     public static void GetF<T>(this object?[] array, int index, out T? value) => value = (T?)array[index];
     #endregion
+    /// <summary>
+    /// <br/>获取列表中某个下标对应的值
+    /// <br/>若超界则返回默认值
+    /// </summary>
     public static T? GetS<T>(this IList<T> list, int index) => index < 0 || index >= list.Count ? default : list[index];
-    public static void GetS<T>(this IList<T> list, int index, out T? value) => value = index < 0 || index >= list.Count ? default : list[index];
+    /// <summary>
+    /// <br/>获取列表中某个下标对应的值
+    /// <br/>若超界则获得默认值
+    /// <br/>获得的值由 out 参数带出
+    /// <br/>返回是否获取成功
+    /// </summary>
+    public static bool GetS<T>(this IList<T> list, int index, out T? value)
+    {
+        if (index < 0 || index >= list.Count)
+        {
+            value = default;
+            return false;
+        }
+        value = list[index];
+        return true;
+    }
+
     public static T? ElementAtS<T>(this IList<T> list, int index) => index < 0 || index >= list.Count ? default : list[index];
     public static void ElementAsS<T>(this IList<T> list, int index, out T? value) => value = index < 0 || index >= list.Count ? default : list[index];
     public static T GetS<T>(this IList<T> list, int index, T defaultValue) => index < 0 || index >= list.Count ? defaultValue : list[index];
@@ -4241,11 +4360,9 @@ public static partial class TigerExtensions
         else if (obj is Vector2 @vector2) { bw.WritePackedVector2(@vector2); }
         else if (obj is object[] array) { bw.Write(array.Length); foreach (int i in Range(array.Length)) { bw.WriteObj(array[i]); } }
         else if (obj is List<object> list) { bw.Write(list.Count); foreach (int i in Range(list.Count)) { bw.WriteObj(list[i]); } }
-        else if (obj is Dictionary<object, object> dict) { bw.Write(dict.Count); foreach (KeyValuePair<object, object> pair in dict) { bw.WriteObj(pair.Key); bw.WriteObj(pair.Value); } }
+        else if (obj is Dictionary<object, object> dict) { bw.Write(dict.Count); foreach (var pair in dict) { bw.WriteObj(pair.Key); bw.WriteObj(pair.Value); } }
         else
-        {
             throw new Exception("type not suppoerted for type " + obj?.GetType().ToString() ?? "null");
-        }
     }
     public static void WriteArray<T>(this BinaryWriter bw, T[] array)
     {
@@ -4266,7 +4383,7 @@ public static partial class TigerExtensions
     public static void WriteDict<TKey, TValue>(this BinaryWriter bw, Dictionary<TKey, TValue> dict) where TKey : notnull
     {
         bw.Write(dict.Count);
-        foreach (KeyValuePair<TKey, TValue> pair in dict)
+        foreach (var pair in dict)
         {
             bw.WriteObj(pair.Key);
             bw.WriteObj(pair.Value);
@@ -4296,14 +4413,10 @@ public static partial class TigerExtensions
         else if (type == typeof(short)) { obj = (T)(object)br.ReadInt16(); }
         else if (type == typeof(byte[])) { int length = br.ReadInt32(); obj = (T)(object)br.ReadBytes(length); }
         else if (type == typeof(char[])) { int length = br.ReadInt32(); obj = (T)(object)br.ReadChars(length); }
+        else if (type == typeof(Color)) { obj = (T)(object)br.ReadRGB(); }
+        else if (type == typeof(Vector2)) { obj = (T)(object)br.ReadPackedVector2(); }
         else
-        {
-            obj = type == typeof(Color)
-            ? (T)(object)br.ReadRGB()
-            : type == typeof(Vector2)
-            ? (T)(object)br.ReadPackedVector2()
-            : throw new Exception("type not suppoerted for type " + type.ToString());
-        }
+            throw new Exception("type not suppoerted for type " + type.ToString());
     }
     /// <summary>
     /// 支持<see cref="ReadObj"/>所支持类型的数组
@@ -4454,44 +4567,22 @@ public static partial class TigerExtensions
         #endregion
         //四角
         if (dl > 0 && dt > 0)
-        {
             spriteBatch.Draw(texture, new Rectangle(x, y, dl, dt), new Rectangle(0, 0, bl, bt), color);
-        }
-
         if (dr > 0 && dt > 0)
-        {
             spriteBatch.Draw(texture, new Rectangle(x + w - dr, y, dr, dt), new Rectangle(tw - br, 0, br, bt), color);
-        }
-
         if (dl > 0 && db > 0)
-        {
             spriteBatch.Draw(texture, new Rectangle(x, y + h - db, dl, db), new Rectangle(0, th - bb, bl, bb), color);
-        }
-
         if (dr > 0 && db > 0)
-        {
             spriteBatch.Draw(texture, new Rectangle(x + w - dr, y + h - db, dr, db), new Rectangle(tw - br, th - bb, br, bb), color);
-        }
         //四边
         if (dt > 0)
-        {
             spriteBatch.Draw(texture, new Rectangle(x + dl, y, w - dl - dr, dt), new Rectangle(bl, 0, tw - bl - br, bt), color);
-        }
-
         if (db > 0)
-        {
             spriteBatch.Draw(texture, new Rectangle(x + dl, y + h - db, w - dl - dr, db), new Rectangle(bl, th - bb, tw - bl - br, bb), color);
-        }
-
         if (dl > 0)
-        {
             spriteBatch.Draw(texture, new Rectangle(x, y + dt, dl, h - dt - db), new Rectangle(0, bt, bl, th - bt - bb), color);
-        }
-
         if (dr > 0)
-        {
             spriteBatch.Draw(texture, new Rectangle(x + w - dr, y + dt, dr, h - dt - db), new Rectangle(tw - br, bt, br, th - bt - bb), color);
-        }
         //中心
         spriteBatch.Draw(texture, new Rectangle(x + dl, y + dt, w - dl - dr, h - dt - db), new Rectangle(bl, bt, tw - bl - br, th - bt - bb), color);
     }
@@ -4523,7 +4614,23 @@ public static partial class TigerExtensions
         {
             return 5;
         }
-        return self < 1 << 7 ? 1 : self < 1 << 14 ? 2 : self < 1 << 21 ? 3 : self < 1 << 28 ? 4 : 5;
+        if (self < 1 << 7)
+        {
+            return 1;
+        }
+        if (self < 1 << 14)
+        {
+            return 2;
+        }
+        if (self < 1 << 21)
+        {
+            return 3;
+        }
+        if (self < 1 << 28)
+        {
+            return 4;
+        }
+        return 5;
     }
     public static double Get7BigEncodedAverageLength(this int self)
     {

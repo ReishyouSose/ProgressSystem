@@ -1,4 +1,7 @@
-﻿using ProgressSystem.Core.Requirements;
+﻿using ProgressSystem.Configs;
+using ProgressSystem.Core.NetUpdate;
+using ProgressSystem.Core.Requirements;
+using ProgressSystem.Core.Requirements.ItemRequirements;
 using ProgressSystem.Core.StaticData;
 using System.IO;
 using System.Reflection;
@@ -10,7 +13,7 @@ namespace ProgressSystem.Core;
 /// <summary>
 /// 储存并管理所有的成就
 /// </summary>
-public class AchievementManager : ModSystem, IWithStaticData
+public class AchievementManager : ModSystem, IWithStaticData, INetUpdate
 {
     public static AchievementManager Instance { get; set; } = null!;
     #region Test
@@ -107,7 +110,9 @@ public class AchievementManager : ModSystem, IWithStaticData
         LoadStaticDataFromAllLoadedMod();
 
         Pages.Values.ForeachDo(p => p.PostInitialize());
+        AfterPostSetup = true;
     }
+
     #region 存取数据
     public override void SaveWorldData(TagCompound tag)
     {
@@ -169,6 +174,45 @@ public class AchievementManager : ModSystem, IWithStaticData
         TagIO.ToStream(tag, stream);
     }
     #endregion
+
+    #region 网络同步
+    public static bool NeedNetUpdate { get; private set; }
+    public static void SetNeedNetUpdate() => NeedNetUpdate = true;
+    public bool NetUpdate { get; set; }
+    public void WriteMessageFromServer(BinaryWriter writer) { }
+    public void ReceiveMessageFromServer(BinaryReader reader) { }
+    public void WriteMessageFromClient(BinaryWriter writer) { }
+    public void ReceiveMessageFromClient(BinaryReader reader) { }
+    public IEnumerable<INetUpdate> GetNetUpdateChildren() => Pages.Values;
+    /// <summary>
+    /// 由大到小缩减
+    /// </summary>
+    private static int netUpdateTimer;
+    private static void Update_TryNetUpdate()
+    {
+        if (Main.netMode == NetmodeID.SinglePlayer)
+        {
+            return;
+        }
+        if (netUpdateTimer > 0)
+        {
+            netUpdateTimer -= 1;
+            return;
+        }
+        if (!NeedNetUpdate)
+        {
+            return;
+        }
+        NeedNetUpdate = false;
+        netUpdateTimer = ServerConfig.Instance.NetUpdateFrequency;
+        NetHandler.ManagerNetUpdate();
+    }
+    #endregion
+
+    public override void PostUpdateEverything()
+    {
+        Update_TryNetUpdate();
+    }
     public override void OnWorldLoad()
     {
         // 在 LoadWorldData 前执行
@@ -253,8 +297,6 @@ public class AchievementPlayerManager : ModPlayer
     public override void LoadData(TagCompound tag)
     {
         loadedData = tag;
-        var cs = ModContent.GetInstance<CraftItemRequirement>().GetConstructInfoTables();
-        ;
     }
     private TagCompound? loadedData;
 }

@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework.Graphics;
+using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.StaticData;
 using ProgressSystem.GameEvents;
 using System.IO;
@@ -13,7 +14,7 @@ namespace ProgressSystem.Core;
 /// <br/>修改的数据是它本身的数据时才设置, 如设置了条件但成就原来就存在的话
 /// <br/>就不需要设置 <see cref="ShouldSaveStaticData"/>, 而只需要设置条件的就好
 /// </summary>
-public class Achievement : IWithStaticData
+public class Achievement : IWithStaticData, INetUpdate
 {
     #region 不会在正常游玩时改变的 字段 / 属性
     /// <summary>
@@ -507,8 +508,7 @@ public class Achievement : IWithStaticData
             return;
         }
         State = StateEnum.Completed;
-        // !!!!!!!! Test
-        Main.NewText($"成就{DisplayName.Value}完成!");
+        NetHandler.TryShowPlayerCompleteMessage(this);
         OnCompleteStatic?.Invoke(this);
         OnComplete?.Invoke();
     }
@@ -650,14 +650,13 @@ public class Achievement : IWithStaticData
 
     #region 网络同步
     // todo: 成就本身与奖励相关的网络同步
-    public virtual void NetSend(BinaryWriter writer)
-    {
-        Requirements.ForeachDo(r => r.NetSend(writer));
-    }
-    public virtual void NetReceive(BinaryReader reader)
-    {
-        Requirements.ForeachDo(r => r.NetReceive(reader));
-    }
+    protected bool _netUpdate;
+    public bool NetUpdate { get => _netUpdate; set => DoIf(_netUpdate = value, AchievementManager.SetNeedNetUpdate); }
+    public IEnumerable<INetUpdate> GetNetUpdateChildren() => Requirements; // TODO: and rewards
+    public virtual void WriteMessageFromServer(BinaryWriter writer) { }
+    public virtual void ReceiveMessageFromServer(BinaryReader reader) { }
+    public virtual void WriteMessageFromClient(BinaryWriter writer) { }
+    public virtual void ReceiveMessageFromClient(BinaryReader reader) { }
     #endregion
 
     public override string ToString()
