@@ -8,7 +8,7 @@ namespace ProgressSystem.Core;
 /// 成就页
 /// 代表一个显示多个成就的界面
 /// </summary>
-public class AchievementPage : IWithStaticData, INetUpdate
+public class AchievementPage : IWithStaticData, INetUpdate, IProgressable
 {
     #region Vars
     public Mod Mod = null!;
@@ -397,6 +397,31 @@ public class AchievementPage : IWithStaticData, INetUpdate
     public virtual void ReceiveMessageFromServer(BinaryReader reader) { }
     public virtual void WriteMessageFromClient(BinaryWriter writer) { }
     public virtual void ReceiveMessageFromClient(BinaryReader reader) { }
+    #endregion
+
+    #region 进度
+    public float Progress { get; protected set; }
+    public Func<float>? ProgressWeightOverride;
+    float IProgressable.ProgressWeight => ProgressWeightOverride?.Invoke() ?? Achievements.Count;
+    IEnumerable<IProgressable> IProgressable.ProgressChildren => Achievements.Values;
+    public void UpdateProgress()
+    {
+        if (State == StateEnum.Completed)
+        {
+            if (Progress < 1)
+            {
+                Progress = 1;
+                AchievementManager.UpdateProgress();
+            }
+            return;
+        }
+        float oldProgress = Progress;
+        Progress = ((IProgressable)this).GetProgressOfChildrenWithProgressHandler(p => (p >= 1).ToInt());
+        if (oldProgress != Progress)
+        {
+            AchievementManager.UpdateProgress();
+        }
+    }
     #endregion
 
     public override string ToString()

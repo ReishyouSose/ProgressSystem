@@ -25,55 +25,55 @@ Requirements: {
 	AnyOfRequirements.DisplayName: Any Of Requirements
 	EmptyRequirement.DisplayName: Empty Requirement
 	SomeOfRequirements.DisplayName: Some Of Requirements
-	CraftItemInWorldRequirement.DisplayName: Mods.ProgressSystem.Requirements.CraftItemInWorldRequirement.DisplayName
+	CraftItemInWorldRequirement.DisplayName: Craft {0} In World
 }
 
 Achievements: {
 	ProgressSystem: {
 		TestPage: {
 			First: {
-				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.First.DisplayName
-				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.First.Tooltip
-				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.First.Description
+				DisplayName: First
+				Tooltip: The first achievement to achieve
+				Description: ""
 			}
 
 			Workbench: {
-				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Workbench.DisplayName
-				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Workbench.Tooltip
-				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Workbench.Description
+				DisplayName: Workbench
+				Tooltip: Craft a workbench
+				Description: ""
 			}
 
 			WoodTools: {
-				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.WoodTools.DisplayName
-				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.WoodTools.Tooltip
-				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.WoodTools.Description
+				DisplayName: Wood Tools
+				Tooltip: Craft some wood tools
+				Description: ""
 			}
 
 			Wood: {
-				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Wood.DisplayName
-				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Wood.Tooltip
-				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Wood.Description
+				DisplayName: Wood
+				Tooltip: Pick wood
+				Description: ""
 			}
 
 			House: {
-				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.House.DisplayName
-				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.House.Tooltip
-				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.House.Description
+				DisplayName: House
+				Tooltip: Make a house
+				Description: ""
 			}
 
 			Slime: {
-				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Slime.DisplayName
-				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Slime.Tooltip
-				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Slime.Description
+				DisplayName: Slime
+				Tooltip: Kill a slime
+				Description: ""
 			}
 
 			Torch: {
-				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Torch.DisplayName
-				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Torch.Tooltip
-				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Torch.Description
+				DisplayName: Torch
+				Tooltip: Craft a torch
+				Description: ""
 			}
 
-			TestCreate.Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.TestCreate.Description
+			TestCreate.Description: Test Create's Description
 		}
 	}
 }
@@ -84,11 +84,11 @@ Configs: {
 
 		NetUpdateFrequency: {
 			Label: Net Update Frequency
-			Tooltip: ""
+			Tooltip: the minimal interval frames of net update
 		}
 
 		DontReceiveOtherPlayerCompleteAchievementMessage: {
-			Label: Dont Receive Other Player Complete Achievement Message
+			Label: Don't Receive Other Player Complete Achievement Message
 			Tooltip: ""
 		}
 	}
@@ -97,12 +97,12 @@ Configs: {
 		DisplayName: Client Config
 
 		DontShowAnyAchievementMessage: {
-			Label: Dont Show Any Achievement Message
+			Label: Don't Show Any Achievement Message
 			Tooltip: ""
 		}
 
 		DontShowOtherPlayerCompleteAchievementMessage: {
-			Label: Dont Show Other Player Complete Achievement Message
+			Label: Don't Show Other Player Complete Achievement Message
 			Tooltip: ""
 		}
 	}

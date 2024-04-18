@@ -2,11 +2,22 @@
 
 namespace ProgressSystem.Core;
 
-public class RequirementList(Achievement achievement, IEnumerable<Requirement>? requirements = null) : IList<Requirement>, IReadOnlyList<Requirement>
+public class RequirementList : IList<Requirement>, IReadOnlyList<Requirement>
 {
-    private readonly Achievement Achievement = achievement;
+    private Achievement? Achievement;
 
-    private readonly List<Requirement> data = requirements == null ? [] : [.. requirements.Select(r => r.WithAction(r => r.Initialize(achievement)))];
+    private readonly List<Requirement> data;
+
+    public RequirementList(Achievement achievement, IEnumerable<Requirement>? requirements = null) : this(requirements) => Initialize(achievement);
+    public RequirementList(IEnumerable<Requirement>? requirements = null) => data = requirements == null ? [] : [.. requirements];
+    public void Initialize(Achievement achievement)
+    {
+        Achievement = achievement;
+        foreach (var requirement in data)
+        {
+            requirement.Initialize(achievement);
+        }
+    }
 
     public int Count => data.Count;
     public bool IsReadOnly => false;
@@ -21,19 +32,28 @@ public class RequirementList(Achievement achievement, IEnumerable<Requirement>? 
                 return;
             }
             data[index] = value;
-            value.Initialize(Achievement);
+            if (Achievement != null)
+            {
+                value.Initialize(Achievement);
+            }
         }
     }
 
     public void Add(Requirement requirement)
     {
         data.Add(requirement);
-        requirement.Initialize(Achievement);
+        if (Achievement != null)
+        {
+            requirement.Initialize(Achievement);
+        }
     }
     public void Insert(int index, Requirement requirement)
     {
         data.Insert(index, requirement);
-        requirement.Initialize(Achievement);
+        if (Achievement != null)
+        {
+            requirement.Initialize(Achievement);
+        }
     }
 
     public bool Contains(Requirement requirement) => data.Contains(requirement);

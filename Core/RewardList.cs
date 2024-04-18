@@ -2,11 +2,22 @@
 
 namespace ProgressSystem.Core;
 
-public class RewardList(Achievement achievement, IEnumerable<Reward>? rewards = null) : IList<Reward>, IReadOnlyList<Reward>
+public class RewardList : IList<Reward>, IReadOnlyList<Reward>
 {
-    private readonly Achievement Achievement = achievement;
+    private Achievement? Achievement;
 
-    private readonly List<Reward> data = rewards == null ? [] : [.. rewards.Select(r => r.WithAction(r => r.Initialize(achievement)))];
+    private readonly List<Reward> data;
+
+    public RewardList(Achievement achievement, IEnumerable<Reward>? rewards = null) : this(rewards) => Initialize(achievement);
+    public RewardList(IEnumerable<Reward>? rewards = null) => data = rewards == null ? [] : [.. rewards];
+    public void Initialize(Achievement achievement)
+    {
+        Achievement = achievement;
+        foreach (var reward in data)
+        {
+            reward.Initialize(achievement);
+        }
+    }
 
     public int Count => data.Count;
     public bool IsReadOnly => false;
@@ -21,19 +32,28 @@ public class RewardList(Achievement achievement, IEnumerable<Reward>? rewards = 
                 return;
             }
             data[index] = value;
-            value.Initialize(Achievement);
+            if (Achievement != null)
+            {
+                value.Initialize(Achievement);
+            }
         }
     }
 
     public void Add(Reward reward)
     {
         data.Add(reward);
-        reward.Initialize(Achievement);
+        if (Achievement != null)
+        {
+            reward.Initialize(Achievement);
+        }
     }
     public void Insert(int index, Reward reward)
     {
         data.Insert(index, reward);
-        reward.Initialize(Achievement);
+        if (Achievement != null)
+        {
+            reward.Initialize(Achievement);
+        }
     }
 
     public bool Contains(Reward reward) => data.Contains(reward);

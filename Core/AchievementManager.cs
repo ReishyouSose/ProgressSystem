@@ -13,7 +13,7 @@ namespace ProgressSystem.Core;
 /// <summary>
 /// 储存并管理所有的成就
 /// </summary>
-public class AchievementManager : ModSystem, IWithStaticData, INetUpdate
+public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgressable
 {
     public static AchievementManager Instance { get; set; } = null!;
     #region Test
@@ -42,9 +42,12 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate
         Achievement.Create(page, ModInstance, "Wood", predecessorNames: ["First"],
             requirements: [new PickItemRequirement(ItemID.Wood)],
             rewards: [new ItemReward(ItemID.Apple)]);
+        Achievement.Create(page, ModInstance, "Wood In World",
+            requirements: [new CraftItemInWorldRequirement(ItemID.Wood, 9999)]);
     }
     #endregion
 
+    #region Pages
     /// <summary>
     /// 存有所有的成就页, 键为<see cref="AchievementPage.FullName"/>
     /// </summary>
@@ -120,14 +123,7 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate
     /// 根据索引获得页面, 若索引超界则报错
     /// </summary>
     public static AchievementPage GetPageByIndexF(int index) => pages.GetValueByIndex(index);
-
-    public static void PostInitialize()
-    {
-        LoadStaticDataFromAllLoadedMod();
-
-        Pages.Values.ForeachDo(p => p.PostInitialize());
-        AfterPostSetup = true;
-    }
+    #endregion
 
     #region 存取数据
     public override void SaveWorldData(TagCompound tag)
@@ -225,6 +221,56 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate
     }
     #endregion
 
+    #region 进度
+    float IProgressable.Progress => Progress;
+    IEnumerable<IProgressable> IProgressable.ProgressChildren => Pages.Values;
+    public static float Progress { get; private set; }
+    public static void UpdateProgress()
+    {
+        Progress = ((IProgressable)Instance).GetProgressOfChildren();
+    }
+    #endregion
+
+    #region 流程控制
+    public static bool AfterPostSetup { get; private set; }
+
+    /// <summary>
+    /// 在 PostSetup之后调用
+    /// </summary>
+    public static void PostInitialize()
+    {
+        LoadStaticDataFromAllLoadedMod();
+
+        Pages.Values.ForeachDo(p => p.PostInitialize());
+        AfterPostSetup = true;
+    }
+    /// <summary>
+    /// 在 <see cref="ModPlayer.OnEnterWorld"/> 中调用
+    /// 此时玩家的和世界的数据都已加载完毕
+    /// </summary>
+    public static void Start()
+    {
+        Pages.Values.ForeachDo(p => p.Start());
+    }
+    /// <summary>
+    /// 重置所有的成就数据,
+    /// 一般在世界卸载时使用
+    /// </summary>
+    public static void Reset()
+    {
+        Pages.Values.ForeachDo(p => p.Reset());
+    }
+    /// <summary>
+    /// 在游戏中调用, 重置所有成就的进度
+    /// </summary>
+    public static void Restart()
+    {
+        Reset();
+        Start();
+    }
+    #endregion
+
+    #region 重写 ModSystem 的方法
     public override void PostUpdateEverything()
     {
         Update_TryNetUpdate();
@@ -238,31 +284,8 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate
         // 在 SaveWorldData 后执行
         Reset();
     }
-    /// <summary>
-    /// 重置所有的成就数据
-    /// </summary>
-    public static void Reset()
-    {
-        Pages.Values.ForeachDo(p => p.Reset());
-    }
-    /// <summary>
-    /// 在 <see cref="ModPlayer.OnEnterWorld"/> 中调用
-    /// 此时玩家的和世界的数据都已加载完毕
-    /// </summary>
-    public static void Start()
-    {
-        Pages.Values.ForeachDo(p => p.Start());
-    }
-    /// <summary>
-    /// 在游戏中调用, 重置所有成就的进度
-    /// </summary>
-    public static void Restart()
-    {
-        Reset();
-        Start();
-    }
+    #endregion
 
-    public static bool AfterPostSetup { get; private set; }
     #region 钩子
     public override void Load()
     {
