@@ -104,6 +104,22 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate
         }
         modPages.Add(page.Name, page);
     }
+    /// <summary>
+    /// 获得页面的索引, 若页面不在其中, 返回 -1
+    /// </summary>
+    public static int GetIndexOfPage(AchievementPage page) => pages.GetIndexByKey(page.FullName);
+    /// <summary>
+    /// 获得全名对应的页面的索引
+    /// </summary>
+    public static int GetIndexByFullName(string pageFullName) => pages.GetIndexByKey(pageFullName);
+    /// <summary>
+    /// 根据索引获得页面, 若索引超界则返回空
+    /// </summary>
+    public static AchievementPage? GetPageByIndex(int index) => pages.GetValueByIndexS(index);
+    /// <summary>
+    /// 根据索引获得页面, 若索引超界则报错
+    /// </summary>
+    public static AchievementPage GetPageByIndexF(int index) => pages.GetValueByIndex(index);
 
     public static void PostInitialize()
     {

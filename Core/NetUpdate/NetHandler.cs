@@ -28,8 +28,16 @@ public static class NetHandler
     }
     public static void TryShowPlayerCompleteMessage(Achievement achievement, bool handle = false, int whoAmI = -1)
     {
-        int pageIndex = AchievementManager.Pages.Values.FindIndexOf(p => p == achievement.Page);
-        int achievementIndex = achievement.Page.Achievements.Values.FindIndexOf(a => a == achievement);
+        int pageIndex = AchievementManager.GetIndexOfPage(achievement.Page);
+        if (pageIndex < 0)
+        {
+            return;
+        }
+        int achievementIndex = achievement.Page.Achievements.GetIndexByKey(achievement.FullName);
+        if (achievementIndex < 0)
+        {
+            return;
+        }
         void TrySendPacket()
         {
             if (ServerConfig.Instance.DontReceiveOtherPlayerCompleteAchievementMessage)
@@ -89,8 +97,8 @@ public static class NetHandler
         whoAmI = reader.ReadByte();
         int pageIndex = reader.Read7BitEncodedInt();
         int achievementIndex = reader.Read7BitEncodedInt();
-        var page = AchievementManager.Pages.Values.ElementAtOrDefault(pageIndex);
-        var achievement = page?.Achievements.Values.ElementAtOrDefault(achievementIndex);
+        var page = AchievementManager.GetPageByIndex(pageIndex);
+        var achievement = page?.Achievements.GetValueByIndexS(achievementIndex);
         if (achievement == null)
         {
             return;
@@ -103,6 +111,7 @@ public static class NetHandler
     public static HandlerDelegate[] Handlers = {
         /* 0  */HandleNone,
         /* 1  */HandleManagerNetUpdate,
+        /* 2  */HandlePlayerCompleteAchievement,
     };
 #pragma warning restore IDE0300 // 简化集合初始化
 }
