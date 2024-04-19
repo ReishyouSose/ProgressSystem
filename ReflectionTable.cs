@@ -54,6 +54,7 @@ namespace ProgressSystem
 #pragma warning restore CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
             {
                 _field = field;
+                Name = field.Name;
                 EntryType = EntryTypeEnum.Field;
             }
 #pragma warning disable CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
@@ -61,6 +62,7 @@ namespace ProgressSystem
 #pragma warning restore CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
             {
                 _property = property;
+                Name = property.Name;
                 EntryType = EntryTypeEnum.Property;
             }
 #pragma warning disable CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
@@ -68,12 +70,13 @@ namespace ProgressSystem
 #pragma warning restore CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
             {
                 _method = method;
+                Name = method.Name;
                 EntryType = EntryTypeEnum.Method;
             }
             [FieldOffset(0)]
             public readonly EntryTypeEnum EntryType;
             [FieldOffset(8)]
-            string? Name;
+            public readonly string Name;
             [FieldOffset(16)]
             FieldInfo _field;
             [FieldOffset(16)]
