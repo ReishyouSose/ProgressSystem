@@ -19,12 +19,12 @@ public class CraftItemInWorldRequirement : ItemWorldRequirement
     protected override void BeginListen()
     {
         base.BeginListen();
-        //GEListener.OnLocalPlayerCraftItem += ListenCraftItem;
+        CommonListener.OnLocalPlayerCraftItem += ListenCraftItem;
     }
     protected override void EndListen()
     {
         base.EndListen();
-        //GEListener.OnLocalPlayerCraftItem -= ListenCraftItem;
+        CommonListener.OnLocalPlayerCraftItem -= ListenCraftItem;
     }
     /// <summary>
     /// 不在服务端监听
