@@ -1,7 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using ProgressSystem.GameEvents;
 using ProgressSystem.UIEditor.ExtraUI;
 using RUIModule;
 using System.Diagnostics;
@@ -78,17 +77,11 @@ namespace ProgressSystem.UIEditor
         private static bool LeftShift;
         private static bool LeftCtrl;
         private static bool LeftAlt;
-        /// <summary>
-        /// 正在编辑的modName
-        /// </summary>
         private Mod editingMod;
         /// <summary>
         /// 正在编辑的进度组名
         /// </summary>
         private string editingPage;
-        /// <summary>
-        /// 检测是否已按下ctrl + S
-        /// </summary>
         private bool trySave;
         private bool tryDelete;
         public override void OnInitialization()
@@ -116,20 +109,24 @@ namespace ProgressSystem.UIEditor
             LeftCtrl = state.IsKeyDown(Keys.LeftControl);
             LeftAlt = state.IsKeyDown(Keys.LeftAlt);
             bool pressS = state.IsKeyDown(Keys.S);
+            bool delete = state.IsKeyDown(Keys.Delete);
+            bool pressR = state.IsKeyDown(Keys.R);
             if (!pressS) trySave = false;
+            if (!delete) tryDelete = false;
             if (!trySave && LeftCtrl && pressS)
             {
                 SaveProgress();
                 trySave = true;
                 ChangeSaveState(true);
             }
-            if (!tryDelete && state.IsKeyDown(Keys.Delete))
+            if (!tryDelete && delete)
             {
                 foreach (UIAchSlot slot in frameSelect)
                 {
                     RemoveAchSlot(slot, true);
                 }
-
+                frameSelect.Clear();
+                tryDelete = true;
             }
             if (dragging || collision != null)
             {
@@ -236,7 +233,7 @@ namespace ProgressSystem.UIEditor
             newAchBg.Register(conditionPanel);
 
             conditionView = new();
-            conditionView.SetSize(-10, 0, 1, 1);
+            conditionView.SetSize(-10, -10, 1, 1);
             conditionView.autoPos[0] = true;
             conditionPanel.Register(conditionView);
 
@@ -244,6 +241,11 @@ namespace ProgressSystem.UIEditor
             cdsV.Info.Left.Pixel += 10;
             conditionView.SetVerticalScrollbar(cdsV);
             conditionPanel.Register(cdsV);
+
+            HorizontalScrollbar cdsH = new();
+            cdsH.Info.Top.Pixel += 10;
+            conditionView.SetHorizontalScrollbar(cdsH);
+            conditionPanel.Register(cdsH);
 
             UIVnlPanel achNameInputBg = new(0, 0);
             achNameInputBg.SetSize(170, 30);
@@ -298,19 +300,26 @@ namespace ProgressSystem.UIEditor
 
             foreach (var require in ModContent.GetContent<Requirement>())
             {
-                var tables = require.GetConstructInfoTables();
-                UIText requireType = new(require.GetType().Name.Replace("Requirement", ""));
-                requireType.SetSize(requireType.TextSize);
-                requireType.HoverToGold();
-                requireType.Events.OnLeftDown += evt =>
+                if (require is RequirementCombination)
                 {
-                    dataView.ClearAllElements();
-                    foreach (var constructInfo in tables)
+
+                }
+                else
+                {
+                    var tables = require.GetConstructInfoTables();
+                    UIText requireType = new(require.GetType().Name.Replace("Requirement", ""));
+                    requireType.SetSize(requireType.TextSize);
+                    requireType.HoverToGold();
+                    requireType.Events.OnLeftDown += evt =>
                     {
-                        RegisterRequireDataPanel(constructInfo);
-                    }
-                };
-                constrcutList.AddElement(requireType);
+                        dataView.ClearAllElements();
+                        foreach (var constructInfo in tables)
+                        {
+                            RegisterRequireDataPanel(constructInfo);
+                        }
+                    };
+                    constrcutList.AddElement(requireType);
+                }
             }
             var inner = constrcutList.expandView.InnerUIE;
             constrcutList.ChangeShowElement(0);

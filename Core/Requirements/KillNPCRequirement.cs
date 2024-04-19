@@ -1,5 +1,4 @@
-﻿using ProgressSystem.GameEvents;
-using Terraria.Localization;
+﻿using Terraria.Localization;
 
 namespace ProgressSystem.Core.Requirements;
 
@@ -64,13 +63,13 @@ public class KillNPCRequirement : Requirement
     protected override void BeginListen()
     {
         base.BeginListen();
-        GEListener.OnLocalPlayerKillNPC += ListenKillNPC;
+        //GEListener.OnLocalPlayerKillNPC += ListenKillNPC;
         DoIf(CountNow >= Count, CompleteSafe);
     }
     protected override void EndListen()
     {
         base.EndListen();
-        GEListener.OnLocalPlayerKillNPC -= ListenKillNPC;
+        //GEListener.OnLocalPlayerKillNPC -= ListenKillNPC;
     }
     private void ListenKillNPC(NPC npc)
     {
