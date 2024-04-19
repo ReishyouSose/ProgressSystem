@@ -58,6 +58,8 @@ namespace ProgressSystem.UIEditor
         private UIInputBox pageInputer;
         private UIInputBox achNameInputer;
         private UIInputBox savePathInputer;
+        private UIText submit;
+        private UIText cdCount;
         private UIDropDownList<UIText> pageList;
         /// <summary>
         /// 用于判定包含的GE鼠标碰撞箱
@@ -90,7 +92,8 @@ namespace ProgressSystem.UIEditor
         public override void OnInitialization()
         {
             base.OnInitialization();
-            if (Main.gameMenu) return;
+            if (Main.gameMenu)
+                return;
             Info.IsVisible = true;
             RemoveAll();
 
@@ -114,8 +117,10 @@ namespace ProgressSystem.UIEditor
             bool pressS = state.IsKeyDown(Keys.S);
             bool delete = state.IsKeyDown(Keys.Delete);
             bool pressR = state.IsKeyDown(Keys.R);
-            if (!pressS) trySave = false;
-            if (!delete) tryDelete = false;
+            if (!pressS)
+                trySave = false;
+            if (!delete)
+                tryDelete = false;
             if (!trySave && LeftCtrl && pressS)
             {
                 SaveProgress();
@@ -212,9 +217,80 @@ namespace ProgressSystem.UIEditor
             newAchBg.Info.SetMargin(10);
             Register(newAchBg);
 
+            UIVnlPanel submitBg = new(0, 0);
+            submitBg.SetSize(200, 30);
+            newAchBg.Register(submitBg);
+
+            submit = new("需要手动提交 否");
+            submit.SetSize(submit.TextSize);
+            submit.SetCenter(0, 5, 0.5f, 0.5f);
+            submit.HoverToGold();
+            submit.Events.OnLeftDown += evt =>
+            {
+                if (EditingAch == null)
+                    return;
+                ref bool needSubmit = ref EditingAch.NeedSubmit;
+                needSubmit = !needSubmit;
+                submit.ChangeText($"需要手动提交  {(needSubmit ? "是" : "否")}");
+                EditingAch.ShouldSaveStaticData = true;
+                ChangeSaveState(false);
+            };
+            submitBg.Register(submit);
+
+            UIVnlPanel needCountBg = new(0, 0);
+            needCountBg.SetPos(0, 40);
+            needCountBg.SetSize(200, 30);
+            newAchBg.Register(needCountBg);
+
+            UIText needCount = new("需求量");
+            needCount.SetPos(10, 5);
+            needCount.SetSize(needCount.TextSize);
+            needCountBg.Register(needCount);
+
+            int left = 0;
+            UIImage increase = new(AssetLoader.Increase);
+            increase.Info.Left.Set(-30, 1);
+            increase.Info.Top.Pixel = 5;
+            increase.Events.OnLeftDown += evt =>
+            {
+                if (EditingAch == null)
+                    return;
+                ref int? need = ref EditingAch.RequirementCountNeeded;
+                need = need == null ? 1 : ++need;
+                cdCount.ChangeText(need!.ToString(), false);
+                EditingAch.ShouldSaveStaticData = true;
+                ChangeSaveState(false);
+            };
+            needCountBg.Register(increase);
+            left += 40;
+
+            cdCount = new("00", drawStyle: 1);
+            cdCount.SetSize(cdCount.TextSize);
+            cdCount.SetPos(-cdCount.TextSize.X - left, 5, 1);
+            needCountBg.Register(cdCount);
+            left += cdCount.Width + 10;
+            cdCount.ChangeText("0", false);
+
+            UIImage decrease = new(AssetLoader.Decrease);
+            decrease.Info.Left.Set(-left - 20, 1);
+            decrease.Info.Top.Pixel = 5;
+            decrease.Events.OnLeftDown += evt =>
+            {
+                if (EditingAch == null)
+                    return;
+                ref int? need = ref EditingAch.RequirementCountNeeded;
+                if (need == null)
+                    return;
+                need = need - 1 == 0 ? null : --need;
+                cdCount.ChangeText((need ?? 0).ToString(), false);
+                EditingAch.ShouldSaveStaticData = true;
+                ChangeSaveState(false);
+            };
+            needCountBg.Register(decrease);
+
             UIVnlPanel dataPanel = new(0, 0);
-            dataPanel.SetPos(0, 40);
-            dataPanel.SetSize(200, -40, 0, 1);
+            dataPanel.SetPos(0, 100);
+            dataPanel.SetSize(200, -100, 0, 1);
             newAchBg.Register(dataPanel);
 
             dataView = new() { spaceY = 10 };
@@ -275,7 +351,8 @@ namespace ProgressSystem.UIEditor
             changeName.Events.OnLeftDown += evt =>
             {
                 var achs = EditingPage?.Achievements;
-                if (achs == null) return;
+                if (achs == null)
+                    return;
                 string text = achNameInputer.Text;
                 Achievement current = EditingAch;
                 if (text.Any())
@@ -296,7 +373,8 @@ namespace ProgressSystem.UIEditor
                         ChangeSaveState(false);
                     }
                 }
-                else Main.NewText("名称不可为空");
+                else
+                    Main.NewText("名称不可为空");
             };
             achNameInputBg.Register(changeName);
 
@@ -308,9 +386,10 @@ namespace ProgressSystem.UIEditor
             })
             { buttonXoffset = 10 };
 
+            constrcutList.showArea.SetPos(0, 70);
             constrcutList.showArea.SetSize(200, 30);
 
-            constrcutList.expandArea.SetPos(0, 40);
+            constrcutList.expandArea.SetPos(0, 100);
             constrcutList.expandArea.SetSize(200, 150);
 
             constrcutList.expandView.autoPos[0] = true;
@@ -412,7 +491,8 @@ namespace ProgressSystem.UIEditor
 
             foreach (Mod mod in ModLoader.Mods)
             {
-                if (mod.Side != ModSide.Both || !mod.HasAsset("icon")) continue;
+                if (mod.Side != ModSide.Both || !mod.HasAsset("icon"))
+                    continue;
                 string modName = mod.Name;
                 UIModSlot modSlot = new(RUIHelper.T2D(modName + "/icon"), modName) { hoverText = mod.DisplayName };
                 modSlot.ReDraw = sb =>
@@ -500,7 +580,8 @@ namespace ProgressSystem.UIEditor
                             {
                                 p.X++;
                             }
-                            else p.Y++;
+                            else
+                                p.Y++;
                         }
                         slot.pos = p;
                         slot.SetPos(p * 80);
@@ -564,10 +645,12 @@ namespace ProgressSystem.UIEditor
             {
                 Point mouse = (Main.MouseScreen - achView.ChildrenElements[0].HitBox(false).TopLeft()).ToPoint();
                 Vector2 pos = new(mouse.X / 80, mouse.Y / 80);
-                if (EditingAchSlot.pos == pos) return;
+                if (EditingAchSlot.pos == pos)
+                    return;
                 string name = BaseName;
                 int i = 1;
-                while (EditingPage.Achievements.ContainsKey(editingMod.Name + "." + name + i)) i++;
+                while (EditingPage.Achievements.ContainsKey(editingMod.Name + "." + name + i))
+                    i++;
                 Achievement ach = Achievement.Create(EditingPage, editingMod, name + i);
                 RegisterAchSlot(ach, pos);
             };
@@ -761,7 +844,8 @@ namespace ProgressSystem.UIEditor
                     frameSelect.Remove(ge);
                     ge.selected = false;
                 }
-                else ge.selected = frameSelect.Add(ge);
+                else
+                    ge.selected = frameSelect.Add(ge);
             }
             else if (frameSelect.Any())
             {
@@ -946,7 +1030,8 @@ namespace ProgressSystem.UIEditor
                         bind.SetValue(text);
                         legal.ChangeText(bind.IsMet ? ("合法值：" + bind.GetValue()) : "不合法");
                     }
-                    else legal.ChangeText(bind.Important ? "可以为空" : "不可为空");
+                    else
+                        legal.ChangeText(bind.Important ? "可以为空" : "不可为空");
                 };
                 valueInputBg.Register(valueInputer);
 
@@ -1030,7 +1115,8 @@ namespace ProgressSystem.UIEditor
             achView.AddElement(slot);
             slotByFullName.Add(slot.ach.FullName, slot);
             AchPos.Add(pos);
-            if (changeToEditing) ChangeEditingAch(ach);
+            if (changeToEditing)
+                ChangeEditingAch(ach);
             ChangeSaveState(false);
             return slot;
         }
@@ -1044,8 +1130,10 @@ namespace ProgressSystem.UIEditor
             string achName = slot.ach.FullName;
             achView.RemoveElement(slot);
             slotByFullName.Remove(achName);
-            if (range) slot.Info.NeedRemove = true;
-            else EditingPage.Achievements.Remove(achName);
+            if (range)
+                slot.Info.NeedRemove = true;
+            else
+                EditingPage.Achievements.Remove(achName);
             AchPos.Remove(slot.pos);
             if (editingAchName == achName)
             {
@@ -1077,14 +1165,24 @@ namespace ProgressSystem.UIEditor
         {
             conditionView.ClearAllElements();
             achNameInputer.ClearText();
-            editingRequires = null;
-            if (ach == null) return;
-            editingAchName = ach.FullName;
-            achNameInputer.Text = ach.Name;
-            conditionView.ClearAllElements();
-            CheckConditions(ach.Requirements, 0);
-            conditionView.Calculation();
-            editingRequires = ach.Requirements;
+            if (ach == null)
+            {
+                editingRequires = null;
+                editingAchName = "";
+                cdCount.ChangeText("0", false);
+                return;
+            }
+            else
+            {
+                cdCount.ChangeText((ach.RequirementCountNeeded ?? 0).ToString(), false);
+                submit.ChangeText($"需要手动提交  {(ach.NeedSubmit ? "是" : "否")}");
+                editingAchName = ach.FullName;
+                achNameInputer.Text = ach.Name;
+                conditionView.ClearAllElements();
+                CheckConditions(ach.Requirements, 0);
+                conditionView.Calculation();
+                editingRequires = ach.Requirements;
+            }
         }
         private void CheckConditions(RequirementList requires, int index)
         {
