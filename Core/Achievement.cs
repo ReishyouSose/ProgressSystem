@@ -13,7 +13,7 @@ namespace ProgressSystem.Core;
 /// <br/>修改的数据是它本身的数据时才设置, 如设置了条件但成就原来就存在的话
 /// <br/>就不需要设置 <see cref="ShouldSaveStaticData"/>, 而只需要设置条件的就好
 /// </summary>
-public class Achievement : IWithStaticData, INetUpdate, IProgressable
+public class Achievement : IWithStaticData, INetUpdate, IProgressable, IEditable
 {
     #region 不会在正常游玩时改变的 字段 / 属性
     /// <summary>
@@ -131,15 +131,44 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     protected int? _useRequirementTextureIndex;
     #endregion
 
+    #region 自定义绘制
+
+    #region 绘制图标
+    public delegate bool PreDrawDelegate(SpriteBatch sb, Rectangle slotRectangle);
+    public delegate void PostDrawDelegate(SpriteBatch sb, Rectangle slotRectangle);
     /// <summary>
-    /// 自定义绘制
+    /// 自定义绘制图标
     /// 返回 false 以取消原本的绘制
     /// </summary>
-    public virtual bool PreDraw(SpriteBatch sb, Rectangle slotRectangle)
+    public PreDrawDelegate? PreDraw;
+    public PostDrawDelegate? PostDraw;
+    #endregion
+
+    #region 绘制连线
+    public delegate bool PreDrawLineDelegate(SpriteBatch sb, Rectangle startRectangle, Rectangle endRectangle, Achievement predecessor);
+    public delegate void PostDrawLineDelegate(SpriteBatch sb, Rectangle startRectangle, Rectangle endRectangle, Achievement predecessor);
+    /// <summary>
+    /// 自定义此成就与前置成就的连线绘制
+    /// 返回 false 以取消原本的绘制
+    /// </summary>
+    public PreDrawLineDelegate PreDrawLine;
+    public PostDrawLineDelegate PostDrawLine;
+    #endregion
+
+    #endregion
+
+    #region Editable
+    public IList<IEditable.Entry> EditList => editList ??= CreateEditList();
+    protected IList<IEditable.Entry>? editList;
+    protected virtual IList<IEditable.Entry> CreateEditList()
     {
-        return true;
+        return [
+            IEditable.Entry.Create("Position", this, nameof(Position))!,
+            new IEditable.Entry<string?>("DisplayName", () => DisplayName.StringValue, v => DisplayName = v),
+            new IEditable.Entry<string?>("DisplayNameKey", () => DisplayName.LocalizedTextValue?.Key, v => DisplayName = Language.GetText(v)),
+        ];
     }
-    public virtual void PostDraw(SpriteBatch sb, Rectangle slotRectangle) { }
+    #endregion
 
     #endregion
 
