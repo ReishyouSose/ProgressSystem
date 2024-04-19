@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Reflection;
 
-namespace ProgressSystem
+namespace ProgressSystem.Core
 {
     [AttributeUsage(AttributeTargets.Constructor | AttributeTargets.Method)]
     public class SpecializeAutoConstructAttribute : Attribute
