@@ -340,11 +340,11 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
 
 public abstract class RequirementCombination : Requirement
 {
-    public RequirementList Requirements = [];
+    public RequirementList Requirements;
     protected RequirementCombination() { }
     public RequirementCombination(params Requirement[] requirements)
     {
-        Requirements = [.. requirements];
+        Requirements = [.. requirements ?? []];
         foreach (int i in Requirements.Count)
         {
             Requirements[i].OnComplete += () => ElementComplete(i);

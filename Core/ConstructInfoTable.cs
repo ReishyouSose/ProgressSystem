@@ -53,8 +53,9 @@ namespace ProgressSystem.Core
                     result = _createFunc(this);
                     return result is not null;
                 }
-                catch
+                catch (Exception e)
                 {
+                    Main.NewText(e);
                     return false;
                 }
             }

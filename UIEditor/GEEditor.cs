@@ -71,7 +71,9 @@ namespace ProgressSystem.UIEditor
         private string editingAchName;
         private RequirementList editingRequires;
         private Dictionary<string, UIAchSlot> slotByFullName;
-        private AchievementPage EditingPage => AchievementManager.PagesByMod[editingMod][editingPage];
+        private AchievementPage EditingPage => AchievementManager.PagesByMod.TryGetValue(editingMod, out var pages)
+                    && pages.TryGetValue(editingPage, out var page) ? page : null;
+
         private Achievement EditingAch => editingAchName == "" ? null : slotByFullName[editingAchName].ach;
         private UIAchSlot EditingAchSlot => slotByFullName[editingAchName];
         private UIText saveTip;
@@ -228,7 +230,7 @@ namespace ProgressSystem.UIEditor
             dataPanel.Register(dataV);
 
             UIVnlPanel conditionPanel = new(0, 0);
-            conditionPanel.SetSize(200, -40, 0, 1);
+            conditionPanel.SetSize(-210, -40, 1, 1);
             conditionPanel.SetPos(210, 40);
             conditionPanel.Info.SetMargin(10);
             newAchBg.Register(conditionPanel);
@@ -251,7 +253,7 @@ namespace ProgressSystem.UIEditor
             conditionPanel.Register(cdsH);
 
             UIVnlPanel achNameInputBg = new(0, 0);
-            achNameInputBg.SetSize(200, 30);
+            achNameInputBg.SetSize(-240, 30, 1);
             achNameInputBg.SetPos(210, 0);
             newAchBg.Register(achNameInputBg);
 
@@ -259,17 +261,22 @@ namespace ProgressSystem.UIEditor
             achNameInputer.SetSize(-70, 0, 1, 1);
             achNameInputBg.Register(achNameInputer);
 
+            UIAdjust adjust = new(AssetLoader.VnlAdjust);
+            adjust.SetPos(-20, 5, 1);
+            newAchBg.Register(adjust);
+
             UIClose clearName = new();
             clearName.SetCenter(-10, 0, 1, 0.5f);
             clearName.Events.OnLeftDown += evt => achNameInputer.ClearText();
             achNameInputBg.Register(clearName);
 
-            UIAdjust changeName = new(AssetLoader.VnlAdjust);
+            UIMove changeName = new(AssetLoader.VnlAdjust);
             changeName.SetCenter(-30, 0, 1, 0.5f);
             changeName.Events.OnLeftDown += evt =>
             {
+                var achs = EditingPage?.Achievements;
+                if (achs == null) return;
                 string text = achNameInputer.Text;
-                var achs = EditingPage.Achievements;
                 Achievement current = EditingAch;
                 if (text.Any())
                 {
@@ -286,6 +293,7 @@ namespace ProgressSystem.UIEditor
                         editingAchName = current.FullName;
                         slotByFullName.Add(current.FullName, currentSlot);
                         EditingPage.Achievements.Add(editingAchName, current);
+                        ChangeSaveState(false);
                     }
                 }
                 else Main.NewText("名称不可为空");
@@ -843,6 +851,7 @@ namespace ProgressSystem.UIEditor
             tempSelect.Clear();
             frameSelect.Clear();
             interacted.Clear();
+            editingAchName = "";
             achView?.InnerUIE.RemoveAll(MatchTempGE);
             achView?.Vscroll.ForceSetPixel(0);
             achView?.Hscroll.ForceSetPixel(0);
@@ -965,6 +974,7 @@ namespace ProgressSystem.UIEditor
                     conditionView.ClearAllElements();
                     CheckConditions(EditingAch.Requirements, 0);
                     conditionView.Calculation();
+                    ChangeSaveState(false);
                 }
             };
             constructPanel.Register(create);
