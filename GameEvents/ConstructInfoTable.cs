@@ -46,7 +46,7 @@ namespace ProgressSystem.GameEvents
         public bool TryConstruct(out T? result)
         {
             result = default;
-            if (AllEntryMeet && Closed)
+            if (AllEntryMet && Closed)
             {
                 try
                 {
@@ -64,10 +64,10 @@ namespace ProgressSystem.GameEvents
         {
             return GetEnumerator();
         }
-        public bool AllEntryMeet => _entries.All(e => e.IsMet);
+        public bool AllEntryMet => _entries.All(e => e.IsMet);
         public ConstructInfoTable<T> Clone()
         {
-            ConstructInfoTable<T> table = new ConstructInfoTable<T>(_createFunc);
+            ConstructInfoTable<T> table = new(_createFunc);
             foreach (Entry entry in _entries)
             {
                 table.AddEntry(new(entry.Type, entry.DisplayName, entry.Important));

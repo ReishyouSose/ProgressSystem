@@ -70,6 +70,7 @@ namespace ProgressSystem.UIEditor
         /// </summary>
         private UIAchSlot preSetting;
         private string editingAchName;
+        private RequirementList editingRequires;
         private Dictionary<string, UIAchSlot> slotByFullName;
         private AchievementPage EditingPage => AchievementManager.PagesByMod[editingMod][editingPage];
         private Achievement EditingAch => editingAchName == "" ? null : slotByFullName[editingAchName].ach;
@@ -212,7 +213,7 @@ namespace ProgressSystem.UIEditor
 
             UIVnlPanel dataPanel = new(0, 0);
             dataPanel.SetPos(0, 40);
-            dataPanel.SetSize(230, -40, 0, 1);
+            dataPanel.SetSize(200, -40, 0, 1);
             newAchBg.Register(dataPanel);
 
             dataView = new() { spaceY = 10 };
@@ -228,14 +229,16 @@ namespace ProgressSystem.UIEditor
             dataPanel.Register(dataV);
 
             UIVnlPanel conditionPanel = new(0, 0);
-            conditionPanel.SetSize(170, -65, 0, 1);
-            conditionPanel.SetPos(240, 40);
+            conditionPanel.SetSize(200, -40, 0, 1);
+            conditionPanel.SetPos(210, 40);
             conditionPanel.Info.SetMargin(10);
             newAchBg.Register(conditionPanel);
 
             conditionView = new();
-            conditionView.SetSize(-10, -10, 1, 1);
+            conditionView.SetSize(-20, -10, 1, 1);
             conditionView.autoPos[0] = true;
+            conditionView.spaceY = 10;
+            conditionView.Events.OnRightDown += evt => editingRequires = EditingAch.Requirements;
             conditionPanel.Register(conditionView);
 
             VerticalScrollbar cdsV = new();
@@ -243,18 +246,18 @@ namespace ProgressSystem.UIEditor
             conditionView.SetVerticalScrollbar(cdsV);
             conditionPanel.Register(cdsV);
 
-            HorizontalScrollbar cdsH = new();
+            HorizontalScrollbar cdsH = new() { useScrollWheel = false };
             cdsH.Info.Top.Pixel += 10;
             conditionView.SetHorizontalScrollbar(cdsH);
             conditionPanel.Register(cdsH);
 
             UIVnlPanel achNameInputBg = new(0, 0);
-            achNameInputBg.SetSize(170, 30);
-            achNameInputBg.SetPos(240, 0);
+            achNameInputBg.SetSize(200, 30);
+            achNameInputBg.SetPos(210, 0);
             newAchBg.Register(achNameInputBg);
 
             achNameInputer = new("输入成就名");
-            achNameInputer.SetSize(-40, 0, 1, 1);
+            achNameInputer.SetSize(-70, 0, 1, 1);
             achNameInputBg.Register(achNameInputer);
 
             UIClose clearName = new();
@@ -262,26 +265,33 @@ namespace ProgressSystem.UIEditor
             clearName.Events.OnLeftDown += evt => achNameInputer.ClearText();
             achNameInputBg.Register(clearName);
 
-            UIText saveChange = new("保存更改");
-            saveChange.SetSize(saveChange.TextSize);
-            saveChange.SetCenter(-85, -5, 1, 1);
-            saveChange.HoverToGold();
-            saveChange.Events.OnLeftDown += evt =>
+            UIAdjust changeName = new(AssetLoader.VnlAdjust);
+            changeName.SetCenter(-30, 0, 1, 0.5f);
+            changeName.Events.OnLeftDown += evt =>
             {
                 string text = achNameInputer.Text;
+                var achs = EditingPage.Achievements;
+                Achievement current = EditingAch;
                 if (text.Any())
                 {
-                    Vector2 pos = EditingAchSlot.pos;
-                    RemoveAchSlot(EditingAchSlot);
-                    Achievement ach = Achievement.Create(EditingPage, editingMod, text);
-                    foreach (UIRequireText require in conditionView.InnerUIE.Cast<UIRequireText>())
+                    if (achs.TryGetValue(current.Mod.Name + "." + text, out Achievement ach))
                     {
-                        ach.Requirements.Add(require.requirement);
+                        Main.NewText($"名称已被{ach.Position}占用");
                     }
-                    RegisterAchSlot(ach, pos);
+                    else
+                    {
+                        UIAchSlot currentSlot = EditingAchSlot;
+                        slotByFullName.Remove(editingAchName);
+                        EditingPage.Achievements.Remove(editingAchName);
+                        current.Name = text;
+                        editingAchName = current.FullName;
+                        slotByFullName.Add(current.FullName, currentSlot);
+                        EditingPage.Achievements.Add(editingAchName, current);
+                    }
                 }
+                else Main.NewText("名称不可为空");
             };
-            newAchBg.Register(saveChange);
+            achNameInputBg.Register(changeName);
 
             UIDropDownList<UIText> constrcutList = new(newAchBg, dataPanel, x =>
             {
@@ -291,36 +301,29 @@ namespace ProgressSystem.UIEditor
             })
             { buttonXoffset = 10 };
 
-            constrcutList.showArea.SetSize(230, 30);
+            constrcutList.showArea.SetSize(200, 30);
 
             constrcutList.expandArea.SetPos(0, 40);
-            constrcutList.expandArea.SetSize(230, 150);
+            constrcutList.expandArea.SetSize(200, 150);
 
             constrcutList.expandView.autoPos[0] = true;
             constrcutList.expandView.Vscroll.canDrag = false;
 
             foreach (var require in ModContent.GetContent<Requirement>())
             {
-                if (require is RequirementCombination)
+                var tables = require.GetConstructInfoTables();
+                UIText requireType = new(require.GetType().Name.Replace("Requirement", ""));
+                requireType.SetSize(requireType.TextSize);
+                requireType.HoverToGold();
+                requireType.Events.OnLeftDown += evt =>
                 {
-
-                }
-                else
-                {
-                    var tables = require.GetConstructInfoTables();
-                    UIText requireType = new(require.GetType().Name.Replace("Requirement", ""));
-                    requireType.SetSize(requireType.TextSize);
-                    requireType.HoverToGold();
-                    requireType.Events.OnLeftDown += evt =>
+                    dataView.ClearAllElements();
+                    foreach (var constructInfo in tables)
                     {
-                        dataView.ClearAllElements();
-                        foreach (var constructInfo in tables)
-                        {
-                            RegisterRequireDataPanel(constructInfo);
-                        }
-                    };
-                    constrcutList.AddElement(requireType);
-                }
+                        RegisterRequireDataPanel(constructInfo);
+                    }
+                };
+                constrcutList.AddElement(requireType);
             }
             var inner = constrcutList.expandView.InnerUIE;
             constrcutList.ChangeShowElement(0);
@@ -381,6 +384,7 @@ namespace ProgressSystem.UIEditor
             eventPanel.SetPos(110, 40);
             eventPanel.SetSize(-110, -40, 1, 1, false);
             editPanel.Register(eventPanel);
+            int left = 110;
 
             pageList = new(editPanel, eventPanel, x =>
             {
@@ -397,7 +401,7 @@ namespace ProgressSystem.UIEditor
             pageList.expandArea.SetSize(200, 100);
 
             pageList.expandView.autoPos[0] = true;
-
+            left += pageList.showArea.Width + 10;
 
             foreach (Mod mod in ModLoader.Mods)
             {
@@ -442,7 +446,7 @@ namespace ProgressSystem.UIEditor
             groupView.InnerUIE[0].Events.LeftDown(null);
 
             UIText newProgress = new("新建进度表");
-            newProgress.SetPos(groupFilter.Width + pageList.showArea.Width + 20, 5);
+            newProgress.SetPos(left, 5);
             newProgress.SetSize(newProgress.TextSize);
             newProgress.Events.OnMouseOver += evt => newProgress.color = Color.Gold;
             newProgress.Events.OnMouseOut += evt => newProgress.color = Color.White;
@@ -453,9 +457,10 @@ namespace ProgressSystem.UIEditor
                 editPanel.LockInteract(false);
             };
             editPanel.Register(newProgress);
+            left += newProgress.Width + 10;
 
             UIText deleteProgress = new("删除进度表");
-            deleteProgress.SetPos(groupFilter.Width + pageList.showArea.Width + newProgress.Width + 30, 5);
+            deleteProgress.SetPos(left, 5);
             deleteProgress.SetSize(deleteProgress.TextSize);
             deleteProgress.Events.OnMouseOver += evt => deleteProgress.color = Color.Gold;
             deleteProgress.Events.OnMouseOut += evt => deleteProgress.color = Color.White;
@@ -468,20 +473,51 @@ namespace ProgressSystem.UIEditor
                 }
             };
             editPanel.Register(deleteProgress);
+            left += deleteProgress.Width + 10;
+
+            UIText checkPos = new("位置检查");
+            checkPos.SetPos(left, 5);
+            checkPos.SetSize(checkPos.TextSize);
+            checkPos.HoverToGold();
+            checkPos.Events.OnLeftDown += evt =>
+            {
+                HashSet<Vector2> pos = [];
+                foreach (UIAchSlot slot in slotByFullName.Values)
+                {
+                    if (!pos.Add(slot.pos))
+                    {
+                        Vector2 p = Vector2.Zero;
+                        while (pos.Contains(p))
+                        {
+                            if (p.Y + 1 > p.X)
+                            {
+                                p.X++;
+                            }
+                            else p.Y++;
+                        }
+                        slot.pos = p;
+                        slot.SetPos(p * 80);
+                    }
+                }
+                AchPos = pos;
+            };
+            editPanel.Register(checkPos);
+            left += checkPos.Width + 10;
 
             saveTip = new("已保存", Color.Green);
             saveTip.SetSize(saveTip.TextSize);
-            saveTip.SetPos(groupFilter.Width + pageList.showArea.Width +
-                newProgress.Width + deleteProgress.Width + 40, 5);
+            saveTip.SetPos(left, 5);
             saveTip.Events.OnLeftDown += evt =>
             {
                 SaveProgress();
                 ChangeSaveState(true);
             };
             editPanel.Register(saveTip);
+            left += saveTip.Width + 10;
 
-            UIVnlPanel savePathInputBg = new(350, 30);
-            savePathInputBg.SetPos(-360, 0, 1);
+            UIVnlPanel savePathInputBg = new(0, 0);
+            savePathInputBg.SetPos(left, 0);
+            savePathInputBg.SetSize(-left, 30, 1);
             editPanel.Register(savePathInputBg);
 
             savePathInputer = new("输入保存路径");
@@ -726,18 +762,6 @@ namespace ProgressSystem.UIEditor
                 Point mouse = (Main.MouseScreen - achView.ChildrenElements[0].HitBox(false).TopLeft()).ToPoint();
                 selectedStart = new(mouse.X / 80, mouse.Y / 80);
             }
-            editingAchName = ach.FullName;
-            achNameInputer.Text = ach.Name;
-            conditionView.ClearAllElements();
-            foreach (Requirement require in ach.Requirements)
-            {
-                UIRequireText req = new(require);
-                req.delete.Events.OnLeftDown += evt =>
-                {
-                    conditionView.InnerUIE.Remove(req);
-                };
-                conditionView.AddElement(req);
-            }
             AchPos.Remove(ge.pos);
             ChangeEditingAch(ach);
             dragging = true;
@@ -892,9 +916,10 @@ namespace ProgressSystem.UIEditor
                 name.SetPos(0, innerY);
                 name.SetSize(name.TextSize);
                 constructPanel.Register(name);
+                innerY += 28;
 
                 UIText legal = new(info.Important ? "可以为空" : "不可为空");
-                legal.SetPos(name.TextSize.X + 10, innerY);
+                legal.SetPos(0, innerY);
                 constructPanel.Register(legal);
                 innerY += 28;
 
@@ -903,7 +928,7 @@ namespace ProgressSystem.UIEditor
                 valueInputBg.SetPos(0, innerY);
                 constructPanel.Register(valueInputBg);
 
-                UIInputBox valueInputer = new("类型为" + info.Type.Name);
+                UIInputBox valueInputer = new(info.Type.Name);
                 valueInputer.SetSize(-40, 0, 1, 1);
                 var bind = info;
                 valueInputer.OnInputText += text =>
@@ -930,20 +955,17 @@ namespace ProgressSystem.UIEditor
             create.Events.OnMouseOut += evt => create.color = Color.White;
             create.Events.OnLeftDown += evt =>
             {
-                if (EditingAch == null)
+                if (editingRequires == null)
                 {
-                    Main.NewText("请先选择一个成就栏位");
+                    Main.NewText("请先选择一个成就栏位/条件层级");
                     return;
                 }
                 if (data.TryConstruct(out Requirement condition))
                 {
-                    int count = conditionView.InnerUIE.Count;
-                    UIRequireText require = new(condition);
-                    require.delete.Events.OnLeftDown += evt =>
-                    {
-                        conditionView.InnerUIE.Remove(require);
-                    };
-                    conditionView.AddElement(require);
+                    editingRequires.Add(condition);
+                    conditionView.ClearAllElements();
+                    CheckConditions(EditingAch.Requirements, 0);
+                    conditionView.Calculation();
                 }
             };
             constructPanel.Register(create);
@@ -1003,6 +1025,11 @@ namespace ProgressSystem.UIEditor
             ChangeSaveState(false);
             return slot;
         }
+        /// <summary>
+        /// range表示是否范围删除
+        /// </summary>
+        /// <param name="slot"></param>
+        /// <param name="range"></param>
         private void RemoveAchSlot(UIAchSlot slot, bool range = false)
         {
             string achName = slot.ach.FullName;
@@ -1041,17 +1068,53 @@ namespace ProgressSystem.UIEditor
         {
             conditionView.ClearAllElements();
             achNameInputer.ClearText();
+            editingRequires = null;
             if (ach == null) return;
             editingAchName = ach.FullName;
             achNameInputer.Text = ach.Name;
-            foreach (Requirement require in ach.Requirements)
+            conditionView.ClearAllElements();
+            CheckConditions(ach.Requirements, 0);
+            conditionView.Calculation();
+            editingRequires = ach.Requirements;
+        }
+        private void CheckConditions(RequirementList requires, int index)
+        {
+            if (requires.Any())
             {
-                UIRequireText text = new(require);
-                text.delete.Events.OnLeftDown += evt =>
+                foreach (Requirement require in requires)
                 {
-                    conditionView.RemoveElement(text);
-                };
-                conditionView.AddElement(text);
+                    UIRequireText text = new(require, requires);
+                    text.SetPos(index * 30, 0);
+                    text.delete.Events.OnLeftDown += evt =>
+                    {
+                        requires.Remove(require);
+                        conditionView.ClearAllElements();
+                        CheckConditions(EditingAch.Requirements, 0);
+                        conditionView.Calculation();
+                    };
+                    conditionView.AddElement(text);
+                    if (require is RequirementCombination combine)
+                    {
+                        text.text.HoverToGold();
+                        var requireList = combine.Requirements;
+                        text.text.Events.OnLeftDown += evt =>
+                        {
+                            editingRequires = requireList;
+                        };
+                        text.text.Events.OnUpdate += evt =>
+                        {
+                            text.text.overrideColor = editingRequires == requireList ? Color.Red : null;
+                        };
+                        CheckConditions(combine.Requirements, index + 1);
+                    }
+                }
+            }
+            else
+            {
+                UIText none = new("空条件");
+                none.SetPos(index * 30, 0);
+                none.SetSize(none.TextSize);
+                conditionView.AddElement(none);
             }
         }
     }

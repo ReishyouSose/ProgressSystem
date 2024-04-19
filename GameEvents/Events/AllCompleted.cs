@@ -20,7 +20,7 @@ public class AllCompleted : GameEvent
     }
     public override IEnumerable<ConstructInfoTable<GameEvent>> GetConstructInfoTables()
     {
-        ConstructInfoTable<GameEvent> table = new ConstructInfoTable<GameEvent>(t =>
+        ConstructInfoTable<GameEvent> table = new(t =>
         {
             IEnumerator<ConstructInfoTable<GameEvent>.Entry> e = t.GetEnumerator();
             e.MoveNext();
