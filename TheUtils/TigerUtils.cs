@@ -7,6 +7,8 @@ using MonoMod.RuntimeDetour;
 using System.Collections;
 using System.IO;
 using System.Reflection;
+using System.Reflection.Emit;
+using SOpCodes = System.Reflection.Emit.OpCodes;
 
 namespace ProgressSystem.TheUtils;
 
@@ -2915,7 +2917,7 @@ public static partial class TigerExtensions
     #endregion
     #region IsBetween
     /// <summary>
-    /// 返回<paramref name="left"/> &lt;= <paramref name="self"/> &amp;&amp; <paramref name="self"/> &lt; <paramref name="right"/>
+    /// 返回 <paramref name="left"/> &lt;= <paramref name="self"/> &amp;&amp; <paramref name="self"/> &lt; <paramref name="right"/>
     /// </summary>
     public static bool IsBetween<T>(this T self, T left, T right) where T : IComparable<T>
         => self.CompareTo(left) >= 0 && self.CompareTo(right) < 0;
@@ -4285,6 +4287,327 @@ public static partial class TigerExtensions
             dictionary.Add(key, elementList);
         }
     }
+    #region 字典的序号相关
+    private static class DictionaryIndexMethodExtendHelper<TKey, TValue> where TKey : notnull
+    {
+        public static Func<Dictionary<TKey, TValue>, int, TKey> GetKeyByIndex;
+        public static Func<Dictionary<TKey, TValue>, int, TValue> GetValueByIndex;
+        public static Func<Dictionary<TKey, TValue>, TKey, int> GetIndexByKey;
+        static DictionaryIndexMethodExtendHelper()
+        {
+            #region 反射
+            var dictionaryType = typeof(Dictionary<TKey, TValue>);
+            var iEqualityComparerType = typeof(IEqualityComparer<TKey>);
+            var entriesField = dictionaryType.GetField("_entries", BindingFlags.Instance | BindingFlags.NonPublic)!;
+            var entriesType = entriesField.FieldType;
+            var entryType = entriesType.GetElementType()!;
+            var bucketsField = dictionaryType.GetField("_buckets", BindingFlags.Instance | BindingFlags.NonPublic)!;
+            var comparerField = dictionaryType.GetField("_comparer", BindingFlags.Instance | BindingFlags.NonPublic)!;
+            var objectGetHashCode = typeof(object).GetMethod(nameof(GetHashCode))!;
+            var iEqualityComparerGetHashCodeMethod = iEqualityComparerType.GetMethod(nameof(IEqualityComparer<TKey>.GetHashCode), [typeof(TKey)])!;
+            var iEqualityComparerEqualMethod = iEqualityComparerType.GetMethod(nameof(IEqualityComparer<TKey>.Equals), [typeof(TKey?), typeof(TKey?)])!;
+            var equalityComparerGetDefaultMethod = typeof(EqualityComparer<TKey>).GetProperty(nameof(EqualityComparer<TKey>.Default), BindingFlags.Static | BindingFlags.Public)!.GetGetMethod()!;
+            var getBucketMethod = dictionaryType.GetMethod("GetBucket", BindingFlags.Instance | BindingFlags.NonPublic)!;
+            var entryHashCodeField = entryType.GetField("hashCode")!;
+            var entryKeyField = entryType.GetField("key")!;
+            var entryValueField = entryType.GetField("value")!;
+            var entryNextField = entryType.GetField("next")!;
+            var invalidOperationExceptionConstructor = typeof(InvalidOperationException).GetConstructor([typeof(string)])!;
+            #endregion
+
+            ILGenerator il;
+
+            #region GetIndexByKey
+            
+            DynamicMethod getIndexByKeyDynamicMethod = new("GetDictionaryIndexByKey", typeof(int), [dictionaryType, typeof(TKey)], dictionaryType, true);
+            il = getIndexByKeyDynamicMethod.GetILGenerator();
+
+            #region locals
+            var i_local = il.DeclareLocal(typeof(int));
+            var comparer_local = il.DeclareLocal(iEqualityComparerType);
+            var hashCode_local = il.DeclareLocal(typeof(uint));
+            var entries_local = il.DeclareLocal(entriesType);
+            var collisionCount_local = il.DeclareLocal(typeof(uint));
+            var entry_local = il.DeclareLocal(entryType);
+            #endregion
+
+            #region labels
+            var returnFound_label = il.DefineLabel();
+            var returnNotFound_label = il.DefineLabel();
+            var comparerIsNotNull_label = il.DefineLabel();
+            var afterComparerIsNotNull_label = il.DefineLabel();
+            var loopStart_label = il.DefineLabel();
+            var testEntryNext_label = il.DefineLabel();
+            #endregion
+
+            /*
+            int GetIndexOfKey(TKey key) {
+                int i;
+                if (_buckets == null) {
+                    goto ReturnNotFound;
+                }
+                IEqualityComparer<TKey>? comparer = _comparer;
+                uint hashCode;
+                if (comparer == null) {
+                    hashCode = (uint)key.GetHashCode();
+                    comparer = EqualityComparer<TKey>.Default;
+                }
+                else {
+                    hashCode = (uint)comparer.GetHashCode(key);
+                }
+                i = GetBucket(hashCode);
+                Entry[]? entries = _entries;
+                uint collisionCount = 0;
+                i--;
+                do {
+                    if ((uint)i >= (uint)entries.Length) {
+                        goto ReturnNotFound;
+                    }
+
+                    var entry = entries[i];
+                    if (entry.hashCode == hashCode && comparer.Equals(entry.key, key)) {
+                        goto ReturnFound;
+                    }
+
+                    i = entry.next;
+
+                    collisionCount++;
+                } while (collisionCount <= (uint)entries.Length);
+                throw new InvalidOperationException("Concurrent operations not supported");
+
+            ReturnFound:
+                return i;
+            ReturnNotFound:
+                return -1;
+            }
+            */
+
+            #region IL
+            // if (_buckets == null) goto ReturnNotFound;
+            il.Emit(SOpCodes.Ldarg_0);
+            il.Emit(SOpCodes.Ldfld, bucketsField);
+            il.Emit(SOpCodes.Brfalse, returnNotFound_label);
+        
+            // IEqualityComparer<TKey> comparer = _comparer;
+            il.Emit(SOpCodes.Ldarg_0);
+            il.Emit(SOpCodes.Ldfld, comparerField);
+            il.Emit(SOpCodes.Stloc, comparer_local);
+
+            // if (comparer == null) {
+            il.Emit(SOpCodes.Ldloc, comparer_local);
+            il.Emit(SOpCodes.Brtrue, comparerIsNotNull_label);
+
+            // hashCode = (uint)key.GetHashCode();
+            il.Emit(SOpCodes.Ldarga_S, 1);
+            il.Emit(SOpCodes.Constrained, typeof(TKey));
+            il.Emit(SOpCodes.Callvirt, objectGetHashCode);
+            il.Emit(SOpCodes.Stloc, hashCode_local);
+
+            // comparer = EqualityComparer<TKey>.Default;
+            il.Emit(SOpCodes.Call, equalityComparerGetDefaultMethod);
+            il.Emit(SOpCodes.Stloc, comparer_local);
+            il.Emit(SOpCodes.Br, afterComparerIsNotNull_label);
+
+            // } else {
+            il.MarkLabel(comparerIsNotNull_label);
+
+            // hashCode = (uint)comparer.GetHashCode(key);
+            il.Emit(SOpCodes.Ldloc, comparer_local);
+            il.Emit(SOpCodes.Ldarg_1);
+            il.Emit(SOpCodes.Callvirt, iEqualityComparerGetHashCodeMethod);
+            il.Emit(SOpCodes.Stloc, hashCode_local);
+
+            // }
+            il.MarkLabel(afterComparerIsNotNull_label);
+
+            // i = GetBucket(hashCode);
+            il.Emit(SOpCodes.Ldarg_0);
+            il.Emit(SOpCodes.Ldloc, hashCode_local);
+            il.Emit(SOpCodes.Call, getBucketMethod);
+            il.Emit(SOpCodes.Ldind_I4);
+            il.Emit(SOpCodes.Stloc, i_local);
+
+            // entries = _entries;
+            il.Emit(SOpCodes.Ldarg_0);
+            il.Emit(SOpCodes.Ldfld, entriesField);
+            il.Emit(SOpCodes.Stloc, entries_local);
+
+            // uint collisionCount = 0;
+            il.Emit(SOpCodes.Ldc_I4_0);
+            il.Emit(SOpCodes.Stloc, collisionCount_local);
+
+            // i--;
+            il.Emit(SOpCodes.Ldloc, i_local);
+            il.Emit(SOpCodes.Ldc_I4_1);
+            il.Emit(SOpCodes.Sub);
+            il.Emit(SOpCodes.Stloc, i_local);
+
+            // do {
+            il.MarkLabel(loopStart_label);
+
+            // if ((uint)i >= (uint)entries.Length) { goto ReturnNotFound; }
+            il.Emit(SOpCodes.Ldloc, i_local);
+            il.Emit(SOpCodes.Ldloc, entries_local);
+            il.Emit(SOpCodes.Ldlen);
+            il.Emit(SOpCodes.Conv_I4);
+            il.Emit(SOpCodes.Bge_Un, returnNotFound_label);
+
+            // entry = entries[i];
+            il.Emit(SOpCodes.Ldloc, entries_local);
+            il.Emit(SOpCodes.Ldloc, i_local);
+            il.Emit(SOpCodes.Ldelem, entryType);
+            il.Emit(SOpCodes.Stloc, entry_local);
+
+            // if (entry.hashCode != hashCode) goto TestEntryNext;
+            il.Emit(SOpCodes.Ldloc, entry_local);
+            il.Emit(SOpCodes.Ldfld, entryHashCodeField);
+            il.Emit(SOpCodes.Ldloc, hashCode_local);
+            il.Emit(SOpCodes.Bne_Un, testEntryNext_label);
+
+            // if (comparer.Equals(entry.key, key)) goto ReturnFound;
+            il.Emit(SOpCodes.Ldloc, comparer_local);
+            il.Emit(SOpCodes.Ldloc, entry_local);
+            il.Emit(SOpCodes.Ldfld, entryKeyField);
+            il.Emit(SOpCodes.Ldarg_1);
+            il.Emit(SOpCodes.Callvirt, iEqualityComparerEqualMethod);
+            il.Emit(SOpCodes.Brtrue, returnFound_label);
+
+            // i = entry.next;
+            il.MarkLabel(testEntryNext_label);
+            il.Emit(SOpCodes.Ldloc, entry_local);
+            il.Emit(SOpCodes.Ldfld, entryNextField);
+            il.Emit(SOpCodes.Stloc, i_local);
+
+            // collisionCount++;
+            il.Emit(SOpCodes.Ldloc, collisionCount_local);
+            il.Emit(SOpCodes.Ldc_I4_1);
+            il.Emit(SOpCodes.Add);
+            il.Emit(SOpCodes.Stloc, collisionCount_local);
+
+            // } while (collisionCount <= (uint)entries.Length);
+            il.Emit(SOpCodes.Ldloc, collisionCount_local);
+            il.Emit(SOpCodes.Ldloc, entries_local);
+            il.Emit(SOpCodes.Ldlen);
+            il.Emit(SOpCodes.Conv_I4);
+            il.Emit(SOpCodes.Ble_Un, loopStart_label);
+
+            // throw new InvalidOperationException("Concurrent operations not supported");
+            il.Emit(SOpCodes.Ldstr, "Concurrent operations not supported");
+            il.Emit(SOpCodes.Newobj, invalidOperationExceptionConstructor);
+            il.Emit(SOpCodes.Throw);
+
+            // ReturnFound: return i;
+            il.MarkLabel(returnFound_label);
+            il.Emit(SOpCodes.Ldloc, i_local);
+            il.Emit(SOpCodes.Ret);
+
+            // ReturnNotFound: return -1;
+            il.MarkLabel(returnNotFound_label);
+            il.Emit(SOpCodes.Ldc_I4_M1);
+            il.Emit(SOpCodes.Ret);
+            #endregion
+
+            GetIndexByKey = getIndexByKeyDynamicMethod.CreateDelegate<Func<Dictionary<TKey, TValue>, TKey, int>>();
+
+            #endregion
+
+            #region GetKeyByIndex
+
+            DynamicMethod getKeyByIndexDynamicMethod = new("GetDictionaryKeyByIndex", typeof(TKey), [dictionaryType, typeof(int)], dictionaryType, true);
+            il = getKeyByIndexDynamicMethod.GetILGenerator();
+
+            il.Emit(SOpCodes.Ldarg_0);
+            il.Emit(SOpCodes.Ldfld, entriesField);
+            il.Emit(SOpCodes.Ldarg_1);
+            il.Emit(SOpCodes.Ldelema, entryType);
+            il.Emit(SOpCodes.Ldfld, entryKeyField);
+            il.Emit(SOpCodes.Ret);
+
+            GetKeyByIndex = getKeyByIndexDynamicMethod.CreateDelegate<Func<Dictionary<TKey, TValue>, int, TKey>>();
+
+            #endregion
+
+            #region GetKeyByIndex
+
+            DynamicMethod getValueByIndexDynamicMethod = new("GetDictionaryValueByIndex", typeof(TValue), [dictionaryType, typeof(int)], dictionaryType, true);
+            il = getValueByIndexDynamicMethod.GetILGenerator();
+
+            il.Emit(SOpCodes.Ldarg_0);
+            il.Emit(SOpCodes.Ldfld, entriesField);
+            il.Emit(SOpCodes.Ldarg_1);
+            il.Emit(SOpCodes.Ldelema, entryType);
+            il.Emit(SOpCodes.Ldfld, entryValueField);
+            il.Emit(SOpCodes.Ret);
+
+            GetValueByIndex = getValueByIndexDynamicMethod.CreateDelegate<Func<Dictionary<TKey, TValue>, int, TValue>>();
+
+            #endregion
+        }
+    }
+    /// <summary>
+    /// 返回索引对应的键, 若超界则报错
+    /// </summary>
+    public static TKey GetKeyByIndex<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, int index) where TKey : notnull
+    {
+        return DictionaryIndexMethodExtendHelper<TKey, TValue>.GetKeyByIndex(dictionary, index);
+    }
+    /// <summary>
+    /// 返回索引对应的值, 若超界则报错
+    /// </summary>
+    public static TValue GetValueByIndex<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, int index) where TKey : notnull
+    {
+        return DictionaryIndexMethodExtendHelper<TKey, TValue>.GetValueByIndex(dictionary, index);
+    }
+    /// <summary>
+    /// 返回索引对应的键值对, 若超界则报错
+    /// </summary>
+    public static KeyValuePair<TKey, TValue> GetPairByIndex<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, int index) where TKey : notnull
+    {
+        return new(GetKeyByIndex(dictionary, index), GetValueByIndex(dictionary, index));
+    }
+    /// <summary>
+    /// 返回索引对应的键, 若超界则返回默认值
+    /// </summary>
+    public static TKey? GetKeyByIndexS<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, int index) where TKey : notnull
+    {
+        return index.IsBetween(0, dictionary.Count) ? DictionaryIndexMethodExtendHelper<TKey, TValue>.GetKeyByIndex(dictionary, index) : default;
+    }
+    /// <summary>
+    /// 返回索引对应的值, 若超界则返回默认值
+    /// </summary>
+    public static TValue? GetValueByIndexS<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, int index) where TKey : notnull
+    {
+        return index.IsBetween(0, dictionary.Count) ? DictionaryIndexMethodExtendHelper<TKey, TValue>.GetValueByIndex(dictionary, index) : default;
+    }
+    /// <summary>
+    /// 返回索引对应的键值对, 若超界则返回默认值
+    /// </summary>
+    public static KeyValuePair<TKey?, TValue?> GetPairByIndexS<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, int index) where TKey : notnull
+    {
+        return index.IsBetween(0, dictionary.Count) ? new(GetKeyByIndex(dictionary, index), GetValueByIndex(dictionary, index)) : default;
+    }
+    /// <summary>
+    /// 返回索引对应的键, 若超界则返回默认值
+    /// </summary>
+    public static TKey GetKeyByIndexS<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, int index, TKey defaultValue) where TKey : notnull
+    {
+        return index.IsBetween(0, dictionary.Count) ? DictionaryIndexMethodExtendHelper<TKey, TValue>.GetKeyByIndex(dictionary, index) : defaultValue;
+    }
+    /// <summary>
+    /// 返回索引对应的值, 若超界则返回默认值
+    /// </summary>
+    public static TValue GetValueByIndexS<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, int index, TValue defaultValue) where TKey : notnull
+    {
+        return index.IsBetween(0, dictionary.Count) ? DictionaryIndexMethodExtendHelper<TKey, TValue>.GetValueByIndex(dictionary, index) : defaultValue;
+    }
+    /// <summary>
+    /// 返回键对应的索引, 若键不在字典中则返回 -1
+    /// </summary>
+    public static int GetIndexByKey<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key) where TKey : notnull
+    {
+        return DictionaryIndexMethodExtendHelper<TKey, TValue>.GetIndexByKey(dictionary, key);
+    }
+    #endregion
     #endregion
     #region ref相关拓展
     //ref拓展不知道为什么只能给值类型用

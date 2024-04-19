@@ -14,7 +14,7 @@ namespace ProgressSystem.Core;
 /// <br/>修改的数据是它本身的数据时才设置, 如设置了条件但成就原来就存在的话
 /// <br/>就不需要设置 <see cref="ShouldSaveStaticData"/>, 而只需要设置条件的就好
 /// </summary>
-public class Achievement : IWithStaticData, INetUpdate
+public class Achievement : IWithStaticData, INetUpdate, IProgressable
 {
     #region 不会在正常游玩时改变的 字段 / 属性
     /// <summary>
@@ -324,6 +324,7 @@ public class Achievement : IWithStaticData, INetUpdate
             a.TryClose();
             a.Successors.ForeachDo(s => s.CheckState());
         };
+        OnCompleteStatic += a => a.UpdateProgress();
     }
     /// <summary>
     /// 创建一个成就, 若页内有同名成就则报错
@@ -649,7 +650,7 @@ public class Achievement : IWithStaticData, INetUpdate
     #endregion
 
     #region 网络同步
-    // todo: 成就本身与奖励相关的网络同步
+    // TODO: 奖励相关的网络同步
     protected bool _netUpdate;
     public bool NetUpdate { get => _netUpdate; set => DoIf(_netUpdate = value, AchievementManager.SetNeedNetUpdate); }
     public IEnumerable<INetUpdate> GetNetUpdateChildren() => Requirements; // TODO: and rewards
@@ -657,6 +658,26 @@ public class Achievement : IWithStaticData, INetUpdate
     public virtual void ReceiveMessageFromServer(BinaryReader reader) { }
     public virtual void WriteMessageFromClient(BinaryWriter writer) { }
     public virtual void ReceiveMessageFromClient(BinaryReader reader) { }
+    #endregion
+
+    #region 进度
+    public float Progress { get; protected set; }
+    public float ProgressWeight { get; set; } = 1f;
+    IEnumerable<IProgressable> IProgressable.ProgressChildren => Requirements;
+    public virtual void UpdateProgress()
+    {
+        if (State is StateEnum.Completed or StateEnum.Closed)
+        {
+            if (Progress < 1)
+            {
+                Progress = 1;
+                Page.UpdateProgress();
+            }
+            return;
+        }
+        Progress = ((IProgressable)this).GetProgressOfChildren();
+        Page.UpdateProgress();
+    }
     #endregion
 
     public override string ToString()

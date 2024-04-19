@@ -10,7 +10,7 @@ namespace ProgressSystem.Core;
 /// 达成成就所需的条件
 /// 继承它的非抽象类需要有一个无参构造 (用以读取静态数据)
 /// </summary>
-public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate
+public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IProgressable
 {
     public Achievement Achievement = null!;
     public TextGetter DisplayName;
@@ -18,6 +18,7 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate
     public Texture2DGetter Texture;
     protected virtual object?[] DisplayNameArgs => [];
     protected virtual object?[] TooltipArgs => [];
+
     #region 构造函数与初始化
     static Requirement()
     {
@@ -64,6 +65,7 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate
         return constructors;
     }
     #endregion
+
     #region 重置与开始
     /// <summary>
     /// 重置
@@ -80,6 +82,7 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate
         TryBeginListen();
     }
     #endregion
+
     #region 多人类型
     public enum MultiplayerTypeEnum
     {
@@ -104,6 +107,7 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate
     /// </summary>
     public MultiplayerTypeEnum MultiplayerType;
     #endregion
+
     #region 数据存取
     public virtual void SaveDataInPlayer(TagCompound tag)
     {
@@ -170,8 +174,8 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate
         Texture = tag.GetWithDefault<string>("Texture");
     }
     #endregion
+
     #region 多人同步
-    // TODO: 同步Completed?
     protected bool _netUpdate;
     public bool NetUpdate { get => _netUpdate; set => DoIf(_netUpdate = value, AchievementManager.SetNeedNetUpdate); }
     public virtual void WriteMessageFromServer(BinaryWriter writer) { }
@@ -179,6 +183,32 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate
     public virtual void WriteMessageFromClient(BinaryWriter writer) { }
     public virtual void ReceiveMessageFromClient(BinaryReader reader) { }
     #endregion
+
+    #region 进度
+    public float Progress { get; protected set; }
+    public float ProgressWeight { get; set; } = 1f;
+    public virtual IEnumerable<IProgressable> ProgressChildren() => [];
+    public virtual float GetProgress() => Completed.ToInt();
+    public virtual void UpdateProgress()
+    {
+        if (Completed)
+        {
+            if (Progress < 1)
+            {
+                Progress = 1;
+                Achievement.UpdateProgress();
+            }
+            return;
+        }
+        float oldProgress = Progress;
+        Progress = GetProgress();
+        if (oldProgress != Progress)
+        {
+            Achievement.UpdateProgress();
+        }
+    }
+    #endregion
+
     #region 监听
     public enum ListenTypeEnum
     {
@@ -249,6 +279,7 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate
         Listening = false;
     }
     #endregion
+
     #region 完成状况
     public bool Completed { get; protected set; }
     public event Action? OnComplete;
@@ -310,7 +341,7 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate
 
 public abstract class RequirementCombination : Requirement
 {
-    public List<Requirement> Requirements = [];
+    public RequirementList Requirements = [];
     protected RequirementCombination() { }
     public RequirementCombination(IEnumerable<Requirement> requirements)
     {
@@ -323,8 +354,14 @@ public abstract class RequirementCombination : Requirement
     public override void Reset()
     {
         base.Reset();
-        Requirements.ForEach(r => r.Reset());
+        Requirements.ForeachDo(r => r.Reset());
     }
+    public override void Initialize(Achievement achievement)
+    {
+        base.Initialize(achievement);
+        Requirements.Initialize(achievement);
+    }
+
     #region 数据存取
     public override void SaveDataInPlayer(TagCompound tag)
     {
@@ -357,9 +394,16 @@ public abstract class RequirementCombination : Requirement
         this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFS, "Requirements", tag, (r, t) => Requirements.Clear());
     }
     #endregion
+
     #region 多人同步
     public IEnumerable<INetUpdate> GetNetUpdateChildren() => Requirements;
     #endregion
+
+    #region 进度
+    public override IEnumerable<IProgressable> ProgressChildren() => Requirements;
+    public override float GetProgress() => ((IProgressable)this).GetProgressOfChildren();
+    #endregion
+
     #region 监听
     protected override void BeginListen()
     {
@@ -378,6 +422,7 @@ public abstract class RequirementCombination : Requirement
         }
     }
     #endregion
+
     #region 完成状况
     protected abstract void ElementComplete(int elementIndex);
     #endregion
