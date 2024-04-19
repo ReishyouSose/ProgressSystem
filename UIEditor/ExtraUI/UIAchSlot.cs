@@ -126,14 +126,14 @@ namespace ProgressSystem.UIEditor.ExtraUI
                 RUIHelper.DrawRec(sb, HitBox(), 2, Color.Red, false);
             }
             Rectangle hitbox = HitBox();
-            if (ach.PreDraw(sb, hitbox))
+            if (ach.PreDraw?.Invoke(sb, hitbox) != false)
             {
                 if (Icon != null)
                 {
                     sb.SimpleDraw(Icon, hitbox.Center(), frame, Icon.Size() / 2f * (frame?.Size().AutoScale() ?? 1), color: color);
                 }
             }
-            ach.PostDraw(sb, hitbox);
+            ach.PostDraw?.Invoke(sb, hitbox);
             if (adsorption != null)
             {
                 sb.SimpleDraw(Tex, (adsorption.Value * 80) + ParentElement.HitBox(false).TopLeft(), null, Vector2.Zero, color: Color.White * 0.5f);
