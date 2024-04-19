@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Reflection;
 
-namespace ProgressSystem
+namespace ProgressSystem.Core
 {
     [AttributeUsage(AttributeTargets.Constructor | AttributeTargets.Method)]
     public class SpecializeAutoConstructAttribute : Attribute
@@ -46,15 +46,16 @@ namespace ProgressSystem
         public bool TryConstruct(out T? result)
         {
             result = default;
-            if (AllEntryMeet && Closed)
+            if (AllEntryMet && Closed)
             {
                 try
                 {
                     result = _createFunc(this);
                     return result is not null;
                 }
-                catch
+                catch (Exception e)
                 {
+                    Main.NewText(e);
                     return false;
                 }
             }
@@ -64,10 +65,10 @@ namespace ProgressSystem
         {
             return GetEnumerator();
         }
-        public bool AllEntryMeet => _entries.All(e => e.IsMet);
+        public bool AllEntryMet => _entries.All(e => e.IsMet);
         public ConstructInfoTable<T> Clone()
         {
-            ConstructInfoTable<T> table = new ConstructInfoTable<T>(_createFunc);
+            ConstructInfoTable<T> table = new(_createFunc);
             foreach (Entry entry in _entries)
             {
                 table.AddEntry(new(entry.Type, entry.DisplayName, entry.Important));

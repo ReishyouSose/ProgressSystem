@@ -74,6 +74,12 @@ Achievements: {
 			}
 
 			TestCreate.Description: Test Create's Description
+
+			"Wood In World": {
+				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Wood In World.DisplayName
+				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Wood In World.Tooltip
+				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Wood In World.Description
+			}
 		}
 	}
 }
@@ -106,4 +112,9 @@ Configs: {
 			Tooltip: ""
 		}
 	}
+}
+
+Rewards: {
+	EmptyReward.DisplayName: Mods.ProgressSystem.Rewards.EmptyReward.DisplayName
+	ItemReward.DisplayName: Mods.ProgressSystem.Rewards.ItemReward.DisplayName
 }

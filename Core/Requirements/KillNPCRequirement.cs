@@ -63,13 +63,13 @@ public class KillNPCRequirement : Requirement
     protected override void BeginListen()
     {
         base.BeginListen();
-        //GEListener.OnLocalPlayerKillNPC += ListenKillNPC;
+        CommonListener.OnLocalPlayerKillNPC += ListenKillNPC;
         DoIf(CountNow >= Count, CompleteSafe);
     }
     protected override void EndListen()
     {
         base.EndListen();
-        //GEListener.OnLocalPlayerKillNPC -= ListenKillNPC;
+        CommonListener.OnLocalPlayerKillNPC -= ListenKillNPC;
     }
     private void ListenKillNPC(NPC npc)
     {

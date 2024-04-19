@@ -2,23 +2,24 @@
 {
     public class UIRequireText : BaseUIElement
     {
-        public readonly IList<Requirement> requirements;
+        public readonly RequirementList requirements;
         public readonly Requirement requirement;
         public readonly UIClose delete;
-        public UIRequireText(Requirement requirement)
+        public readonly UIText text;
+        public UIRequireText(Requirement requirement, RequirementList requires)
         {
-            this.requirements = requirements;
+            requirements = requires;
+            this.requirement = requirement;
             delete = new();
             delete.SetCenter(20, 0, 0, 0.5f);
             Register(delete);
 
-            UIText text = new(requirement.DisplayName.Value ?? requirement.GetType().Name);
-            text.SetPos(20, 0);
-            text.SetMaxWidth(130);
-            SetSize(0, text.TextSize.Y, 1);
+            text = new(requirement.DisplayName.Value ?? requirement.GetType().Name);
+            text.SetPos(30, 0);
+            text.SetSize(text.TextSize);
             Register(text);
 
-            this.requirement = requirement;
+            SetSize(text.TextSize + Vector2.UnitX * 30);
         }
     }
 }
