@@ -39,6 +39,7 @@ public abstract class ItemRequirement : Requirement
             {
                 return;
             }
+            count = value;
             if (itemType > 0)
             {
                 itemTag = ItemTagHandler.GenerateTag(new Item(itemType, Count.WithMin(1)));

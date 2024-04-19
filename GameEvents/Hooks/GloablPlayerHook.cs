@@ -25,7 +25,7 @@ internal class GloablPlayerHook : ModPlayer
     private void IL_Player_GrabItems(ILContext il)
     {
         ILCursor c = new(il);
-        if (!c.TryGotoNext(
+        if (!c.TryGotoNext(MoveType.AfterLabel,
             i => i.MatchLdsfld(typeof(Main), nameof(Main.item)),
             i => i.MatchLdloc0(),
             i => i.MatchNewobj<Item>(),
@@ -36,7 +36,7 @@ internal class GloablPlayerHook : ModPlayer
         c.Emit(OpCodes.Ldarg_0);
         c.Emit(OpCodes.Ldloc_1);
         c.EmitDelegate(GEListener.ListenPickItem);
-        if (!c.TryGotoNext(
+        if (!c.TryGotoNext(MoveType.AfterLabel,
             i => i.MatchLdarg0(),
             i => i.MatchLdarg1(),
             i => i.MatchLdloc0(),
