@@ -1,5 +1,4 @@
-﻿using Humanizer;
-using ProgressSystem.Core.NetUpdate;
+﻿using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.StaticData;
 using ProgressSystem.GameEvents;
 using System.IO;
@@ -47,7 +46,8 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate
         ListenType = listenType;
         MultiplayerType = multiplayerType;
     }
-    protected Requirement() {
+    protected Requirement()
+    {
         Reset();
     }
     /// <summary>
@@ -284,7 +284,8 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate
     /// </summary>
     public static IReadOnlyDictionary<Type, Mod> DefinedMod => definedMod;
     protected static Dictionary<Type, Mod> definedMod = [];
-    public virtual void Load(Mod mod) {
+    public virtual void Load(Mod mod)
+    {
         definedMod.Add(GetType(), mod);
         InitializeByDefinedMod(mod);
     }
