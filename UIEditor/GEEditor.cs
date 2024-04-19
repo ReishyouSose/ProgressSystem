@@ -73,10 +73,10 @@ namespace ProgressSystem.UIEditor
         private string editingAchName;
         private RequirementList editingRequires;
         private Dictionary<string, UIAchSlot> slotByFullName;
-        private AchievementPage EditingPage => AchievementManager.PagesByMod.TryGetValue(editingMod, out var pages)
+        private AchievementPage? EditingPage => AchievementManager.PagesByMod.TryGetValue(editingMod, out var pages)
                     && pages.TryGetValue(editingPage, out var page) ? page : null;
 
-        private Achievement EditingAch => editingAchName == "" ? null : slotByFullName[editingAchName].ach;
+        private Achievement? EditingAch => editingAchName == "" ? null : slotByFullName[editingAchName].ach;
         private UIAchSlot EditingAchSlot => slotByFullName[editingAchName];
         private UIText saveTip;
         private static bool LeftShift;
@@ -357,7 +357,7 @@ namespace ProgressSystem.UIEditor
                 Achievement current = EditingAch;
                 if (text.Any())
                 {
-                    if (achs.TryGetValue(current.Mod.Name + "." + text, out Achievement ach))
+                    if (achs.TryGetValue(current.Mod.Name + "." + text, out Achievement? ach))
                     {
                         Main.NewText($"名称已被{ach.Position}占用");
                     }
@@ -652,6 +652,7 @@ namespace ProgressSystem.UIEditor
                 while (EditingPage.Achievements.ContainsKey(editingMod.Name + "." + name + i))
                     i++;
                 Achievement ach = Achievement.Create(EditingPage, editingMod, name + i);
+                ach.ShouldSaveStaticData = true;
                 RegisterAchSlot(ach, pos);
             };
             achView.Events.OnRightDown += evt =>
@@ -781,7 +782,8 @@ namespace ProgressSystem.UIEditor
                     pageName.Events.OnLeftDown += evt => LoadPage(pageName.text);
                     pageList.AddElement(pageName);
                     pageList.ChangeShowElement(pageName);
-                    AchievementPage.Create(editingMod, editingPage);
+                    var page = AchievementPage.Create(editingMod, editingPage);
+                    page.ShouldSaveStaticData = true;
                     ClearTemp();
                     SaveProgress();
                 }
@@ -1053,8 +1055,9 @@ namespace ProgressSystem.UIEditor
                     Main.NewText("请先选择一个成就栏位/条件层级");
                     return;
                 }
-                if (data.TryConstruct(out Requirement condition))
+                if (data.TryConstruct(out Requirement? condition))
                 {
+                    condition.ShouldSaveStaticData = true;
                     editingRequires.Add(condition);
                     conditionView.ClearAllElements();
                     CheckConditions(EditingAch.Requirements, 0);

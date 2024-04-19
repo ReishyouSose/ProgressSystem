@@ -113,3 +113,8 @@ Configs: {
 		}
 	}
 }
+
+Rewards: {
+	EmptyReward.DisplayName: Mods.ProgressSystem.Rewards.EmptyReward.DisplayName
+	ItemReward.DisplayName: Mods.ProgressSystem.Rewards.ItemReward.DisplayName
+}

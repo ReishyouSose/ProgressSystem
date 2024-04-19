@@ -13,7 +13,7 @@ namespace ProgressSystem.Core;
 /// <br/>修改的数据是它本身的数据时才设置, 如设置了条件但成就原来就存在的话
 /// <br/>就不需要设置 <see cref="ShouldSaveStaticData"/>, 而只需要设置条件的就好
 /// </summary>
-public class Achievement : IWithStaticData, INetUpdate, IProgressable, IEditable
+public class Achievement : IWithStaticData, INetUpdate, IProgressable
 {
     #region 不会在正常游玩时改变的 字段 / 属性
     /// <summary>
@@ -151,30 +151,17 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IEditable
     /// 自定义此成就与前置成就的连线绘制
     /// 返回 false 以取消原本的绘制
     /// </summary>
-    public PreDrawLineDelegate PreDrawLine;
-    public PostDrawLineDelegate PostDrawLine;
+    public PreDrawLineDelegate? PreDrawLine;
+    public PostDrawLineDelegate? PostDrawLine;
     #endregion
 
-    #endregion
-
-    #region Editable
-    public IList<IEditable.Entry> EditList => editList ??= CreateEditList();
-    protected IList<IEditable.Entry>? editList;
-    protected virtual IList<IEditable.Entry> CreateEditList()
-    {
-        return [
-            IEditable.Entry.Create("Position", this, nameof(Position))!,
-            new IEditable.Entry<string?>("DisplayName", () => DisplayName.StringValue, v => DisplayName = v),
-            new IEditable.Entry<string?>("DisplayNameKey", () => DisplayName.LocalizedTextValue?.Key, v => DisplayName = Language.GetText(v)),
-        ];
-    }
     #endregion
 
     #endregion
 
     #region 前后置相关
     /// <summary>
-    /// 前置任务(都在同一页)
+    /// 前置(都在同一页)
     /// </summary>
     public IReadOnlyList<Achievement> Predecessors
     {
@@ -186,7 +173,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IEditable
     }
 
     /// <summary>
-    /// 后置任务(都在同一页)
+    /// 后置(都在同一页)
     /// </summary>
     public IReadOnlyList<Achievement> Successors => successors;
 
@@ -261,12 +248,12 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IEditable
     protected List<(string Value, bool IsFullName)>? _predecessorNames;
 
     /// <summary>
-    /// <br/>需要多少个前置才能开始此任务
+    /// <br/>需要多少个前置才能开始此成就
     /// <br/>默认 <see langword="null"/> 代表需要所有前置完成
     /// <br/>如果此值大于前置数, 那么以前置数为准
     /// <br/>1 代表只需要任意前置完成即可
     /// <br/>0 代表实际上不需要前置完成, 前置只是起提示作用
-    /// <br/>负数(-n)代表有 n 个前置完成时此任务封闭, 不可再完成
+    /// <br/>负数(-n)代表有 n 个前置完成时此成就封闭, 不可再完成
     /// </summary>
     public int? PredecessorCountNeeded;
 
@@ -291,7 +278,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IEditable
     public RequirementList Requirements = null!;
 
     /// <summary>
-    /// <br/>需要多少个条件才能完成此任务
+    /// <br/>需要多少个条件才能完成此成就
     /// <br/>默认 <see langword="null"/> 代表需要所有条件完成
     /// <br/>如果此值大于条件数, 那么以条件数为准
     /// <br/>例如 1 代表只需要任意条件完成即可
@@ -597,19 +584,21 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IEditable
     #endregion
 
     #region 数据存取
-    // TODO: 成就本身与奖励相关的数据存取
     public virtual void SaveDataInWorld(TagCompound tag)
     {
         tag.SaveListData("Requirements", Requirements, (r, t) => r.SaveDataInWorld(t));
+        tag.SaveListData("Rewards", Rewards, (r, t) => r.SaveDataInWorld(t));
     }
     public virtual void LoadDataInWorld(TagCompound tag)
     {
         tag.LoadListData("Requirements", Requirements, (r, t) => r.LoadDataInWorld(t));
+        tag.LoadListData("Rewards", Rewards, (r, t) => r.LoadDataInWorld(t));
     }
     public virtual void SaveDataInPlayer(TagCompound tag)
     {
         tag.SetWithDefault("State", State.ToString(), StateEnum.Locked.ToString());
         tag.SaveListData("Requirements", Requirements, (r, t) => r.SaveDataInPlayer(t));
+        tag.SaveListData("Rewards", Rewards, (r, t) => r.SaveDataInPlayer(t));
     }
     public virtual void LoadDataInPlayer(TagCompound tag)
     {
@@ -618,6 +607,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IEditable
             State = state;
         }
         tag.LoadListData("Requirements", Requirements, (r, t) => r.LoadDataInPlayer(t));
+        tag.LoadListData("Rewards", Rewards, (r, t) => r.LoadDataInPlayer(t));
     }
     public bool ShouldSaveStaticData { get; set; }
     public virtual void SaveStaticData(TagCompound tag)
@@ -629,13 +619,14 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IEditable
             tag.SetWithDefault("TooltipKey", Tooltip.LocalizedTextValue?.Key);
             tag.SetWithDefault("Tooltip", Tooltip.StringValue);
             tag.SetWithDefault("Texture", Texture.AssetPath);
-            tag.SetWithDefault("Position", Position ?? Vector2.Zero);
+            tag.SetWithDefaultN("Position", Position);
             tag.SetWithDefaultN("UseRequirementTextureIndex", UseRequirementTextureIndex);
             tag.SetWithDefaultN("RequirementCountNeeded", RequirementCountNeeded);
             tag.SetWithDefaultN("PredecessorCountNeeded", PredecessorCountNeeded);
             tag.SetWithDefault("NeedSubmit", NeedSubmit);
             tag.SetWithDefault("Repeatable", Repeatable);
         });
+        this.SaveStaticDataListTemplate(Rewards, "Rewards", tag);
     }
     public virtual void LoadStaticData(TagCompound tag)
     {
@@ -666,7 +657,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IEditable
                 Description = description;
             }
             Texture = tag.GetWithDefault<string>("Texture");
-            Position = tag.GetWithDefault<Vector2>("Position");
+            Position = tag.GetWithDefaultN<Vector2>("Position");
             UseRequirementTextureIndex = tag.GetWithDefaultN<int>("UseRequirementTextureIndex");
             RequirementCountNeeded = tag.GetWithDefaultN<int>("RequirementCountNeeded");
             PredecessorCountNeeded = tag.GetWithDefaultN<int>("PredecessorCountNeeded");
@@ -674,14 +665,14 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IEditable
             tag.GetWithDefault("Repeatable", out Repeatable);
             Requirements.Clear();
         });
+        this.LoadStaticDataListTemplate(Rewards.GetS, Rewards!.SetFS, "Rewards", tag);
     }
     #endregion
 
     #region 网络同步
-    // TODO: 奖励相关的网络同步
     protected bool _netUpdate;
     public bool NetUpdate { get => _netUpdate; set => DoIf(_netUpdate = value, AchievementManager.SetNeedNetUpdate); }
-    public IEnumerable<INetUpdate> GetNetUpdateChildren() => Requirements; // TODO: and rewards
+    public IEnumerable<INetUpdate> GetNetUpdateChildren() => Requirements.Concat<INetUpdate>(Rewards); // TODO: and rewards
     public virtual void WriteMessageFromServer(BinaryWriter writer) { }
     public virtual void ReceiveMessageFromServer(BinaryReader reader) { }
     public virtual void WriteMessageFromClient(BinaryWriter writer) { }

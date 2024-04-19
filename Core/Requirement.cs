@@ -56,7 +56,7 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
     public virtual void Initialize(Achievement achievement)
     {
         Achievement = achievement;
-        InitializeByDefinedMod();
+        AchievementManager.DoAfterPostSetup(InitializeByDefinedMod);
     }
     public virtual IEnumerable<ConstructInfoTable<Requirement>> GetConstructInfoTables()
     {
@@ -319,7 +319,8 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
         definedMod.Add(GetType(), mod);
         InitializeByDefinedMod(mod);
     }
-    protected virtual void InitializeByDefinedMod(Mod? mod = null)
+    protected void InitializeByDefinedMod() => InitializeByDefinedMod(null);
+    protected virtual void InitializeByDefinedMod(Mod? mod)
     {
         mod ??= definedMod[GetType()];
         if (DisplayName.IsNone)

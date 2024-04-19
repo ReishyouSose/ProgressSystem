@@ -2,6 +2,7 @@
 using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.Requirements;
 using ProgressSystem.Core.Requirements.ItemRequirements;
+using ProgressSystem.Core.Rewards;
 using ProgressSystem.Core.StaticData;
 using System.IO;
 using System.Reflection;
@@ -233,6 +234,16 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgr
 
     #region 流程控制
     public static bool AfterPostSetup { get; private set; }
+    public static void DoAfterPostSetup(Action action)
+    {
+        if (AfterPostSetup)
+        {
+            action();
+        }
+        OnPostInitializeOnce += action;
+    }
+
+    public static event Action? OnPostInitializeOnce;
 
     /// <summary>
     /// 在 PostSetup之后调用
@@ -242,6 +253,8 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgr
         LoadStaticDataFromAllLoadedMod();
 
         Pages.Values.ForeachDo(p => p.PostInitialize());
+        OnPostInitializeOnce?.Invoke();
+        OnPostInitializeOnce = null;
         AfterPostSetup = true;
     }
     /// <summary>

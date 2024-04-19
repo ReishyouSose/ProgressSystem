@@ -10,12 +10,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
         public Achievement ach;
         private bool dragging;
         private Vector2 oldlocal;
-        private readonly Texture2D Icon;
-
-        /// <summary>
-        /// 绘制用裁剪矩形
-        /// </summary>
-        private readonly Rectangle? frame;
+        private readonly Texture2DGetter Icon;
 
         /// <summary>
         /// 吸附位置
@@ -34,10 +29,10 @@ namespace ProgressSystem.UIEditor.ExtraUI
         public bool preSetting;
         public HashSet<UIRequireLine> preLine;
         public IReadOnlySet<UIAchSlot> PreAch => preLine.Select(x => x.start).ToHashSet();
-        public UIAchSlot(Achievement ach = null, Vector2? pos = null) : base(AssetLoader.Slot)
+        public UIAchSlot(Achievement ach, Vector2? pos = null) : base(AssetLoader.Slot)
         {
             this.ach = ach;
-            (Icon, frame) = (ach.Texture.Value, ach.SourceRect);
+            Icon = ach.Texture;
             if (pos != null)
             {
                 this.pos = pos.Value;
@@ -128,9 +123,11 @@ namespace ProgressSystem.UIEditor.ExtraUI
             Rectangle hitbox = HitBox();
             if (ach.PreDraw?.Invoke(sb, hitbox) != false)
             {
-                if (Icon != null)
+                var icon = Icon.Value;
+                var frame = ach.SourceRect;
+                if (icon != null)
                 {
-                    sb.SimpleDraw(Icon, hitbox.Center(), frame, Icon.Size() / 2f * (frame?.Size().AutoScale() ?? 1), color: color);
+                    sb.SimpleDraw(icon, hitbox.Center(), frame, icon.Size() / 2f * (frame?.Size().AutoScale() ?? 1), color: color);
                 }
             }
             ach.PostDraw?.Invoke(sb, hitbox);

@@ -1,81 +1,127 @@
-﻿namespace ProgressSystem.Core;
+﻿using ProgressSystem.Core.NetUpdate;
+using ProgressSystem.Core.StaticData;
+using System.IO;
+using Terraria.Localization;
 
-// TODO
-public abstract class Reward
+namespace ProgressSystem.Core;
+
+public abstract class Reward : ILoadable, IWithStaticData, INetUpdate
 {
     public Achievement Achievement = null!;
+    public TextGetter DisplayName;
+    public TextGetter Tooltip;
+    public Texture2DGetter Texture;
+    protected virtual object?[] DisplayNameArgs => [];
+    protected virtual object?[] TooltipArgs => [];
+
+    #region 获取奖励
     public virtual bool Received { get; protected set; }
     /// <summary>
     /// 获取奖励
     /// </summary>
     /// <returns>是否全部获取</returns>
     public abstract bool Receive();
-    public virtual void SaveData(TagCompound tag)
+    #endregion
+
+    #region 数据存取
+    public virtual void SaveDataInPlayer(TagCompound tag)
     {
         tag.SetWithDefault("Received", Received);
     }
-    public virtual void LoadData(TagCompound tag)
+    public virtual void LoadDataInPlayer(TagCompound tag)
     {
         if (tag.GetWithDefault("Received", out bool received))
         {
             Received = received;
         }
     }
+    public virtual void SaveDataInWorld(TagCompound tag) { }
+    public virtual void LoadDataInWorld(TagCompound tag) { }
+
+    public bool ShouldSaveStaticData { get; set; }
+    public virtual void SaveStaticData(TagCompound tag)
+    {
+        if (!ShouldSaveStaticData)
+        {
+            return;
+        }
+        tag["SaveStatic"] = true;
+        tag["Type"] = GetType().FullName;
+        tag.SetWithDefault("DisplayNameKey", DisplayName.LocalizedTextValue?.Key);
+        tag.SetWithDefault("DisplayName", DisplayName.StringValue);
+        tag.SetWithDefault("TooltipKey", Tooltip.LocalizedTextValue?.Key);
+        tag.SetWithDefault("Tooltip", Tooltip.StringValue);
+        tag.SetWithDefault("Texture", Texture.AssetPath);
+    }
+    public virtual void LoadStaticData(TagCompound tag)
+    {
+        ShouldSaveStaticData = tag.GetWithDefault<bool>("SaveStatic");
+        if (tag.TryGet("DisplayNameKey", out string displayNameKey))
+        {
+            DisplayName = Language.GetText(displayNameKey);
+        }
+        else if (tag.TryGet("DisplayName", out string displayName))
+        {
+            DisplayName = displayName;
+        }
+        if (tag.TryGet("TooltipKey", out string tooltipKey))
+        {
+            Tooltip = Language.GetText(tooltipKey);
+        }
+        else if (tag.TryGet("Tooltip", out string tooltip))
+        {
+            Tooltip = tooltip;
+        }
+        Texture = tag.GetWithDefault<string>("Texture");
+    }
+    #endregion
+
+    #region 多人同步
+    protected bool _netUpdate;
+    public bool NetUpdate { get => _netUpdate; set => DoIf(_netUpdate = value, AchievementManager.SetNeedNetUpdate); }
+    public virtual void WriteMessageFromServer(BinaryWriter writer) { }
+    public virtual void ReceiveMessageFromServer(BinaryReader reader) { }
+    public virtual void WriteMessageFromClient(BinaryWriter writer) { }
+    public virtual void ReceiveMessageFromClient(BinaryReader reader) { }
+    #endregion
+
     public virtual void Initialize(Achievement achievement)
     {
         Achievement = achievement;
+        AchievementManager.DoAfterPostSetup(InitializeByDefinedMod);
     }
-}
-
-public class EmptyReward : Reward
-{
-    public override bool Receive() => Received = true;
-}
-
-public class ItemReward(Item item) : Reward
-{
-    public override bool Received
+    protected virtual void InitializeByDefinedMod() => InitializeByDefinedMod(null);
+    protected virtual void InitializeByDefinedMod(Mod? mod)
     {
-        get => leftStack <= 0;
-        protected set
+        mod ??= definedMod[GetType()];
+        if (DisplayName.IsNone)
         {
-            if (value)
-            {
-                leftStack = 0;
-            }
+            DisplayName |= mod.GetLocalization($"Rewards.{GetType().Name}.DisplayName").WithFormatArgs(DisplayNameArgs);
         }
+        if (DisplayName.IsNone)
+        {
+            Tooltip = mod.GetLocalization($"Rewards.{GetType().Name}.Tooltip").WithFormatArgs(TooltipArgs);
+        }
+        Texture |= $"{mod.Name}/Assets/Textures/Rewards/{GetType().Name}";
+        Texture |= $"{mod.Name}/Assets/Textures/Rewards/Default";
+        Texture |= $"{mod.Name}/Assets/Textures/Default";
     }
-    public Item Item = item;
+    public virtual IEnumerable<ConstructInfoTable<Requirement>> GetConstructInfoTables()
+    {
+        ConstructInfoTable<Achievement>.TryAutoCreate<Requirement>(GetType(), null, out var constructors);
+        return constructors;
+    }
+    
     /// <summary>
-    /// 剩余的个数 (有可能一次没领完)
+    /// 获取对应类型的条件的定义在哪个mod
     /// </summary>
-    public int leftStack = item.stack;
-
-    public ItemReward(int itemType, int stack = 1) : this(new(itemType, stack)) { }
-
-    public override bool Receive()
+    public static IReadOnlyDictionary<Type, Mod> DefinedMod => definedMod;
+    protected static Dictionary<Type, Mod> definedMod = [];
+    public virtual void Load(Mod mod)
     {
-        if (leftStack <= 0)
-        {
-            return true;
-        }
-        Item item = Item.Clone();
-        item.stack = leftStack;
-        // TODO: Entity Source
-        // TODO: 直接给玩家背包塞东西
-        // Main.LocalPlayer.TryStackToInventory(item, null, false);
-        // leftStack = item.stack;
-        Main.LocalPlayer.QuickSpawnItem(null, item, item.stack);
-        leftStack = 0;
-        return leftStack <= 0;
+        definedMod.Add(GetType(), mod);
+        InitializeByDefinedMod(mod);
     }
 
-    public override void SaveData(TagCompound tag)
-    {
-        tag.SetWithDefault("leftStack", leftStack, Item.stack);
-    }
-    public override void LoadData(TagCompound tag)
-    {
-        tag.GetWithDefault("leftStack", out leftStack, Item.stack);
-    }
+    public virtual void Unload() { }
 }
