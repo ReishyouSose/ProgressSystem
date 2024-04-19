@@ -1,6 +1,5 @@
 ﻿using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.StaticData;
-using ProgressSystem.GameEvents;
 using System.IO;
 using Terraria.Localization;
 

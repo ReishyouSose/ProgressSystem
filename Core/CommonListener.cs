@@ -1,12 +1,12 @@
-﻿using System.Collections.ObjectModel;
+﻿using Mono.Cecil.Cil;
+using MonoMod.Cil;
+using System.Collections.ObjectModel;
+using Terraria.GameContent.Achievements;
 using Terraria.ObjectData;
 
-namespace ProgressSystem.GameEvents;
+namespace ProgressSystem;
 
-/// <summary>
-/// GameEvent 监听器
-/// </summary>
-public static class GEListener
+public static class CommonListener
 {
     public delegate void OnNPCKilledDelegate(Player? player, NPC npc);
     public delegate void OnCreateItemDelegate(Player player, Item item, RecipeItemCreationContext context);
@@ -22,30 +22,18 @@ public static class GEListener
     public delegate void OnPlayerHurtDelegate(Player player, Player.HurtInfo hurtInfo);
     public delegate void OnManaCostStatisticsDelegate(Player player, int cost);
 
-    public static event OnNPCKilledDelegate?
-        OnNPCKilled;
-    public static event OnCreateItemDelegate?
-        OnCreateItem;
-    public static event OnTileBreakDelegate?
-        OnTileBreak;
-    public static event OnBuyItemDelegate?
-        OnBuyItem;
-    public static event OnConsumeItemDelegate?
-        OnConsumeItem;
-    public static event OnPickItemDelegate?
-        OnPickItem;
-    public static event OnDamageStatisticsDelegate?
-        OnDamageStatistics;
-    public static event OnDistanceStatisticsDelegate?
-        OnDistanceStatistics;
-    public static event OnPlayerResetDelegate?
-        OnPlayerReset;
-    public static event OnStatisticInventoryDelegate?
-        OnStatisticInventory;
-    public static event OnPlayerHurtDelegate?
-        OnPlayerHurt;
-    public static event OnManaCostStatisticsDelegate?
-        OnManaCostStatistics;
+    public static event OnNPCKilledDelegate? OnNPCKilled;
+    public static event OnCreateItemDelegate? OnCreateItem;
+    public static event OnTileBreakDelegate? OnTileBreak;
+    public static event OnBuyItemDelegate? OnBuyItem;
+    public static event OnConsumeItemDelegate? OnConsumeItem;
+    public static event OnPickItemDelegate? OnPickItem;
+    public static event OnDamageStatisticsDelegate? OnDamageStatistics;
+    public static event OnDistanceStatisticsDelegate? OnDistanceStatistics;
+    public static event OnPlayerResetDelegate? OnPlayerReset;
+    public static event OnStatisticInventoryDelegate? OnStatisticInventory;
+    public static event OnPlayerHurtDelegate? OnPlayerHurt;
+    public static event OnManaCostStatisticsDelegate? OnManaCostStatistics;
 
     public delegate void OnLocalPlayerCreateItemDelegate(Item item, ItemCreationContext context);
     public delegate void OnLocalPlayerCraftItemDelegate(Item item, RecipeItemCreationContext context);
@@ -54,22 +42,15 @@ public static class GEListener
     public delegate void OnLocalPlayerConsumeItemDelegate(Item item);
     public delegate void OnLocalPlayerPickItemDelegate(Item item);
 
-    public static event OnLocalPlayerKillNPCDelegate?
-        OnLocalPlayerKillNPC;
-    public static event OnLocalPlayerCreateItemDelegate?
-        OnLocalPlayerCreateItem;
-    public static event OnLocalPlayerCraftItemDelegate?
-        OnLocalPlayerCraftItem;
-    public static event OnLocalPlayerBreakTileDelegate?
-        OnLocalPlayerBreakTile;
-    public static event OnLocalPlayerBuyItemDelegate?
-        OnLocalPlayerBuyItem;
-    public static event OnLocalPlayerConsumeItemDelegate?
-        OnLocalPlayerConsumeItem;
-    public static event OnLocalPlayerPickItemDelegate?
-        OnLocalPlayerPickItem;
+    public static event OnLocalPlayerKillNPCDelegate? OnLocalPlayerKillNPC;
+    public static event OnLocalPlayerCreateItemDelegate? OnLocalPlayerCreateItem;
+    public static event OnLocalPlayerCraftItemDelegate? OnLocalPlayerCraftItem;
+    public static event OnLocalPlayerBreakTileDelegate? OnLocalPlayerBreakTile;
+    public static event OnLocalPlayerBuyItemDelegate? OnLocalPlayerBuyItem;
+    public static event OnLocalPlayerConsumeItemDelegate? OnLocalPlayerConsumeItem;
+    public static event OnLocalPlayerPickItemDelegate? OnLocalPlayerPickItem;
 
-    static GEListener()
+    static CommonListener()
     {
         OnPlayerReset += ListenStatisticInventory;
     }
@@ -78,7 +59,6 @@ public static class GEListener
     /// Set this hook in <see cref="GlobalNPC.HitEffect(NPC, NPC.HitInfo)"/> when <see cref="NPC.life"/> less than 1 if in server 
     /// <br>or <see cref="GlobalNPC.OnKill(NPC)"/> if in single.</br>
     /// </summary>
-    /// <param name="npc"></param>
     internal static void ListenNPCKilled(NPC npc)
     {
         Player? player = Main.player.IndexInRange(npc.lastInteraction) ? Main.player[npc.lastInteraction] : null;
@@ -91,7 +71,6 @@ public static class GEListener
     /// <summary>
     /// See <see cref="GlobalItem.OnCreated(Item, ItemCreationContext)"/>
     /// </summary>
-    /// <param name="item"></param>
     internal static void ListenCreateItem(Item item, ItemCreationContext context)
     {
         OnLocalPlayerCreateItem?.Invoke(item, context);
@@ -150,7 +129,7 @@ public static class GEListener
             OnLocalPlayerConsumeItem?.Invoke(item);
         }
     }
-    // !!!!! 当玩家碰到物品但捡不起来时会反复调用
+
     internal static void ListenPickItem(Player player, Item item)
     {
         OnPickItem?.Invoke(player, item);
@@ -191,5 +170,131 @@ public static class GEListener
     internal static void ListenPlayerHurt(Player player, Player.HurtInfo hurtInfo)
     {
         OnPlayerHurt?.Invoke(player, hurtInfo);
+    }
+}
+
+internal class GloablPlayerHook : ModPlayer
+{
+    protected override bool CloneNewInstances => true;
+    public override void Load()
+    {
+        IL_Player.GrabItems += IL_Player_GrabItems;
+        IL_Player.Update += IL_Player_Update;
+    }
+    private void IL_Player_Update(ILContext il)
+    {
+        ILCursor c = new(il);
+        if (!c.TryGotoNext(i => i.MatchLdloc(16)))
+        {
+            return;
+        }
+        c.Emit(OpCodes.Ldloc, 17);
+        c.Emit(OpCodes.Ldloc, 18);
+        c.EmitDelegate(ListenForPlayerMove);
+    }
+    private void IL_Player_GrabItems(ILContext il)
+    {
+        ILCursor c = new(il);
+        if (!c.TryGotoNext(MoveType.AfterLabel,
+            i => i.MatchLdarg0(),
+            i => i.MatchLdarg1(),
+            i => i.MatchLdloc0(),
+            i => i.MatchLdloc1(),
+            i => i.MatchCall(typeof(Player), "PickupItem"),
+            i => i.MatchStloc1()))
+        {
+            return;
+        }
+        c.Emit(OpCodes.Ldarg_0);
+        c.Emit(OpCodes.Ldloc_1);
+        c.EmitDelegate(CommonListener.ListenPickItem);
+    }
+    private static void ListenForPlayerMove(bool localPlayerNotOnMount, Vector2 movement)
+    {
+        if (localPlayerNotOnMount)
+        {
+            CommonListener.ListenPlayerMove(Main.LocalPlayer, movement.Length());
+        }
+    }
+    public override void PostBuyItem(NPC vendor, Item[] shopInventory, Item item)
+    {
+        CommonListener.ListenBuyItem(Player, vendor, shopInventory, item);
+    }
+    public override void OnHitNPCWithItem(Item item, NPC target, NPC.HitInfo hit, int damageDone)
+    {
+        CommonListener.ListenDamage(Player, damageDone);
+    }
+    public override void OnHitNPCWithProj(Projectile proj, NPC target, NPC.HitInfo hit, int damageDone)
+    {
+        CommonListener.ListenDamage(Player, damageDone);
+    }
+    public override void OnHurt(Player.HurtInfo info)
+    {
+        CommonListener.ListenPlayerHurt(Player, info);
+    }
+    public override void OnConsumeMana(Item item, int manaConsumed)
+    {
+        CommonListener.ListenManaCost(Player, manaConsumed);
+    }
+}
+
+internal class GlobalItemHook : GlobalItem
+{
+    public override void OnCreated(Item item, ItemCreationContext context)
+    {
+        CommonListener.ListenCreateItem(item, context);
+    }
+    public override void OnConsumeItem(Item item, Player player)
+    {
+        CommonListener.ListenConsumeItem(player, item);
+    }
+}
+
+internal class GlobalNPCHook : GlobalNPC
+{
+    public override void HitEffect(NPC npc, NPC.HitInfo hit)
+    {
+        if (Main.netMode == NetmodeID.MultiplayerClient && npc.life <= 0)
+        {
+            Console.WriteLine($"HitEffect NPC Life: {npc.life}");
+
+            CommonListener.ListenNPCKilled(npc);
+        }
+    }
+
+    public override void OnKill(NPC npc)
+    {
+        if (Main.netMode == NetmodeID.SinglePlayer)
+        {
+            Console.WriteLine($"OnKill NPC Life: {npc.life}");
+
+            CommonListener.ListenNPCKilled(npc);
+        }
+    }
+}
+
+internal class GlobalTileHook : GlobalTile
+{
+    public override void Load()
+    {
+        // 原版成就物块处理后面插入
+        IL_WorldGen.KillTile += IL_WorldGen_KillTile;
+    }
+    private void IL_WorldGen_KillTile(ILContext il)
+    {
+        ILCursor c = new(il);
+        if (!c.TryGotoNext(
+                MoveType.Before,
+                i => i.MatchCall(typeof(AchievementsHelper).GetMethod("NotifyTileDestroyed"))))
+        {
+            return;
+        }
+        c.Emit(OpCodes.Ldarg_0);
+        c.Emit(OpCodes.Ldarg_1);
+        c.Emit(OpCodes.Ldloc, 0);
+        c.EmitDelegate((int x, int y, Tile tile) =>
+        {
+            CommonListener.ListenTileBreak(Main.LocalPlayer, x, y, tile);
+        });
     }
 }

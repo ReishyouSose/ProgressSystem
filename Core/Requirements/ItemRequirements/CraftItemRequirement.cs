@@ -1,5 +1,4 @@
-﻿using ProgressSystem.GameEvents;
-using Terraria.Localization;
+﻿using Terraria.Localization;
 
 namespace ProgressSystem.Core.Requirements.ItemRequirements;
 
@@ -14,12 +13,12 @@ public class CraftItemRequirement : ItemRequirement
     protected override void BeginListen()
     {
         base.BeginListen();
-        GEListener.OnLocalPlayerCraftItem += ListenCraftItem;
+        CommonListener.OnLocalPlayerCraftItem += ListenCraftItem;
     }
     protected override void EndListen()
     {
         base.EndListen();
-        GEListener.OnLocalPlayerCraftItem -= ListenCraftItem;
+        CommonListener.OnLocalPlayerCraftItem -= ListenCraftItem;
     }
     private void ListenCraftItem(Item item, RecipeItemCreationContext context)
     {

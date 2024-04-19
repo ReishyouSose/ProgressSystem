@@ -1,7 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using ProgressSystem.GameEvents;
 using ProgressSystem.UIEditor.ExtraUI;
 using RUIModule;
 using System.Diagnostics;

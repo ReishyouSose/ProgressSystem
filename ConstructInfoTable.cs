@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Reflection;
 
-namespace ProgressSystem.GameEvents
+namespace ProgressSystem
 {
     [AttributeUsage(AttributeTargets.Constructor | AttributeTargets.Method)]
     public class SpecializeAutoConstructAttribute : Attribute
