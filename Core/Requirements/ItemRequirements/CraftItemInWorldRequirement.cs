@@ -1,5 +1,4 @@
-﻿using ProgressSystem.GameEvents;
-using Terraria.Localization;
+﻿using Terraria.Localization;
 
 namespace ProgressSystem.Core.Requirements.ItemRequirements;
 
@@ -20,12 +19,12 @@ public class CraftItemInWorldRequirement : ItemWorldRequirement
     protected override void BeginListen()
     {
         base.BeginListen();
-        GEListener.OnLocalPlayerCraftItem += ListenCraftItem;
+        //GEListener.OnLocalPlayerCraftItem += ListenCraftItem;
     }
     protected override void EndListen()
     {
         base.EndListen();
-        GEListener.OnLocalPlayerCraftItem -= ListenCraftItem;
+        //GEListener.OnLocalPlayerCraftItem -= ListenCraftItem;
     }
     /// <summary>
     /// 不在服务端监听
