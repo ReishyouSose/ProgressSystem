@@ -41,7 +41,6 @@ namespace ProgressSystem.Core
             {
                 yield return entry;
             }
-            yield break;
         }
         public bool TryConstruct(out T? result)
         {

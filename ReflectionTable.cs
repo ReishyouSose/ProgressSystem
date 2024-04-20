@@ -304,7 +304,6 @@ namespace ProgressSystem
             {
                 yield return e;
             }
-            yield break;
         }
         IEnumerator IEnumerable.GetEnumerator()
         {
