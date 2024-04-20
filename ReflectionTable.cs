@@ -142,6 +142,19 @@ namespace ProgressSystem
                     };
                 }
             }
+            public Type? ReflectedType
+            {
+                get
+                {
+                    return EntryType switch
+                    {
+                        EntryTypeEnum.Field => _field.ReflectedType,
+                        EntryTypeEnum.Property => _property.ReflectedType,
+                        EntryTypeEnum.Method => _method.ReflectedType,
+                        _ => throw new DataException("Invalid EntryType"),
+                    };
+                }
+            }
             public object? GetFieldValue(object target)
             {
                 if (EntryType == EntryTypeEnum.Field && CheckTarget(target))
@@ -150,6 +163,12 @@ namespace ProgressSystem
                 }
                 return null;
             }
+            /// <summary>
+            /// if target is struct should use <see cref="SetFieldValue(TypedReference, object)"/>
+            /// </summary>
+            /// <param name="target"></param>
+            /// <param name="value"></param>
+            /// <returns></returns>
             public bool SetFieldValue(object target, object value)
             {
                 if (EntryType == EntryTypeEnum.Field && CheckTarget(target))
@@ -157,6 +176,24 @@ namespace ProgressSystem
                     if (value.GetType().IsAssignableFrom(_field.FieldType))
                     {
                         _field.SetValue(target, value);
+                        return true;
+                    }
+                }
+                return false;
+            }
+            /// <summary>
+            /// use __makeref(target) to create TypedReference instance.also can handle target is class
+            /// </summary>
+            /// <param name="target"></param>
+            /// <param name="value"></param>
+            /// <returns></returns>
+            public bool SetFieldValue(TypedReference target, object value)
+            {
+                if (EntryType == EntryTypeEnum.Field && CheckTarget(target))
+                {
+                    if (value.GetType().IsAssignableFrom(_field.FieldType))
+                    {
+                        _field.SetValueDirect(target, value);
                         return true;
                     }
                 }
@@ -193,8 +230,21 @@ namespace ProgressSystem
             }
             bool CheckTarget(object target)
             {
-                Type t = target.GetType();
-                return t.IsAssignableFrom(Type);
+                Type? declaringType = ReflectedType;
+                if (declaringType == null)
+                {
+                    return false;
+                }
+                return target.GetType().IsAssignableFrom(ReflectedType);
+            }
+            bool CheckTarget(TypedReference target)
+            {
+                Type? declaringType = ReflectedType;
+                if (declaringType == null)
+                {
+                    return false;
+                }
+                return __reftype(target).IsAssignableFrom(ReflectedType);
             }
             public ParamterRef[]? GetPropertyGetParamters()
             {
@@ -252,6 +302,29 @@ namespace ProgressSystem
                 }
                 return true;
             }
+            public bool GetPropertyValue(TypedReference target, ParamterRef[] paramters, out object? value, bool checkParamters = true)
+            {
+                value = null;
+                if (EntryType != EntryTypeEnum.Property || _property.GetMethod is null || !CheckTarget(target))
+                {
+                    return false;
+                }
+                if (checkParamters && !CheckParamters(_property.GetMethod, paramters))
+                {
+                    return false;
+                }
+                object[] objs = new object[paramters.Length];
+                for (int i = 0; i < objs.Length; i++)
+                {
+                    objs[i] = paramters[i].GetValue();
+                }
+                value = _property.GetMethod.Invoke(TypedReference.ToObject(target), objs);
+                for (int i = 0; i < objs.Length; i++)
+                {
+                    paramters[i].SetValue(objs[i]);
+                }
+                return true;
+            }
             public bool SetPropertyValue(object target, ParamterRef[] paramters, bool checkParamters = true)
             {
                 if (EntryType != EntryTypeEnum.Property || _property.SetMethod is null || !CheckTarget(target))
@@ -268,6 +341,28 @@ namespace ProgressSystem
                     objs[i] = paramters[i].GetValue();
                 }
                 _property.SetMethod.Invoke(target, objs);
+                for (int i = 0; i < objs.Length; i++)
+                {
+                    paramters[i].SetValue(objs[i]);
+                }
+                return true;
+            }
+            public bool SetPropertyValue(TypedReference target, ParamterRef[] paramters, bool checkParamters = true)
+            {
+                if (EntryType != EntryTypeEnum.Property || _property.SetMethod is null || !CheckTarget(target))
+                {
+                    return false;
+                }
+                if (checkParamters && !CheckParamters(_property.SetMethod, paramters))
+                {
+                    return false;
+                }
+                object[] objs = new object[paramters.Length];
+                for (int i = 0; i < objs.Length; i++)
+                {
+                    objs[i] = paramters[i].GetValue();
+                }
+                _property.SetMethod.Invoke(TypedReference.ToObject(target), objs);
                 for (int i = 0; i < objs.Length; i++)
                 {
                     paramters[i].SetValue(objs[i]);
@@ -291,6 +386,29 @@ namespace ProgressSystem
                     objs[i] = paramters[i].GetValue();
                 }
                 value = _method.Invoke(target, objs);
+                for (int i = 0; i < objs.Length; i++)
+                {
+                    paramters[i].SetValue(objs[i]);
+                }
+                return true;
+            }
+            public bool RunMethod(TypedReference target, ParamterRef[] paramters, out object? value, bool checkParamters = true)
+            {
+                value = null;
+                if (EntryType != EntryTypeEnum.Method || _method is null || !CheckTarget(target))
+                {
+                    return false;
+                }
+                if (checkParamters && !CheckParamters(_method, paramters))
+                {
+                    return false;
+                }
+                object[] objs = new object[paramters.Length];
+                for (int i = 0; i < objs.Length; i++)
+                {
+                    objs[i] = paramters[i].GetValue();
+                }
+                value = _method.Invoke(TypedReference.ToObject(target), objs);
                 for (int i = 0; i < objs.Length; i++)
                 {
                     paramters[i].SetValue(objs[i]);
