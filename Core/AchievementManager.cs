@@ -17,6 +17,7 @@ namespace ProgressSystem.Core;
 public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgressable
 {
     public static AchievementManager Instance { get; set; } = null!;
+    public static int GeneralTimer { get; private set; }
     #region Test
     public override void OnModLoad()
     {
@@ -24,27 +25,27 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgr
         Achievement.Create(page, ModInstance, "First", rewards: [new ItemReward(ItemID.SilverCoin, 20)]).NeedSubmit = true;
         Achievement.Create(page, ModInstance, "Workbench", predecessorNames: ["Wood"],
             requirements: [new CraftItemRequirement(ItemID.WorkBench)],
-            rewards: [new ItemReward(ItemID.Wood, 100)]);
+            rewards: [new ItemReward(ItemID.Wood, 100)]).UseRollingRequirementTexture = true;
         Achievement.Create(page, ModInstance, "WoodTools", predecessorNames: ["Workbench"],
             requirements: [
                 new CraftItemRequirement(ItemID.WoodenSword),
                 new CraftItemRequirement(ItemID.WoodHelmet),
                 new CraftItemRequirement(ItemID.WoodBreastplate)],
-            rewards: [new ItemReward(ItemID.IronskinPotion, 5)]);
+            rewards: [new ItemReward(ItemID.IronskinPotion, 5)]).UseRollingRequirementTexture = true;
         Achievement.Create(page, ModInstance, "House", predecessorNames: ["Workbench", "Torch"],
             requirements: [new HouseRequirement()],
             rewards: [new ItemReward(ItemID.Wood, 100)]);
         Achievement.Create(page, ModInstance, "Slime",
             requirements: [new KillNPCRequirement(NPCID.BlueSlime)],
-            rewards: [new ItemReward(ItemID.Gel, 30)]);
+            rewards: [new ItemReward(ItemID.Gel, 30)]).UseRollingRequirementTexture = true;
         Achievement.Create(page, ModInstance, "Torch", predecessorNames: ["Slime", "Wood"],
             requirements: [new CraftItemRequirement(ItemID.Torch)],
-            rewards: [new ItemReward(ItemID.Torch, 100)]);
+            rewards: [new ItemReward(ItemID.Torch, 100)]).UseRollingRequirementTexture = true;
         Achievement.Create(page, ModInstance, "Wood", predecessorNames: ["First"],
             requirements: [new PickItemRequirement(ItemID.Wood)],
-            rewards: [new ItemReward(ItemID.Apple)]);
+            rewards: [new ItemReward(ItemID.Apple)]).UseRollingRequirementTexture = true;
         Achievement.Create(page, ModInstance, "Wood In World",
-            requirements: [new CraftItemInWorldRequirement(ItemID.Wood, 9999)]);
+            requirements: [new CraftItemInWorldRequirement(ItemID.Wood, 9999)]).UseRollingRequirementTexture = true;
     }
     #endregion
 
@@ -287,6 +288,7 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgr
     public override void PostUpdateEverything()
     {
         Update_TryNetUpdate();
+        GeneralTimer += 1;
     }
     public override void OnWorldLoad()
     {

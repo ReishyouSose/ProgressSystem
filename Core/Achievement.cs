@@ -91,8 +91,8 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
 
         set => _texture = value;
     }
-    public Rectangle? SourceRect => GetSourceRect();
-    public Func<Rectangle?> GetSourceRect;
+    public Rectangle? SourceRect => GetSourceRect?.Invoke() ?? null;
+    public Func<Rectangle?>? GetSourceRect;
     public static Rectangle? DefaultGetSourceRect() => null;
 
     protected TextGetter _displayName;
@@ -106,10 +106,15 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     public Vector2? Position;
 
     #region 以条件的图片作为成就的图片
-    public void SetTextureToRequirementTexture(int index)
+
+    #region 以特定的条件的图片作为成就的图片
+    public void SetTextureToRequirementTexture(int? index)
     {
         _useRequirementTextureIndex = index;
-        Texture = new(() => Requirements.GetS(index)?.Texture.Value);
+        Texture = index.HasValue ?
+            new(() => Requirements.GetS(index.Value)?.Texture.Value) :
+            Texture2DGetter.Default;
+        GetSourceRect = index.HasValue ? () => Requirements.GetS(index.Value)?.SourceRect : null;
     }
     public int? UseRequirementTextureIndex
     {
@@ -120,15 +125,61 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
             {
                 return;
             }
-            _useRequirementTextureIndex = value;
-            if (value.HasValue)
-            {
-                int index = value.Value;
-                Texture = new(() => Requirements.GetS(index)?.Texture.Value);
-            }
+            SetTextureToRequirementTexture(value);
         }
     }
     protected int? _useRequirementTextureIndex;
+    #endregion
+
+    #region 滚动显示条件的图片
+    /// <summary>
+    /// 让图片为轮流显示条件的图片
+    /// </summary>
+    /// <param name="rollTime">显示下一个条件图片的时间间隔, 单位为帧</param>
+    public void SetTextureToRollingRequirementTexture(int? rollTime = 60)
+    {
+        _useRequirementTextureRollTime = rollTime;
+        Texture = rollTime.HasValue ?
+            new(() => Requirements.Count <= 0 ?
+                null : Requirements[
+                    Modular(AchievementManager.GeneralTimer, Requirements.Count * rollTime.Value) / rollTime.Value
+                ].Texture.Value
+            ) : Texture2DGetter.Default;
+        GetSourceRect = rollTime.HasValue ?
+            () => Requirements.Count <= 0 ?
+                null : Requirements[
+                    Modular(AchievementManager.GeneralTimer, Requirements.Count * rollTime.Value) / rollTime.Value
+                ].SourceRect
+            : null;
+                
+    }
+    public bool UseRollingRequirementTexture
+    {
+        get => _useRequirementTextureRollTime.HasValue;
+        set
+        {
+            int? valueToSet = value ? 60 : null;
+            if (valueToSet == _useRequirementTextureRollTime)
+            {
+                return;
+            }
+            SetTextureToRollingRequirementTexture(valueToSet);
+        }
+    }
+    public int? UseRequirementTextureRollTime
+    {
+        get => _useRequirementTextureRollTime;
+        set {
+            if (value == _useRequirementTextureRollTime)
+            {
+                return;
+            }
+            SetTextureToRollingRequirementTexture(value);
+        }
+    }
+    protected int? _useRequirementTextureRollTime;
+    #endregion
+
     #endregion
 
     #region 自定义绘制
@@ -279,7 +330,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
 
     /// <summary>
     /// <br/>需要多少个条件才能完成此成就
-    /// <br/>默认 <see langword="null"/> 代表需要所有条件完成
+    /// <br/>默认 0 代表需要所有条件完成
     /// <br/>如果此值大于条件数, 那么以条件数为准
     /// <br/>例如 1 代表只需要任意条件完成即可
     /// </summary>
@@ -510,7 +561,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     public bool DefaultCompleteCondition()
     {
         return (!NeedSubmit || InSubmitting) &&
-            (RequirementCountNeeded == 0 || RequirementCountNeeded > Requirements.Count ?
+            (RequirementCountNeeded == 0 || RequirementCountNeeded >= Requirements.Count ?
             Requirements.All(r => r.Completed) :
             Requirements.Sum(r => r.Completed.ToInt()) >= RequirementCountNeeded);
     }
@@ -614,14 +665,17 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     {
         this.SaveStaticDataListTemplate(Requirements, "Requirements", tag, (a, t) =>
         {
+            /*
             tag.SetWithDefault("DisplayNameKey", DisplayName.LocalizedTextValue?.Key);
             tag.SetWithDefault("DisplayName", DisplayName.StringValue);
             tag.SetWithDefault("TooltipKey", Tooltip.LocalizedTextValue?.Key);
             tag.SetWithDefault("Tooltip", Tooltip.StringValue);
             tag.SetWithDefault("Texture", Texture.AssetPath);
+            */
             tag.SetWithDefaultN("Position", Position);
             tag.SetWithDefaultN("UseRequirementTextureIndex", UseRequirementTextureIndex);
-            tag.SetWithDefaultN("RequirementCountNeeded", RequirementCountNeeded);
+            tag.SetWithDefaultN("UseRequirementTextureRollTime", UseRequirementTextureRollTime);
+            tag.SetWithDefault("RequirementCountNeeded", RequirementCountNeeded);
             tag.SetWithDefaultN("PredecessorCountNeeded", PredecessorCountNeeded);
             tag.SetWithDefault("NeedSubmit", NeedSubmit);
             tag.SetWithDefault("Repeatable", Repeatable);
@@ -632,6 +686,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     {
         this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFS, "Requirements", tag, (a, t) =>
         {
+            /*
             if (tag.TryGet("DisplayNameKey", out string displayNameKey))
             {
                 DisplayName = Language.GetText(displayNameKey);
@@ -656,14 +711,18 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
             {
                 Description = description;
             }
-            Texture = tag.GetWithDefault<string>("Texture");
+            else if (tag.TryGet("Texture", out string texture))
+            {
+                Texture = texture;
+            }
+            */
             Position = tag.GetWithDefaultN<Vector2>("Position");
             UseRequirementTextureIndex = tag.GetWithDefaultN<int>("UseRequirementTextureIndex");
+            UseRequirementTextureRollTime = tag.GetWithDefaultN<int>("UseRequirementTextureRollTime");
             RequirementCountNeeded = tag.GetWithDefault<int>("RequirementCountNeeded");
             PredecessorCountNeeded = tag.GetWithDefaultN<int>("PredecessorCountNeeded");
             tag.GetWithDefault("NeedSubmit", out NeedSubmit);
             tag.GetWithDefault("Repeatable", out Repeatable);
-            Requirements.Clear();
         });
         this.LoadStaticDataListTemplate(Rewards.GetS, Rewards!.SetFS, "Rewards", tag);
     }

@@ -454,8 +454,8 @@ namespace ProgressSystem.UIEditor
                 if (EditingAch == null)
                     return;
                 ref int need = ref EditingAch.RequirementCountNeeded;
-                need++;
-                cdsCount.ChangeText(need!.ToString(), false);
+                need += 1;
+                cdsCount.ChangeText(need.ToString(), false);
                 EditingAch.ShouldSaveStaticData = true;
                 ChangeSaveState(false);
             };
@@ -478,7 +478,7 @@ namespace ProgressSystem.UIEditor
                 ref int need = ref EditingAch.RequirementCountNeeded;
                 if (need == 0)
                     return;
-                need--;
+                need -= 1;
                 cdsCount.ChangeText(need.ToString(), false);
                 EditingAch.ShouldSaveStaticData = true;
                 ChangeSaveState(false);
@@ -668,7 +668,12 @@ namespace ProgressSystem.UIEditor
                 if (require is CombineRequirement)
                     continue;
                 var tables = require.GetConstructInfoTables();
-                UIText requireType = new(require.GetType().Name.Replace("Requirement", ""));
+                var requireName = require.GetType().Name;
+                if (requireName.EndsWith("Requirement"))
+                {
+                    requireName = requireName[0..^"Requirement".Length];
+                }
+                UIText requireType = new(requireName);
                 requireType.SetSize(requireType.TextSize);
                 requireType.HoverToGold();
                 requireType.Events.OnLeftDown += evt =>
@@ -1457,7 +1462,7 @@ namespace ProgressSystem.UIEditor
             else
             {
                 int? pre = ach.PredecessorCountNeeded;
-                preCount.ChangeText(pre.HasValue ? pre.ToString() : "null", false);
+                preCount.ChangeText(pre.HasValue ? pre.Value.ToString() : "null", false);
                 cdsCount.ChangeText(ach.RequirementCountNeeded.ToString(), false);
                 combineCount.ChangeText(ach.RequirementCountNeeded.ToString(), false);
                 submit.ChangeText($"需要手动提交  {(ach.NeedSubmit ? "是" : "否")}");

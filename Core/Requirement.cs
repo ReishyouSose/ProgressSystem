@@ -15,6 +15,8 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
     public TextGetter DisplayName;
     public TextGetter Tooltip;
     public Texture2DGetter Texture;
+    public Rectangle? SourceRect => GetSourceRect?.Invoke() ?? null;
+    public Func<Rectangle?>? GetSourceRect;
     protected virtual object?[] DisplayNameArgs => [];
     protected virtual object?[] TooltipArgs => [];
 

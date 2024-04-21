@@ -2,7 +2,9 @@
 
 public class EmptyRequirement : Requirement
 {
-    public EmptyRequirement() : base() { }
+    public EmptyRequirement() : base() {
+        Texture = Texture2DGetter.Default;
+    }
     public override void Reset()
     {
         base.Reset();

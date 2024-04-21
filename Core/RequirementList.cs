@@ -4,18 +4,29 @@ namespace ProgressSystem.Core;
 
 public class RequirementList : IList<Requirement>, IReadOnlyList<Requirement>
 {
-    private Achievement? Achievement;
-
     private readonly List<Requirement> data;
 
-    public RequirementList(Achievement achievement, IEnumerable<Requirement>? requirements = null) : this(requirements) => Initialize(achievement);
-    public RequirementList(IEnumerable<Requirement>? requirements = null) => data = requirements == null ? [] : [.. requirements];
-    public void Initialize(Achievement achievement)
+    public event Action<Requirement>? OnAdd;
+    public event Action<Requirement>? OnRemove;
+    public void AddOnAddAndDo(Action<Requirement> onAdd)
     {
-        Achievement = achievement;
+        OnAdd += onAdd;
         foreach (var requirement in data)
         {
-            requirement.Initialize(achievement);
+            onAdd(requirement);
+        }
+    }
+
+    public RequirementList(Achievement achievement, IEnumerable<Requirement>? requirements = null, Action<Requirement>? onAdd = null, Action<Requirement>? onRemove = null)
+        : this(requirements, onAdd + (a => a.Initialize(achievement)), onRemove) { }
+    public RequirementList(IEnumerable<Requirement>? requirements = null, Action<Requirement>? onAdd = null, Action<Requirement>? onRemove = null)
+    {
+        data = requirements == null ? [] : [.. requirements];
+        OnAdd = onAdd;
+        OnRemove = onRemove;
+        if (OnAdd != null)
+        {
+            data.ForeachDo(OnAdd);
         }
     }
 
@@ -31,28 +42,28 @@ public class RequirementList : IList<Requirement>, IReadOnlyList<Requirement>
             {
                 return;
             }
+            OnRemove?.Invoke(data[index]);
             data[index] = value;
-            if (Achievement != null)
-            {
-                value.Initialize(Achievement);
-            }
+            OnAdd?.Invoke(value);
         }
     }
 
     public void Add(Requirement requirement)
     {
         data.Add(requirement);
-        if (Achievement != null)
-        {
-            requirement.Initialize(Achievement);
-        }
+        OnAdd?.Invoke(requirement);
     }
     public void Insert(int index, Requirement requirement)
     {
         data.Insert(index, requirement);
-        if (Achievement != null)
+        OnAdd?.Invoke(requirement);
+    }
+    public void AddRange(IEnumerable<Requirement> requirements)
+    {
+        data.AddRange(requirements);
+        foreach (var requirement in requirements)
         {
-            requirement.Initialize(Achievement);
+            OnAdd?.Invoke(requirement);
         }
     }
 

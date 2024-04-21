@@ -1,4 +1,5 @@
-﻿using Terraria.GameContent.UI.Chat;
+﻿using Terraria.GameContent;
+using Terraria.GameContent.UI.Chat;
 using Terraria.Localization;
 
 namespace ProgressSystem.Core.Requirements.ItemRequirements;
@@ -79,6 +80,15 @@ public abstract class ItemRequirement : Requirement
     {
         ListenType = ListenTypeOverride;
         MultiplayerType = MultiplayerTypeOverride;
+        Texture = new(() =>
+        {
+            if (ItemType <= 0)
+            {
+                return null;
+            }
+            Main.instance.LoadItem(ItemType);
+            return TextureAssets.Item[ItemType].Value;
+        });
     }
 
     protected string? itemTag;

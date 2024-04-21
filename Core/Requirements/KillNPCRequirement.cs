@@ -1,4 +1,5 @@
-﻿using Terraria.Localization;
+﻿using Terraria.GameContent;
+using Terraria.Localization;
 
 namespace ProgressSystem.Core.Requirements;
 
@@ -14,14 +15,47 @@ public class KillNPCRequirement : Requirement
 
     public KillNPCRequirement(int npcType, int count = 1) : this(npcType, null, null, count) { }
     public KillNPCRequirement(Func<NPC, bool> condition, LocalizedText conditionDescription, int count = 1) : this(0, condition, conditionDescription, count) { }
-    protected KillNPCRequirement(int npcType, Func<NPC, bool>? condition, LocalizedText? conditionDescription, int count) : base(ListenTypeEnum.OnStart)
+    protected KillNPCRequirement(int npcType, Func<NPC, bool>? condition, LocalizedText? conditionDescription, int count) : this()
     {
         NPCType = npcType;
         Condition = condition;
         ConditionDescription = conditionDescription;
         Count = count;
     }
-    protected KillNPCRequirement() : base() { }
+    protected KillNPCRequirement() : base(ListenTypeEnum.OnStart) {
+        Texture = new(() =>
+        {
+            if (NPCType <= 0)
+            {
+                return null;
+            }
+            Main.instance.LoadNPC(NPCType);
+            // SampleNPC(NPCType).frame
+            return TextureAssets.Npc[NPCType].Value;
+        });
+        GetSourceRect = () => {
+            if (NPCType <= 0)
+            {
+                return null;
+            }
+            TrySetDummyNPC(NPCType);
+            dummyNPC?.FindFrame();
+            return dummyNPC.frame;
+        };
+    }
+    protected NPC? dummyNPC;
+    protected void TrySetDummyNPC(int type)
+    {
+        if (type <= 0)
+        {
+            dummyNPC = null;
+        }
+        if (type != dummyNPC?.type)
+        {
+            dummyNPC ??= new();
+            dummyNPC.SetDefaults(type);
+        }
+    }
 
     protected override object?[] DisplayNameArgs => [ Count + " " + (NPCType > 0 ? SampleNPC(NPCType).TypeName : ConditionDescription?.Value ?? "?")];
 

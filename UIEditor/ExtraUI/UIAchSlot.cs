@@ -127,7 +127,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
                 var frame = ach.SourceRect;
                 if (icon != null)
                 {
-                    sb.SimpleDraw(icon, hitbox.Center(), frame, icon.Size() / 2f * (frame?.Size().AutoScale() ?? 1), color: color);
+                    sb.SimpleDraw(icon, hitbox.Center(), frame, (frame?.Size() ?? icon.Size()) / 2f * (frame?.Size().AutoScale() ?? 1), color: color);
                 }
             }
             ach.PostDraw?.Invoke(sb, hitbox);

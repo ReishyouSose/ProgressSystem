@@ -8,18 +8,20 @@ public class CombineRequirement : Requirement
     public RequirementList Requirements;
 
     public int needCount;
-    public CombineRequirement()
-    {
-        Requirements = [];
+    public CombineRequirement() : base() {
+        Requirements = new(null, r => r.OnComplete += ElementComplete, r => r.OnComplete -= ElementComplete);
     }
 
-    public CombineRequirement(int count, params Requirement[] requirements) : base()
-    {
+    public CombineRequirement(int count) : this() {
         needCount = count;
-        Requirements = [.. requirements ?? []];
-        for (int i = 0; i < Requirements.Count; i++)
+    }
+
+    [SpecializeAutoConstruct(Disabled = true)]
+    public CombineRequirement(int count, params Requirement[]? requirements) : this(count)
+    {
+        if (requirements != null)
         {
-            Requirements[i].OnComplete += () => ElementComplete(i);
+            Requirements.AddRange(requirements);
         }
     }
     public override void Reset()
@@ -30,7 +32,7 @@ public class CombineRequirement : Requirement
     public override void Initialize(Achievement achievement)
     {
         base.Initialize(achievement);
-        Requirements.Initialize(achievement);
+        Requirements.AddOnAddAndDo(r => r.Initialize(achievement));
     }
 
     #region 数据存取
@@ -70,7 +72,7 @@ public class CombineRequirement : Requirement
     public override void LoadStaticData(TagCompound tag)
     {
         base.LoadStaticData(tag);
-        this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFS, "Requirements", tag, (r, t) => Requirements.Clear());
+        this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFS, "Requirements", tag);
     }
     #endregion
 
@@ -104,7 +106,7 @@ public class CombineRequirement : Requirement
 
     #region 完成状况
 
-    protected void ElementComplete(int elementIndex)
+    protected void ElementComplete()
     {
         if (Requirements.Sum(r => r.Completed.ToInt()) >= needCount)
         {
