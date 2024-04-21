@@ -107,7 +107,7 @@ namespace ProgressSystem
                 {
                     try
                     {
-                        _value = Convert.ChangeType(value, _type);
+                        _value = value.GetType().IsClass ? Convert.ChangeType(value, _type) : value;
                         return true;
                     }
                     catch
