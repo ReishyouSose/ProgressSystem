@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using ProgressSystem.Core.Requirements;
 using ProgressSystem.UIEditor.ExtraUI;
 using RUIModule;
 using System.Diagnostics;
@@ -61,6 +62,8 @@ namespace ProgressSystem.UIEditor
         private UIText submit;
         private UIText cdsCount;
         private UIText preCount;
+        private UIText combineCount;
+
         private UIDropDownList<UIText> pageList;
         /// <summary>
         /// 用于判定包含的GE鼠标碰撞箱
@@ -72,7 +75,8 @@ namespace ProgressSystem.UIEditor
         /// </summary>
         private UIAchSlot preSetting;
         private string editingAchName;
-        private RequirementList editingRequires;
+        private RequirementList? editingRequires;
+        private CombineRequirement? editingCombine;
         private Dictionary<string, UIAchSlot> slotByFullName;
         private AchievementPage? EditingPage => AchievementManager.PagesByMod.TryGetValue(editingMod, out var pages)
                     && pages.TryGetValue(editingPage, out var page) ? page : null;
@@ -387,7 +391,7 @@ namespace ProgressSystem.UIEditor
             preNeedCountBg.Register(preIncrease);
             left += 40;
 
-            preCount = new("00", drawStyle: 1);
+            preCount = new("未选", drawStyle: 1);
             preCount.SetSize(preCount.TextSize);
             preCount.SetPos(-preCount.TextSize.X - left, 5, 1);
             preCount.HoverToGold();
@@ -413,7 +417,6 @@ namespace ProgressSystem.UIEditor
             };
             preNeedCountBg.Register(preCount);
             left += preCount.Width + 10;
-            preCount.ChangeText("null", false);
 
             UIImage preDecrease = new(AssetLoader.Decrease);
             preDecrease.Info.Left.Set(-left - 20, 1);
@@ -450,8 +453,8 @@ namespace ProgressSystem.UIEditor
             {
                 if (EditingAch == null)
                     return;
-                ref int? need = ref EditingAch.RequirementCountNeeded;
-                need = need == null ? 1 : ++need;
+                ref int need = ref EditingAch.RequirementCountNeeded;
+                need++;
                 cdsCount.ChangeText(need!.ToString(), false);
                 EditingAch.ShouldSaveStaticData = true;
                 ChangeSaveState(false);
@@ -459,12 +462,11 @@ namespace ProgressSystem.UIEditor
             cdsNeedCountBg.Register(cdsIncrease);
             left += 40;
 
-            cdsCount = new("00", drawStyle: 1);
+            cdsCount = new("未选", drawStyle: 1);
             cdsCount.SetSize(cdsCount.TextSize);
             cdsCount.SetPos(-cdsCount.TextSize.X - left, 5, 1);
             cdsNeedCountBg.Register(cdsCount);
             left += cdsCount.Width + 10;
-            cdsCount.ChangeText("0", false);
 
             UIImage cdsDecrease = new(AssetLoader.Decrease);
             cdsDecrease.Info.Left.Set(-left - 20, 1);
@@ -473,11 +475,11 @@ namespace ProgressSystem.UIEditor
             {
                 if (EditingAch == null)
                     return;
-                ref int? need = ref EditingAch.RequirementCountNeeded;
-                if (need == null)
+                ref int need = ref EditingAch.RequirementCountNeeded;
+                if (need == 0)
                     return;
-                need = need - 1 == 0 ? null : --need;
-                cdsCount.ChangeText((need ?? 0).ToString(), false);
+                need--;
+                cdsCount.ChangeText(need.ToString(), false);
                 EditingAch.ShouldSaveStaticData = true;
                 ChangeSaveState(false);
             };
@@ -485,9 +487,10 @@ namespace ProgressSystem.UIEditor
         }
         private void RegisterConditionPanel(BaseUIElement panel)
         {
+            int leftWidth = 150;
             UIVnlPanel constructBg = new(0, 0);
-            constructBg.SetSize(200, -30, 0, 1);
-            constructBg.SetPos(0, 30);
+            constructBg.SetSize(leftWidth, -80, 0, 1);
+            constructBg.SetPos(0, 80);
             panel.Register(constructBg);
 
             constructView = new() { spaceY = 10 };
@@ -502,9 +505,127 @@ namespace ProgressSystem.UIEditor
             constructView.SetVerticalScrollbar(dataV);
             constructBg.Register(dataV);
 
+            UIVnlPanel cdsNeedCountBg = new(0, 0);
+            cdsNeedCountBg.SetSize(0, 30, 1);
+            panel.Register(cdsNeedCountBg);
+
+            UIText needCount = new("需求达成数");
+            needCount.SetPos(10, 5);
+            needCount.SetSize(needCount.TextSize);
+            cdsNeedCountBg.Register(needCount);
+
+            int left = 0;
+            UIImage cdsIncrease = new(AssetLoader.Increase);
+            cdsIncrease.Info.Left.Set(-30, 1);
+            cdsIncrease.Info.Top.Pixel = 5;
+            cdsIncrease.Events.OnLeftDown += evt =>
+            {
+                if (editingCombine == null)
+                {
+                    if (EditingAch == null)
+                        return;
+                    else
+                    {
+                        ref int count = ref EditingAch.RequirementCountNeeded;
+                        count++;
+                        string c = count.ToString();
+                        cdsCount.ChangeText(c, false);
+                        combineCount.ChangeText(c, false);
+                        EditingAch.ShouldSaveStaticData = true;
+                        ChangeSaveState(false);
+                    }
+                }
+                else
+                {
+                    editingCombine.needCount++;
+                    combineCount.ChangeText(editingCombine.needCount.ToString(), false);
+                    editingCombine.ShouldSaveStaticData = true;
+                    conditionView.ClearAllElements();
+                    CheckConditions(EditingAch.Requirements, 0);
+                    conditionView.Calculation();
+                    ChangeSaveState(false);
+                }
+            };
+            cdsNeedCountBg.Register(cdsIncrease);
+            left += 40;
+
+            combineCount = new("未选", drawStyle: 1);
+            combineCount.SetSize(combineCount.TextSize);
+            combineCount.SetPos(-combineCount.TextSize.X - left, 5, 1);
+            cdsNeedCountBg.Register(combineCount);
+            left += combineCount.Width + 10;
+
+            UIImage cdsDecrease = new(AssetLoader.Decrease);
+            cdsDecrease.Info.Left.Set(-left - 20, 1);
+            cdsDecrease.Info.Top.Pixel = 5;
+            cdsDecrease.Events.OnLeftDown += evt =>
+            {
+                if (editingCombine == null)
+                {
+                    if (EditingAch == null)
+                        return;
+                    else
+                    {
+                        ref int count = ref EditingAch.RequirementCountNeeded;
+                        if (count == 0)
+                            return;
+                        count--;
+                        string c = count.ToString();
+                        combineCount.ChangeText(c, false);
+                        cdsCount.ChangeText(c, false);
+                        EditingAch.ShouldSaveStaticData = true;
+                        ChangeSaveState(false);
+                    }
+                }
+                else
+                {
+                    ref int count = ref editingCombine.needCount;
+                    if (count == 0)
+                        return;
+                    count--;
+                    combineCount.ChangeText(count.ToString(), false);
+                    editingCombine.ShouldSaveStaticData = true;
+                    conditionView.ClearAllElements();
+                    CheckConditions(EditingAch.Requirements, 0);
+                    conditionView.Calculation();
+                    ChangeSaveState(false);
+                }
+            };
+            cdsNeedCountBg.Register(cdsDecrease);
+
+            UIVnlPanel addCombineBg = new(0, 0);
+            addCombineBg.SetPos(leftWidth + 10, 40);
+            addCombineBg.SetSize(-leftWidth - 10, 30, 1);
+            panel.Register(addCombineBg);
+
+            UIText addCombine = new("添加组合条件") { hoverText = "默认需求一个" };
+            addCombine.SetSize(addCombine.TextSize);
+            addCombine.SetCenter(0, 5, 0.5f, 0.5f);
+            addCombine.HoverToGold();
+            addCombine.Events.OnLeftDown += evt =>
+            {
+                if (editingRequires == null)
+                {
+                    Main.NewText("请先选择一个成就栏位/条件层级");
+                    return;
+                }
+                CombineRequirement condition = new(1)
+                {
+                    ShouldSaveStaticData = true
+                };
+                editingRequires.Add(condition);
+                editingCombine = condition;
+                editingRequires = condition.Requirements;
+                conditionView.ClearAllElements();
+                CheckConditions(EditingAch.Requirements, 0);
+                conditionView.Calculation();
+                ChangeSaveState(false);
+            };
+            addCombineBg.Register(addCombine);
+
             UIVnlPanel conditionPanel = new(0, 0);
-            conditionPanel.SetSize(-210, 0, 1, 1);
-            conditionPanel.SetPos(210, 0);
+            conditionPanel.SetSize(-leftWidth - 10, -80, 1, 1);
+            conditionPanel.SetPos(leftWidth + 10, 80);
             conditionPanel.Info.SetMargin(10);
             panel.Register(conditionPanel);
 
@@ -533,16 +654,19 @@ namespace ProgressSystem.UIEditor
             })
             { buttonXoffset = 10 };
 
-            constrcutList.showArea.SetSize(200, 30);
+            constrcutList.showArea.SetPos(0, 40);
+            constrcutList.showArea.SetSize(leftWidth, 30);
 
-            constrcutList.expandArea.SetPos(0, 30);
-            constrcutList.expandArea.SetSize(200, 150);
+            constrcutList.expandArea.SetPos(0, 80);
+            constrcutList.expandArea.SetSize(leftWidth, -80, 0, 1);
 
             constrcutList.expandView.autoPos[0] = true;
             constrcutList.expandView.Vscroll.canDrag = false;
 
             foreach (var require in ModContent.GetContent<Requirement>())
             {
+                if (require is CombineRequirement)
+                    continue;
                 var tables = require.GetConstructInfoTables();
                 UIText requireType = new(require.GetType().Name.Replace("Requirement", ""));
                 requireType.SetSize(requireType.TextSize);
@@ -1320,19 +1444,22 @@ namespace ProgressSystem.UIEditor
         {
             conditionView.ClearAllElements();
             achNameInputer.ClearText();
+            editingCombine = null;
             if (ach == null)
             {
                 editingRequires = null;
                 editingAchName = "";
-                preCount.ChangeText("null", false);
-                cdsCount.ChangeText("0", false);
+                preCount.ChangeText("未选", false);
+                cdsCount.ChangeText("未选", false);
+                combineCount.ChangeText("未选", false);
                 return;
             }
             else
             {
                 int? pre = ach.PredecessorCountNeeded;
                 preCount.ChangeText(pre.HasValue ? pre.ToString() : "null", false);
-                cdsCount.ChangeText((ach.RequirementCountNeeded ?? 0).ToString(), false);
+                cdsCount.ChangeText(ach.RequirementCountNeeded.ToString(), false);
+                combineCount.ChangeText(ach.RequirementCountNeeded.ToString(), false);
                 submit.ChangeText($"需要手动提交  {(ach.NeedSubmit ? "是" : "否")}");
                 editingAchName = ach.FullName;
                 achNameInputer.Text = ach.Name;
@@ -1359,13 +1486,16 @@ namespace ProgressSystem.UIEditor
                         conditionView.Calculation();
                     };
                     conditionView.AddElement(text);
-                    if (require is RequirementCombination combine)
+                    if (require is CombineRequirement combine)
                     {
                         text.text.HoverToGold();
+                        var cb = combine;
                         var requireList = combine.Requirements;
                         text.text.Events.OnLeftDown += evt =>
                         {
                             editingRequires = requireList;
+                            editingCombine = cb;
+                            combineCount.ChangeText(editingCombine.needCount.ToString(), false);
                         };
                         text.text.Events.OnUpdate += evt =>
                         {

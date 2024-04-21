@@ -6,7 +6,7 @@ public static class StaticDataHelper
         Func<TChild, string> getChildFullName,
         string childrenName, TagCompound tag,
         Action<T, TagCompound>? extraSaveStaticData = null)
-        where T : IWithStaticData where TChild  : IWithStaticData
+        where T : IWithStaticData where TChild : IWithStaticData
     {
         if (self.ShouldSaveStaticData)
         {
@@ -88,7 +88,7 @@ public static class StaticDataHelper
     }
     public static (T Value, Mod Mod, string Name)? GetObjectWithStaticData<T>(string fullName, TagCompound data) where T : IWithStaticData
     {
-        
+
         var tokens = fullName.Split('.', 2);
         if (tokens.Length < 2)
         {

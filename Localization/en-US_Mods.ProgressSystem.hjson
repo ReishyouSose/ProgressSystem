@@ -26,6 +26,7 @@ Requirements: {
 	EmptyRequirement.DisplayName: Empty Requirement
 	SomeOfRequirements.DisplayName: Some Of Requirements
 	CraftItemInWorldRequirement.DisplayName: Craft {0} In World
+	CombineRequirement.DisplayName: Mods.ProgressSystem.Requirements.CombineRequirement.DisplayName
 }
 
 Achievements: {

@@ -283,7 +283,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     /// <br/>如果此值大于条件数, 那么以条件数为准
     /// <br/>例如 1 代表只需要任意条件完成即可
     /// </summary>
-    public int? RequirementCountNeeded;
+    public int RequirementCountNeeded;
 
     #region 提交
     public bool NeedSubmit;
@@ -510,7 +510,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     public bool DefaultCompleteCondition()
     {
         return (!NeedSubmit || InSubmitting) &&
-            (!RequirementCountNeeded.HasValue || RequirementCountNeeded.Value > Requirements.Count ?
+            (RequirementCountNeeded == 0 || RequirementCountNeeded > Requirements.Count ?
             Requirements.All(r => r.Completed) :
             Requirements.Sum(r => r.Completed.ToInt()) >= RequirementCountNeeded);
     }
@@ -659,7 +659,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
             Texture = tag.GetWithDefault<string>("Texture");
             Position = tag.GetWithDefaultN<Vector2>("Position");
             UseRequirementTextureIndex = tag.GetWithDefaultN<int>("UseRequirementTextureIndex");
-            RequirementCountNeeded = tag.GetWithDefaultN<int>("RequirementCountNeeded");
+            RequirementCountNeeded = tag.GetWithDefault<int>("RequirementCountNeeded");
             PredecessorCountNeeded = tag.GetWithDefaultN<int>("PredecessorCountNeeded");
             tag.GetWithDefault("NeedSubmit", out NeedSubmit);
             tag.GetWithDefault("Repeatable", out Repeatable);

@@ -1,4 +1,6 @@
-﻿namespace ProgressSystem.UIEditor.ExtraUI
+﻿using ProgressSystem.Core.Requirements;
+
+namespace ProgressSystem.UIEditor.ExtraUI
 {
     public class UIRequireText : BaseUIElement
     {
@@ -11,10 +13,10 @@
             requirements = requires;
             this.requirement = requirement;
             delete = new();
-            delete.SetCenter(20, 0, 0, 0.5f);
+            delete.SetCenter(20, -3, 0, 0.5f);
             Register(delete);
-
-            text = new(requirement.DisplayName.Value ?? requirement.GetType().Name);
+            text = new(requirement is CombineRequirement combine ? $"至少完成 {combine.needCount} 项" :
+                requirement.DisplayName.Value ?? requirement.GetType().Name);
             text.SetPos(30, 0);
             text.SetSize(text.TextSize);
             Register(text);
