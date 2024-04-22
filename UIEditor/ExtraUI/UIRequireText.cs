@@ -15,8 +15,20 @@ namespace ProgressSystem.UIEditor.ExtraUI
             delete = new();
             delete.SetCenter(20, -3, 0, 0.5f);
             Register(delete);
-            text = new(requirement is CombineRequirement combine ? $"至少完成 {combine.needCount} 项" :
-                requirement.DisplayName.Value ?? requirement.GetType().Name);
+            string tooltip;
+            if (requirement is CombineRequirement combine)
+            {
+                int needCount = combine.needCount;
+                tooltip = needCount switch
+                {
+                    0 => "达成下列所有",
+                    1 => "达成下列任意",
+                    _ => $"达成至少 {needCount} 项"
+                };
+            }
+            else
+                tooltip = requirement.DisplayName.Value ?? requirement.GetType().Name;
+            text = new(tooltip);
             text.SetPos(30, 0);
             text.SetSize(text.TextSize);
             Register(text);

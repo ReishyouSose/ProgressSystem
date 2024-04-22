@@ -82,7 +82,7 @@ namespace ProgressSystem.UIEditor
                     && pages.TryGetValue(editingPage, out var page) ? page : null;
 
         private Achievement? EditingAch => editingAchName == "" ? null : slotByFullName[editingAchName].ach;
-        private UIAchSlot EditingAchSlot => slotByFullName[editingAchName];
+        private UIAchSlot? EditingAchSlot => editingAchName == "" ? null : slotByFullName[editingAchName];
         private UIText saveTip;
         private static bool LeftShift;
         private static bool LeftCtrl;
@@ -540,9 +540,7 @@ namespace ProgressSystem.UIEditor
                     editingCombine.needCount++;
                     combineCount.ChangeText(editingCombine.needCount.ToString(), false);
                     editingCombine.ShouldSaveStaticData = true;
-                    conditionView.ClearAllElements();
                     CheckConditions(EditingAch.Requirements, 0);
-                    conditionView.Calculation();
                     ChangeSaveState(false);
                 }
             };
@@ -585,9 +583,7 @@ namespace ProgressSystem.UIEditor
                     count--;
                     combineCount.ChangeText(count.ToString(), false);
                     editingCombine.ShouldSaveStaticData = true;
-                    conditionView.ClearAllElements();
                     CheckConditions(EditingAch.Requirements, 0);
-                    conditionView.Calculation();
                     ChangeSaveState(false);
                 }
             };
@@ -616,9 +612,8 @@ namespace ProgressSystem.UIEditor
                 editingRequires.Add(condition);
                 editingCombine = condition;
                 editingRequires = condition.Requirements;
-                conditionView.ClearAllElements();
+                combineCount.ChangeText(editingCombine.needCount.ToString(), false);
                 CheckConditions(EditingAch.Requirements, 0);
-                conditionView.Calculation();
                 ChangeSaveState(false);
             };
             addCombineBg.Register(addCombine);
@@ -924,7 +919,7 @@ namespace ProgressSystem.UIEditor
             {
                 Point mouse = (Main.MouseScreen - achView.ChildrenElements[0].HitBox(false).TopLeft()).ToPoint();
                 Vector2 pos = new(mouse.X / 80, mouse.Y / 80);
-                if (EditingAchSlot.pos == pos)
+                if (EditingAchSlot?.pos == pos)
                     return;
                 string name = BaseName;
                 int i = 1;
@@ -1338,9 +1333,7 @@ namespace ProgressSystem.UIEditor
                 {
                     condition.ShouldSaveStaticData = true;
                     editingRequires.Add(condition);
-                    conditionView.ClearAllElements();
                     CheckConditions(EditingAch.Requirements, 0);
-                    conditionView.Calculation();
                     ChangeSaveState(false);
                 }
             };
@@ -1447,16 +1440,16 @@ namespace ProgressSystem.UIEditor
         }
         private void ChangeEditingAch(Achievement ach)
         {
-            conditionView.ClearAllElements();
-            achNameInputer.ClearText();
             editingCombine = null;
             if (ach == null)
             {
                 editingRequires = null;
                 editingAchName = "";
+                achNameInputer.ClearText();
                 preCount.ChangeText("未选", false);
                 cdsCount.ChangeText("未选", false);
                 combineCount.ChangeText("未选", false);
+                conditionView.ClearAllElements();
                 return;
             }
             else
@@ -1469,14 +1462,14 @@ namespace ProgressSystem.UIEditor
                 editingAchName = ach.FullName;
                 achNameInputer.Text = ach.Name;
                 achNameInputer.OnInputText?.Invoke(ach.Name);
-                conditionView.ClearAllElements();
                 CheckConditions(ach.Requirements, 0);
-                conditionView.Calculation();
                 editingRequires = ach.Requirements;
             }
         }
         private void CheckConditions(RequirementList requires, int index)
         {
+            if (index == 0)
+                conditionView.ClearAllElements();
             if (requires.Any())
             {
                 foreach (Requirement require in requires)
@@ -1486,7 +1479,6 @@ namespace ProgressSystem.UIEditor
                     text.delete.Events.OnLeftDown += evt =>
                     {
                         requires.Remove(require);
-                        conditionView.ClearAllElements();
                         CheckConditions(EditingAch.Requirements, 0);
                         conditionView.Calculation();
                     };
@@ -1517,6 +1509,8 @@ namespace ProgressSystem.UIEditor
                 none.SetSize(none.TextSize);
                 conditionView.AddElement(none);
             }
+            if (index == 0)
+                conditionView.Calculation();
         }
     }
 }
