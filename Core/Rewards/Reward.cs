@@ -1,5 +1,4 @@
 ﻿using ProgressSystem.Core.NetUpdate;
-using ProgressSystem.Core.Requirements;
 using ProgressSystem.Core.StaticData;
 using System.IO;
 using Terraria.Localization;
@@ -107,9 +106,9 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate
         Texture |= $"{mod.Name}/Assets/Textures/Rewards/Default";
         Texture |= $"{mod.Name}/Assets/Textures/Default";
     }
-    public virtual IEnumerable<ConstructInfoTable<Requirement>> GetConstructInfoTables()
+    public virtual IEnumerable<ConstructInfoTable<Reward>> GetConstructInfoTables()
     {
-        ConstructInfoTable<Achievement>.TryAutoCreate<Requirement>(GetType(), null, out var constructors);
+        ConstructInfoTable<Achievement>.TryAutoCreate<Reward>(GetType(), null, out var constructors);
         return constructors;
     }
 
