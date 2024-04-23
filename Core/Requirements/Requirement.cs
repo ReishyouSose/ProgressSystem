@@ -3,11 +3,11 @@ using ProgressSystem.Core.StaticData;
 using System.IO;
 using Terraria.Localization;
 
-namespace ProgressSystem.Core;
+namespace ProgressSystem.Core.Requirements;
 
 /// <summary>
-/// 达成成就所需的条件
-/// 继承它的非抽象类需要有一个无参构造 (用以读取静态数据)
+/// <br/>达成成就所需的条件
+/// <br/>继承它的非抽象类需要有一个无参构造 (用以读取静态数据)
 /// </summary>
 public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IProgressable
 {

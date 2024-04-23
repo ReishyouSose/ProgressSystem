@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace ProgressSystem.Core;
+namespace ProgressSystem.Core.Requirements;
 
 public class RequirementList : IList<Requirement>, IReadOnlyList<Requirement>
 {

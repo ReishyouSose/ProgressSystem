@@ -22,7 +22,7 @@ public abstract class ItemWorldRequirement : ItemRequirement
     }
     public override void LoadDataInWorld(TagCompound tag)
     {
-        Completed = tag.GetWithDefault<bool>("Competed");
+        Completed = tag.GetWithDefault<bool>("Completed");
         if (!Completed)
         {
             CountNow = tag.GetWithDefault<int>("CountNow");
@@ -46,6 +46,7 @@ public abstract class ItemWorldRequirement : ItemRequirement
     {
         base.WriteMessageFromClient(writer);
         writer.Write7BitEncodedInt(countToAdd);
+        countToAdd = 0;
     }
     public override void ReceiveMessageFromClient(BinaryReader reader)
     {

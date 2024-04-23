@@ -2,6 +2,8 @@
 using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.Requirements;
 using ProgressSystem.Core.Requirements.ItemRequirements;
+using ProgressSystem.Core.Requirements.MiscRequirements;
+using ProgressSystem.Core.Requirements.NPCRequirements;
 using ProgressSystem.Core.Rewards;
 using ProgressSystem.Core.StaticData;
 using System.IO;

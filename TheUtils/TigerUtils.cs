@@ -4054,6 +4054,7 @@ public static partial class TigerExtensions
     public static void Fill<T>(this T[] array, T value) => Array.Fill(array, value);
     public static void Fill<T>(this T[] array, T value, int startIndex, int count) => Array.Fill(array, value, startIndex, count);
     #endregion
+    #region 添加元素( Add... )
     /// <summary>
     /// 返回是否成功添加
     /// </summary>
@@ -4088,6 +4089,14 @@ public static partial class TigerExtensions
         }
         return false;
     }
+    public static void AddRange<T>(this ICollection<T> list, IEnumerable<T> elements)
+    {
+        foreach (var e in elements)
+        {
+            list.Add(e);
+        }
+    }
+    #endregion
     #region Length相关
     public static void ClampLength<T>(this List<T> list, int length)
     {

@@ -1,4 +1,5 @@
-﻿using Terraria.Localization;
+﻿using ProgressSystem.Core.Listeners;
+using Terraria.Localization;
 
 namespace ProgressSystem.Core.Requirements.ItemRequirements;
 
@@ -13,20 +14,34 @@ public class PickItemRequirement : ItemRequirement
     protected override void BeginListen()
     {
         base.BeginListen();
-        CommonListener.OnLocalPlayerPickItem += ListenPickItem;
-        DoIf(CountNow >= Count, CompleteSafe);
+        if (ItemType > 0)
+        {
+            PlayerListener.OnLocalPlayerPickItemOfTypeAdd(ItemType, ListenPickItem);
+        }
+        else
+        {
+            PlayerListener.OnLocalPlayerPickItem += ListenPickItem;
+        }
     }
     protected override void EndListen()
     {
         base.EndListen();
-        CommonListener.OnLocalPlayerPickItem -= ListenPickItem;
+        PlayerListener.OnLocalPlayerPickItem -= ListenPickItem;
+        if (ItemType > 0)
+        {
+            PlayerListener.OnLocalPlayerPickItemOfTypeRemove(ItemType, ListenPickItem);
+        }
+        else
+        {
+            PlayerListener.OnLocalPlayerPickItem -= ListenPickItem;
+        }
     }
     private void ListenPickItem(Item item)
     {
-        if (ItemType > 0 && item.type != ItemType || Condition?.Invoke(item) == false)
+        if (Condition?.Invoke(item) == false)
         {
             return;
         }
-        DoIf((CountNow += item.stack) >= Count, CompleteSafe);
+        CountNow += item.stack;
     }
 }

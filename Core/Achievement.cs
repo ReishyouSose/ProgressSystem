@@ -1,5 +1,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using ProgressSystem.Core.NetUpdate;
+using ProgressSystem.Core.Requirements;
+using ProgressSystem.Core.Rewards;
 using ProgressSystem.Core.StaticData;
 using System.IO;
 using Terraria.Localization;

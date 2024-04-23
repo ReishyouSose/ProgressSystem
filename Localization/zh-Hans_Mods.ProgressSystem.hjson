@@ -1,0 +1,132 @@
+Keybinds.check.DisplayName: check
+
+Requirements: {
+	CraftItemRequirement: {
+		DisplayName: 制作{0}
+		Tooltip: ""
+	}
+
+	HouseRequirement: {
+		DisplayName: 房子
+		Tooltip: 拥有一间房子
+	}
+
+	KillNPCRequirement: {
+		DisplayName: 击杀{0}
+		Tooltip: ""
+	}
+
+	PickItemRequirement: {
+		DisplayName: 捡起{0}
+		Tooltip: ""
+	}
+
+	EmptyRequirement.DisplayName: 空条件
+	CraftItemInWorldRequirement.DisplayName: 在世界中制造{0}
+	CombineRequirement.DisplayName: 组合条件
+	// ConsumeItemRequirement.DisplayName: Mods.ProgressSystem.Requirements.ConsumeItemRequirement.DisplayName
+	// OpenBackpackRequirement.DisplayName: Mods.ProgressSystem.Requirements.OpenBackpackRequirement.DisplayName
+	// OpenBestiaryRequirement.DisplayName: Mods.ProgressSystem.Requirements.OpenBestiaryRequirement.DisplayName
+	// KillAnyNPCRequirement.DisplayName: Mods.ProgressSystem.Requirements.KillAnyNPCRequirement.DisplayName
+	// TalkToAnyNPCRequirement.DisplayName: Mods.ProgressSystem.Requirements.TalkToAnyNPCRequirement.DisplayName
+	// TalkToNPCRequirement.DisplayName: Mods.ProgressSystem.Requirements.TalkToNPCRequirement.DisplayName
+	// ReachModBiomeRequirement.DisplayName: Mods.ProgressSystem.Requirements.ReachModBiomeRequirement.DisplayName
+	// ReachZoneRequirement.DisplayName: Mods.ProgressSystem.Requirements.ReachZoneRequirement.DisplayName
+	// InteractWithAnyChestRequirement.DisplayName: Mods.ProgressSystem.Requirements.InteractWithAnyChestRequirement.DisplayName
+	// InteractWithChestRequirement.DisplayName: Mods.ProgressSystem.Requirements.InteractWithChestRequirement.DisplayName
+}
+
+Achievements: {
+	ProgressSystem: {
+		TestPage: {
+			First: {
+				DisplayName: 第一步
+				Tooltip: 你所获得的第一个成就
+				Description: ""
+			}
+
+			Workbench: {
+				DisplayName: 工作台
+				Tooltip: 万物之源
+				Description: ""
+			}
+
+			WoodTools: {
+				DisplayName: 木制工具
+				Tooltip: 用木头武装自己
+				Description: ""
+			}
+
+			Wood: {
+				DisplayName: 木头
+				Tooltip: 最基础的材料
+				Description: ""
+			}
+
+			House: {
+				DisplayName: 房子
+				Tooltip: 建一间有桌椅有门有墙还有光源的房子吧
+				Description: ""
+			}
+
+			Slime: {
+				DisplayName: 史莱姆
+				Tooltip: 凝胶的来源
+				Description: ""
+			}
+
+			Torch: {
+				DisplayName: 火把
+				Tooltip: 用木头和凝胶制作
+				Description: ""
+			}
+
+			TestCreate: {
+				Description: 测试创建的成就
+				DisplayName: ???
+				Tooltip: ""
+			}
+
+			"Wood In World": {
+				DisplayName: 一起做木头
+				Tooltip: 多人一起完成目标!
+				Description: ""
+			}
+		}
+	}
+}
+
+Rewards: {
+	EmptyReward.DisplayName: 空条件
+	ItemReward.DisplayName: 获得{0}
+}
+
+Configs: {
+	ServerConfig: {
+		DisplayName: 服务端配置
+
+		NetUpdateFrequency: {
+			Label: 网络同步间隔
+			Tooltip: 每隔至少多少帧进行网络同步
+		}
+
+		DontReceiveOtherPlayerCompleteAchievementMessage: {
+			Label: 不接受其它玩家的完成成就信息
+			Tooltip: ""
+		}
+	}
+
+	ClientConfig: {
+		DisplayName: 客户端配置
+
+		DontShowAnyAchievementMessage: {
+			Label: 不显示任何成就相关信息
+			Tooltip: ""
+		}
+
+		DontShowOtherPlayerCompleteAchievementMessage: {
+			Label: 不显示他人的成就完成信息
+			Tooltip: ""
+		}
+	}
+}

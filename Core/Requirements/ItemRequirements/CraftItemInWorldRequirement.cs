@@ -1,4 +1,5 @@
-﻿using Terraria.Localization;
+﻿using ProgressSystem.Core.Listeners;
+using Terraria.Localization;
 
 namespace ProgressSystem.Core.Requirements.ItemRequirements;
 
@@ -19,19 +20,33 @@ public class CraftItemInWorldRequirement : ItemWorldRequirement
     protected override void BeginListen()
     {
         base.BeginListen();
-        CommonListener.OnLocalPlayerCraftItem += ListenCraftItem;
+        if (ItemType > 0)
+        {
+            PlayerListener.OnLocalPlayerCraftItemOfTypeAdd(ItemType, ListenCraftItem);
+        }
+        else
+        {
+            PlayerListener.OnLocalPlayerCraftItem += ListenCraftItem;
+        }
     }
     protected override void EndListen()
     {
         base.EndListen();
-        CommonListener.OnLocalPlayerCraftItem -= ListenCraftItem;
+        if (ItemType > 0)
+        {
+            PlayerListener.OnLocalPlayerCraftItemOfTypeRemove(ItemType, ListenCraftItem);
+        }
+        else
+        {
+            PlayerListener.OnLocalPlayerCraftItem -= ListenCraftItem;
+        }
     }
     /// <summary>
     /// 不在服务端监听
     /// </summary>
     private void ListenCraftItem(Item item, RecipeItemCreationContext context)
     {
-        if (ItemType > 0 && item.type != ItemType || Condition?.Invoke(item) == false)
+        if (Condition?.Invoke(item) == false)
         {
             return;
         }

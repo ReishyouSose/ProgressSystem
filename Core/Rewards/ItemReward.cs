@@ -1,4 +1,6 @@
-﻿namespace ProgressSystem.Core.Rewards;
+﻿using Terraria.GameContent.UI.Chat;
+
+namespace ProgressSystem.Core.Rewards;
 
 public class ItemReward(Item item) : Reward
 {
@@ -13,11 +15,23 @@ public class ItemReward(Item item) : Reward
             }
         }
     }
-    public Item Item = item;
+    protected Item _item = item;
+    public Item Item
+    {
+        get => _item;
+        set
+        {
+            _item = value;
+            itemTag = ItemTagHandler.GenerateTag(value);
+        }
+    }
     /// <summary>
     /// 剩余的个数 (有可能一次没领完)
     /// </summary>
     public int leftStack = item.stack;
+
+    protected override object?[] DisplayNameArgs => [itemTag];
+    protected string itemTag = ItemTagHandler.GenerateTag(item);
 
     protected ItemReward() : this(new(0, 1)) { }
     public ItemReward(int itemType, int stack = 1) : this(new(itemType, stack)) { }
