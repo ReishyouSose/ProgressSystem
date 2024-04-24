@@ -21,12 +21,19 @@ Requirements: {
 		Tooltip: ""
 	}
 
-	AllOfRequirements.DisplayName: All Of Requirements
-	AnyOfRequirements.DisplayName: Any Of Requirements
 	EmptyRequirement.DisplayName: Empty Requirement
-	SomeOfRequirements.DisplayName: Some Of Requirements
 	CraftItemInWorldRequirement.DisplayName: Craft {0} In World
-	CombineRequirement.DisplayName: Mods.ProgressSystem.Requirements.CombineRequirement.DisplayName
+	CombineRequirement.DisplayName: Combined Requirement
+	ConsumeItemRequirement.DisplayName: Mods.ProgressSystem.Requirements.ConsumeItemRequirement.DisplayName
+	OpenBackpackRequirement.DisplayName: Mods.ProgressSystem.Requirements.OpenBackpackRequirement.DisplayName
+	OpenBestiaryRequirement.DisplayName: Mods.ProgressSystem.Requirements.OpenBestiaryRequirement.DisplayName
+	KillAnyNPCRequirement.DisplayName: Mods.ProgressSystem.Requirements.KillAnyNPCRequirement.DisplayName
+	TalkToAnyNPCRequirement.DisplayName: Mods.ProgressSystem.Requirements.TalkToAnyNPCRequirement.DisplayName
+	TalkToNPCRequirement.DisplayName: Mods.ProgressSystem.Requirements.TalkToNPCRequirement.DisplayName
+	ReachModBiomeRequirement.DisplayName: Mods.ProgressSystem.Requirements.ReachModBiomeRequirement.DisplayName
+	ReachZoneRequirement.DisplayName: Mods.ProgressSystem.Requirements.ReachZoneRequirement.DisplayName
+	InteractWithAnyChestRequirement.DisplayName: Mods.ProgressSystem.Requirements.InteractWithAnyChestRequirement.DisplayName
+	InteractWithChestRequirement.DisplayName: Mods.ProgressSystem.Requirements.InteractWithChestRequirement.DisplayName
 }
 
 Achievements: {
@@ -89,12 +96,17 @@ Achievements: {
 	}
 }
 
+Rewards: {
+	EmptyReward.DisplayName: Empty Reward
+	ItemReward.DisplayName: Receive {0}
+}
+
 Configs: {
 	ServerConfig: {
 		DisplayName: Server Config
 
 		NetUpdateFrequency: {
-			Label: Net Update Frequency
+			Label: Net Update Interval
 			Tooltip: the minimal interval frames of net update
 		}
 
@@ -117,9 +129,4 @@ Configs: {
 			Tooltip: ""
 		}
 	}
-}
-
-Rewards: {
-	EmptyReward.DisplayName: Mods.ProgressSystem.Rewards.EmptyReward.DisplayName
-	ItemReward.DisplayName: Mods.ProgressSystem.Rewards.ItemReward.DisplayName
 }

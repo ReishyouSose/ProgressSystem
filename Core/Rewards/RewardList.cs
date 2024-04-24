@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace ProgressSystem.Core;
+namespace ProgressSystem.Core.Rewards;
 
 public class RewardList : IList<Reward>, IReadOnlyList<Reward>
 {

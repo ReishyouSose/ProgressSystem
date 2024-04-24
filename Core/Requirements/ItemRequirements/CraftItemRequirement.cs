@@ -1,4 +1,5 @@
-﻿using Terraria.Localization;
+﻿using ProgressSystem.Core.Listeners;
+using Terraria.Localization;
 
 namespace ProgressSystem.Core.Requirements.ItemRequirements;
 
@@ -8,21 +9,36 @@ namespace ProgressSystem.Core.Requirements.ItemRequirements;
 public class CraftItemRequirement : ItemRequirement
 {
     public CraftItemRequirement(int itemType, int count = 1) : base(itemType, count) { }
+    [SpecializeAutoConstruct(Disabled = true)]
     public CraftItemRequirement(Func<Item, bool> condition, LocalizedText conditionDescription, int count = 1) : base(condition, conditionDescription, count) { }
     protected CraftItemRequirement() : base() { }
     protected override void BeginListen()
     {
         base.BeginListen();
-        CommonListener.OnLocalPlayerCraftItem += ListenCraftItem;
+        if (ItemType > 0)
+        {
+            PlayerListener.OnLocalPlayerCraftItemOfTypeAdd(ItemType, ListenCraftItem);
+        }
+        else
+        {
+            PlayerListener.OnLocalPlayerCraftItem += ListenCraftItem;
+        }
     }
     protected override void EndListen()
     {
         base.EndListen();
-        CommonListener.OnLocalPlayerCraftItem -= ListenCraftItem;
+        if (ItemType > 0)
+        {
+            PlayerListener.OnLocalPlayerCraftItemOfTypeRemove(ItemType, ListenCraftItem);
+        }
+        else
+        {
+            PlayerListener.OnLocalPlayerCraftItem -= ListenCraftItem;
+        }
     }
     private void ListenCraftItem(Item item, RecipeItemCreationContext context)
     {
-        if (ItemType > 0 && item.type != ItemType || Condition?.Invoke(item) == false)
+        if (Condition?.Invoke(item) == false)
         {
             return;
         }

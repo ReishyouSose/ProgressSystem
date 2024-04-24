@@ -17,7 +17,16 @@ namespace ProgressSystem
         public static ReflectionTable GetOrCreate<T>()
         {
             Type type = typeof(T);
-            if (!_tables.TryGetValue(type, out var table))
+            if (!_tables.ContainsKey(type))
+            {
+                _tables[type] = new(type);
+            }
+            return _tables[type];
+        }
+        public static ReflectionTable GetOrCreate(object obj)
+        {
+            Type type = obj.GetType();
+            if (!_tables.ContainsKey(type))
             {
                 _tables[type] = new(type);
             }
@@ -125,7 +134,7 @@ namespace ProgressSystem
                         EntryTypeEnum.Field => _field.FieldType,
                         EntryTypeEnum.Property => _property.PropertyType,
                         EntryTypeEnum.Method => _method.ReturnType,
-                        _ => throw new DataException("Invalid EntryType"),
+                        _ => throw new DataException("Invalid EntryType")
                     };
                 }
             }
@@ -138,7 +147,7 @@ namespace ProgressSystem
                         EntryTypeEnum.Field => _field.IsStatic,
                         EntryTypeEnum.Property => false,
                         EntryTypeEnum.Method => _method.IsStatic,
-                        _ => throw new DataException("Invalid EntryType"),
+                        _ => throw new DataException("Invalid EntryType")
                     };
                 }
             }
@@ -151,9 +160,42 @@ namespace ProgressSystem
                         EntryTypeEnum.Field => _field.ReflectedType,
                         EntryTypeEnum.Property => _property.ReflectedType,
                         EntryTypeEnum.Method => _method.ReflectedType,
-                        _ => throw new DataException("Invalid EntryType"),
+                        _ => throw new DataException("Invalid EntryType")
                     };
                 }
+            }
+            public Attribute[] Attributes
+            {
+                get
+                {
+                    object[] objs;
+                    objs= EntryType switch
+                    {
+                        EntryTypeEnum.Field => _field.GetCustomAttributes(true),
+                        EntryTypeEnum.Property => _property.GetCustomAttributes(true),
+                        EntryTypeEnum.Method => _method.GetCustomAttributes(true),
+                        _ => throw new DataException("Invalid EntryType")
+                    };
+                    List<Attribute> list = [];
+                    foreach (var obj in objs)
+                    {
+                        if(obj is Attribute attribute)
+                        {
+                            list.Add(attribute);
+                        }
+                    }
+                    return [.. list];
+                }
+            }
+            public T? GetCustomAttribute<T>() where T : Attribute
+            {
+                return EntryType switch
+                {
+                    EntryTypeEnum.Field => _field.GetCustomAttribute<T>(),
+                    EntryTypeEnum.Property => _property.GetCustomAttribute<T>(),
+                    EntryTypeEnum.Method => _method.GetCustomAttribute<T>(),
+                    _ => throw new DataException("Invalid EntryType")
+                };
             }
             public object? GetFieldValue(object target)
             {

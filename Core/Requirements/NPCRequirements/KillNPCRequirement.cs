@@ -1,7 +1,8 @@
-﻿using Terraria.GameContent;
+﻿using ProgressSystem.Core.Listeners;
+using Terraria.GameContent;
 using Terraria.Localization;
 
-namespace ProgressSystem.Core.Requirements;
+namespace ProgressSystem.Core.Requirements.NPCRequirements;
 
 // TODO: NPC NetID
 public class KillNPCRequirement : Requirement
@@ -10,7 +11,7 @@ public class KillNPCRequirement : Requirement
     public int Count;
     public Func<NPC, bool>? Condition;
     public LocalizedText? ConditionDescription;
-    
+
     public int CountNow;
 
     public KillNPCRequirement(int npcType, int count = 1) : this(npcType, null, null, count) { }
@@ -22,7 +23,8 @@ public class KillNPCRequirement : Requirement
         ConditionDescription = conditionDescription;
         Count = count;
     }
-    protected KillNPCRequirement() : base(ListenTypeEnum.OnStart) {
+    protected KillNPCRequirement() : base(ListenTypeEnum.OnStart)
+    {
         Texture = new(() =>
         {
             if (NPCType <= 0)
@@ -30,34 +32,29 @@ public class KillNPCRequirement : Requirement
                 return null;
             }
             Main.instance.LoadNPC(NPCType);
-            // SampleNPC(NPCType).frame
             return TextureAssets.Npc[NPCType].Value;
         });
-        GetSourceRect = () => {
-            if (NPCType <= 0)
+        GetSourceRect = () =>
+        {
+            var type = NPCType;
+            if (type <= 0)
             {
                 return null;
             }
-            TrySetDummyNPC(NPCType);
-            dummyNPC?.FindFrame();
+            if (type != dummyNPC?.type)
+            {
+                dummyNPC ??= new();
+                dummyNPC.SetDefaults(type);
+                dummyNPC.IsABestiaryIconDummy = true;
+            }
+
+            dummyNPC.FindFrame();
             return dummyNPC.frame;
         };
     }
     protected NPC? dummyNPC;
-    protected void TrySetDummyNPC(int type)
-    {
-        if (type <= 0)
-        {
-            dummyNPC = null;
-        }
-        if (type != dummyNPC?.type)
-        {
-            dummyNPC ??= new();
-            dummyNPC.SetDefaults(type);
-        }
-    }
 
-    protected override object?[] DisplayNameArgs => [ Count + " " + (NPCType > 0 ? SampleNPC(NPCType).TypeName : ConditionDescription?.Value ?? "?")];
+    protected override object?[] DisplayNameArgs => [Count + " " + (NPCType > 0 ? SampleNPC(NPCType).TypeName : ConditionDescription?.Value ?? "?")];
 
     public override void Reset()
     {
@@ -97,17 +94,17 @@ public class KillNPCRequirement : Requirement
     protected override void BeginListen()
     {
         base.BeginListen();
-        CommonListener.OnLocalPlayerKillNPC += ListenKillNPC;
+        PlayerListener.OnLocalPlayerKillNPC += ListenKillNPC;
         DoIf(CountNow >= Count, CompleteSafe);
     }
     protected override void EndListen()
     {
         base.EndListen();
-        CommonListener.OnLocalPlayerKillNPC -= ListenKillNPC;
+        PlayerListener.OnLocalPlayerKillNPC -= ListenKillNPC;
     }
     private void ListenKillNPC(NPC npc)
     {
-        if ((NPCType > 0 && npc.type != NPCType) || Condition?.Invoke(npc) == false)
+        if (NPCType > 0 && npc.type != NPCType || Condition?.Invoke(npc) == false)
         {
             return;
         }
@@ -115,3 +112,12 @@ public class KillNPCRequirement : Requirement
     }
 }
 
+public class KillAnyNPCRequirement : KillNPCRequirement
+{
+    public KillAnyNPCRequirement(int count, LocalizedText? conditionDescription) :
+        base(npc  => true, conditionDescription ?? ModInstance.GetLocalization("Requirements.KillAnyNPCRequirement.ConditionDescription"), count)
+    { }
+    public KillAnyNPCRequirement(int count = 1) : this(count, null) { }
+    public KillAnyNPCRequirement(LocalizedText? conditionDescription) : this(1, conditionDescription) { }
+    protected KillAnyNPCRequirement() : base() { }
+}
