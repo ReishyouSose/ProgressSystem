@@ -14,6 +14,12 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate
     protected virtual object?[] DisplayNameArgs => [];
     protected virtual object?[] TooltipArgs => [];
 
+    public virtual bool ReportDetails(out string details)
+    {
+        details = "";
+        return false;
+    }
+
     #region 获取奖励
     public virtual bool Received { get; protected set; }
 

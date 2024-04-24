@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using ProgressSystem.Core.Requirements;
+using ProgressSystem.Core.Rewards;
 using ProgressSystem.UIEditor.ExtraUI;
 using RUIModule;
 using System.Diagnostics;
@@ -247,7 +248,7 @@ namespace ProgressSystem.UIEditor
             condition.Events.OnLeftDown += evt => SwitchPanel(1);
             editBg.Register(condition);
 
-            UIImage reward = new(RUIHelper.T2D(path + "Reward")) { hoverText = "奖励设置" };
+            UIImage reward = new(RUIHelper.T2D(path + "reward")) { hoverText = "奖励设置" };
             reward.SetPos(-22, 64, 1);
             reward.Events.OnLeftDown += evt => SwitchPanel(2);
             editBg.Register(reward);
@@ -653,6 +654,8 @@ namespace ProgressSystem.UIEditor
 
             constructList.expandView.autoPos[0] = true;
             constructList.expandView.Vscroll.canDrag = false;
+            string end = "Requirement";
+            int len = end.Length;
 
             foreach (var require in ModContent.GetContent<Requirement>())
             {
@@ -660,9 +663,9 @@ namespace ProgressSystem.UIEditor
                     continue;
                 var tables = require.GetConstructInfoTables();
                 var requireName = require.GetType().Name;
-                if (requireName.EndsWith("Requirement"))
+                if (requireName.EndsWith(end))
                 {
-                    requireName = requireName[0..^"Requirement".Length];
+                    requireName = requireName[0..^len];
                 }
                 UIText requireType = new(requireName);
                 requireType.SetSize(requireType.TextSize);
@@ -677,7 +680,6 @@ namespace ProgressSystem.UIEditor
                 };
                 constructList.AddElement(requireType);
             }
-            var inner = constructList.expandView.InnerUIE;
             constructList.ChangeShowElement(0);
         }
         private void RegisterRewardPanle(BaseUIElement panel)
@@ -694,7 +696,7 @@ namespace ProgressSystem.UIEditor
             constructView.SetSize(-40, -20, 1, 1);
             constructBg.Register(constructView);
 
-            UIDropDownList<UIText> rewardList = new(panel, constructBg, x =>
+            UIDropDownList<UIText> constructList = new(panel, constructBg, x =>
             {
                 UIText text = new(x.text);
                 x.SetPos(10, 5);
@@ -702,17 +704,38 @@ namespace ProgressSystem.UIEditor
             })
             { buttonXoffset = 10 };
 
-            rewardList.showArea.SetSize(leftWidth, 30);
+            constructList.showArea.SetSize(leftWidth, 30);
 
-            rewardList.expandArea.SetPos(0, 40);
-            rewardList.expandArea.SetSize(leftWidth, 100);
+            constructList.expandArea.SetPos(0, 40);
+            constructList.expandArea.SetSize(leftWidth, 100);
 
-            rewardList.expandView.autoPos[0] = true;
-            rewardList.expandView.Vscroll.canDrag = false;
+            constructList.expandView.autoPos[0] = true;
+            constructList.expandView.Vscroll.canDrag = false;
+
+            string end = "reward";
+            int len = end.Length;
 
             foreach (Reward reward in ModContent.GetContent<Reward>())
             {
-                //var tables = reward.get
+                var tables = reward.GetConstructInfoTables();
+                var rewardName = reward.GetType().Name;
+                if (rewardName.EndsWith(end))
+                {
+                    rewardName = rewardName[0..^len];
+                }
+                UIText rewardType = new(rewardName);
+                rewardType.SetSize(rewardType.TextSize);
+                rewardType.HoverToGold();
+                rewardType.Events.OnLeftDown += evt =>
+                {
+                    constructView.ClearAllElements();
+                    foreach (var constructInfo in tables)
+                    {
+                        RegisterRewardDataPanel(constructInfo, constructView);
+                    }
+                };
+                constructList.AddElement(rewardType);
+                constructList.ChangeShowElement(0);
             }
         }
         private void RegisterEditPagePanel()
@@ -1368,6 +1391,75 @@ namespace ProgressSystem.UIEditor
             constructPanel.SetSize(0, innerY + 48, 1);
             constructView.Calculation();
         }
+        private void RegisterRewardDataPanel(ConstructInfoTable<Reward> data, UIContainerPanel constructView)
+        {
+            UIVnlPanel constructPanel = new(0, 0);
+            constructPanel.Info.SetMargin(10);
+            constructView.AddElement(constructPanel);
+            int innerY = 0;
+            foreach (var info in data)
+            {
+                UIText name = new(info.DisplayName.Value ?? "Anonymous");
+                name.SetPos(0, innerY);
+                name.SetSize(name.TextSize);
+                constructPanel.Register(name);
+                innerY += 28;
+
+                UIText legal = new(info.Important ? "可以为空" : "不可为空");
+                legal.SetPos(0, innerY);
+                constructPanel.Register(legal);
+                innerY += 28;
+
+                UIVnlPanel valueInputBg = new(0, 28);
+                valueInputBg.Info.Width.Percent = 1;
+                valueInputBg.SetPos(0, innerY);
+                constructPanel.Register(valueInputBg);
+
+                UIInputBox valueInputer = new(info.Type.Name);
+                valueInputer.SetSize(-40, 0, 1, 1);
+                var bind = info;
+                valueInputer.OnInputText += text =>
+                {
+                    if (text.Any())
+                    {
+                        bind.SetValue(text);
+                        legal.ChangeText(bind.IsMet ? ("合法值：" + bind.GetValue()) : "不合法");
+                    }
+                    else
+                        legal.ChangeText(bind.Important ? "可以为空" : "不可为空");
+                };
+                valueInputBg.Register(valueInputer);
+
+                UIClose clear = new();
+                clear.SetCenter(-10, 0, 1, 0.5f);
+                clear.Events.OnLeftDown += evt => valueInputer.ClearText();
+                valueInputBg.Register(clear);
+                innerY += 48;
+            }
+            UIText create = new("添加奖励");
+            create.SetSize(create.TextSize);
+            create.SetPos(0, innerY);
+            create.Events.OnMouseOver += evt => create.color = Color.Gold;
+            create.Events.OnMouseOut += evt => create.color = Color.White;
+            create.Events.OnLeftDown += evt =>
+            {
+                if (EditingAch == null)
+                {
+                    Main.NewText("请先选择一个成就栏位");
+                    return;
+                }
+                if (data.TryConstruct(out Reward? reward))
+                {
+                    reward.ShouldSaveStaticData = true;
+                    EditingAch.Rewards.Add(reward);
+                    CheckRewards(EditingAch.Rewards);
+                    ChangeSaveState(false);
+                }
+            };
+            constructPanel.Register(create);
+            constructPanel.SetSize(0, innerY + 48, 1);
+            constructView.Calculation();
+        }
         private void MatchPageName(string text, UIText report)
         {
             if (text.Any())
@@ -1477,6 +1569,7 @@ namespace ProgressSystem.UIEditor
                 cdsCount.ChangeText("未选", false);
                 combineCount.ChangeText("未选", false);
                 conditionView.ClearAllElements();
+                rewardView.ClearAllElements();
                 return;
             }
             else
@@ -1490,6 +1583,7 @@ namespace ProgressSystem.UIEditor
                 achNameInputer.Text = ach.Name;
                 achNameInputer.OnInputText?.Invoke(ach.Name);
                 CheckConditions(ach.Requirements, 0);
+                CheckRewards(ach.Rewards);
                 editingRequires = ach.Requirements;
             }
         }
@@ -1505,7 +1599,7 @@ namespace ProgressSystem.UIEditor
                     text.SetPos(index * 30, 0);
                     text.delete.Events.OnLeftDown += evt =>
                     {
-                        requires.Remove(require);
+                        text.requirements.Remove(text.requirement);
                         CheckConditions(EditingAch.Requirements, 0);
                         conditionView.Calculation();
                     };
@@ -1538,6 +1632,21 @@ namespace ProgressSystem.UIEditor
             }
             if (index == 0)
                 conditionView.Calculation();
+        }
+        private void CheckRewards(RewardList rewards)
+        {
+            rewardView.ClearAllElements();
+            foreach (Reward reward in rewards)
+            {
+                UIRewardText text = new(reward, rewards);
+                text.delete.Events.OnLeftDown += evt =>
+                {
+                    text.rewards.Remove(text.reward);
+                    CheckConditions(EditingAch.Requirements, 0);
+                };
+                rewardView.AddElement(text);
+            }
+            rewardView.Calculation();
         }
     }
 }
