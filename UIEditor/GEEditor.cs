@@ -46,14 +46,10 @@ namespace ProgressSystem.UIEditor
         private UIContainerPanel achView;
 
         /// <summary>
-        /// Require信息输入视区
-        /// </summary>
-        private UIContainerPanel constructView;
-
-        /// <summary>
         /// 已添加的条件视区
         /// </summary>
         private UIContainerPanel conditionView;
+        private UIContainerPanel rewardView;
         private UIVnlPanel editPanel;
         private UIVnlPanel pagePanel;
         private UIInputBox pageInputer;
@@ -493,7 +489,7 @@ namespace ProgressSystem.UIEditor
             constructBg.SetPos(0, 80);
             panel.Register(constructBg);
 
-            constructView = new() { spaceY = 10 };
+            UIContainerPanel constructView = new() { spaceY = 10 };
             constructView.autoPos[0] = true;
             constructView.SetPos(10, 10);
             constructView.SetSize(-40, -20, 1, 1);
@@ -641,7 +637,7 @@ namespace ProgressSystem.UIEditor
             conditionView.SetHorizontalScrollbar(cdsH);
             conditionPanel.Register(cdsH);
 
-            UIDropDownList<UIText> constrcutList = new(panel, constructBg, x =>
+            UIDropDownList<UIText> constructList = new(panel, constructBg, x =>
             {
                 UIText text = new(x.text);
                 text.SetPos(10, 5);
@@ -649,14 +645,14 @@ namespace ProgressSystem.UIEditor
             })
             { buttonXoffset = 10 };
 
-            constrcutList.showArea.SetPos(0, 40);
-            constrcutList.showArea.SetSize(leftWidth, 30);
+            constructList.showArea.SetPos(0, 40);
+            constructList.showArea.SetSize(leftWidth, 30);
 
-            constrcutList.expandArea.SetPos(0, 80);
-            constrcutList.expandArea.SetSize(leftWidth, -80, 0, 1);
+            constructList.expandArea.SetPos(0, 80);
+            constructList.expandArea.SetSize(leftWidth, -80, 0, 1);
 
-            constrcutList.expandView.autoPos[0] = true;
-            constrcutList.expandView.Vscroll.canDrag = false;
+            constructList.expandView.autoPos[0] = true;
+            constructList.expandView.Vscroll.canDrag = false;
 
             foreach (var require in ModContent.GetContent<Requirement>())
             {
@@ -676,17 +672,48 @@ namespace ProgressSystem.UIEditor
                     constructView.ClearAllElements();
                     foreach (var constructInfo in tables)
                     {
-                        RegisterRequireDataPanel(constructInfo);
+                        RegisterRequireDataPanel(constructInfo, constructView);
                     }
                 };
-                constrcutList.AddElement(requireType);
+                constructList.AddElement(requireType);
             }
-            var inner = constrcutList.expandView.InnerUIE;
-            constrcutList.ChangeShowElement(0);
+            var inner = constructList.expandView.InnerUIE;
+            constructList.ChangeShowElement(0);
         }
         private void RegisterRewardPanle(BaseUIElement panel)
         {
+            int leftWidth = 150;
+            UIVnlPanel constructBg = new(0, 0);
+            constructBg.SetSize(leftWidth, -30, 0, 1);
+            constructBg.SetPos(0, 30);
+            panel.Register(constructBg);
 
+            UIContainerPanel constructView = new() { spaceY = 10 };
+            constructView.autoPos[0] = true;
+            constructView.SetPos(10, 10);
+            constructView.SetSize(-40, -20, 1, 1);
+            constructBg.Register(constructView);
+
+            UIDropDownList<UIText> rewardList = new(panel, constructBg, x =>
+            {
+                UIText text = new(x.text);
+                x.SetPos(10, 5);
+                return text;
+            })
+            { buttonXoffset = 10 };
+
+            rewardList.showArea.SetSize(leftWidth, 30);
+
+            rewardList.expandArea.SetPos(0, 40);
+            rewardList.expandArea.SetSize(leftWidth, 100);
+
+            rewardList.expandView.autoPos[0] = true;
+            rewardList.expandView.Vscroll.canDrag = false;
+
+            foreach (Reward reward in ModContent.GetContent<Reward>())
+            {
+                //var tables = reward.get
+            }
         }
         private void RegisterEditPagePanel()
         {
@@ -1272,7 +1299,7 @@ namespace ProgressSystem.UIEditor
                 }
             };
         }
-        private void RegisterRequireDataPanel(ConstructInfoTable<Requirement> data)
+        private void RegisterRequireDataPanel(ConstructInfoTable<Requirement> data, UIContainerPanel constructView)
         {
             UIVnlPanel constructPanel = new(0, 0);
             constructPanel.Info.SetMargin(10);

@@ -16,6 +16,11 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate
 
     #region 获取奖励
     public virtual bool Received { get; protected set; }
+
+    /// <summary>
+    /// 可否重复获取，多用于属性型奖励
+    /// </summary>
+    public virtual bool Repeatable => false;
     /// <summary>
     /// 获取奖励
     /// </summary>
@@ -111,7 +116,7 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate
         ConstructInfoTable<Achievement>.TryAutoCreate<Requirement>(GetType(), null, out var constructors);
         return constructors;
     }
-    
+
     /// <summary>
     /// 获取对应类型的条件的定义在哪个mod
     /// </summary>
