@@ -491,6 +491,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     {
         State = StateEnum.Locked;
         Requirements.ForeachDo(r => r.Reset());
+        Rewards.ForeachDo(r => r.Reset());
         OnResetStatic?.Invoke(this);
         OnReset?.Invoke();
     }
@@ -505,13 +506,14 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     }
     #endregion
 
-    #region 状态 (完成 / 解锁)
+    #region 状态
     public enum StateEnum
     {
-        Locked,
-        Unlocked,
-        Completed,
-        Closed
+        Disabled = -1,
+        Locked = 0,
+        Unlocked = 1,
+        Completed = 2,
+        Closed = 3
     }
     public StateEnum State { get; protected set; }
     public Func<bool> ReachedStableState;
@@ -618,7 +620,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     #endregion
 
     #region 重复
-    public bool Repeatable;
+    public virtual bool Repeatable { get; set; }
     public virtual void TryRepeat()
     {
         if (!Repeatable && State != StateEnum.Completed)
@@ -631,6 +633,13 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     {
         Reset();
         Start();
+    }
+    #endregion
+
+    #region 禁用
+    public void Disable()
+    {
+        State = StateEnum.Disabled;
     }
     #endregion
 
@@ -724,7 +733,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
             RequirementCountNeeded = tag.GetWithDefault<int>("RequirementCountNeeded");
             PredecessorCountNeeded = tag.GetWithDefaultN<int>("PredecessorCountNeeded");
             tag.GetWithDefault("NeedSubmit", out NeedSubmit);
-            tag.GetWithDefault("Repeatable", out Repeatable);
+            Repeatable = tag.GetWithDefault<bool>("Repeatable");
         });
         this.LoadStaticDataListTemplate(Rewards.GetS, Rewards!.SetFS, "Rewards", tag);
     }
@@ -777,6 +786,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
 
 public static class AchievementStateEnumExtensions
 {
+    public static bool IsDisabled(this Achievement.StateEnum self) => self == Achievement.StateEnum.Disabled;
     public static bool IsLocked(this Achievement.StateEnum self) => self == Achievement.StateEnum.Locked;
     public static bool IsUnlocked(this Achievement.StateEnum self) => self == Achievement.StateEnum.Unlocked;
     public static bool IsCompleted(this Achievement.StateEnum self) => self == Achievement.StateEnum.Completed;

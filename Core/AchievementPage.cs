@@ -60,12 +60,13 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable
     }
     #endregion
 
-    #region 状态 (锁定 / 完成)
+    #region 状态
     public enum StateEnum
     {
-        Locked,
-        Unlocked,
-        Completed
+        Disabled = -1,
+        Locked = 0,
+        Unlocked = 1,
+        Completed = 2
     }
     public StateEnum State { get; protected set; }
 
@@ -175,6 +176,14 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable
         OnCompleteStatic?.Invoke(this);
         OnComplete?.Invoke();
     }
+
+    #region 禁用
+    public void Disable()
+    {
+        State = StateEnum.Disabled;
+    }
+    #endregion
+
     #endregion
 
     #region 初始化与创建一个成就页

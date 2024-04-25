@@ -7,13 +7,7 @@ public class ItemReward(Item item) : Reward
     public override bool Received
     {
         get => leftStack <= 0;
-        protected set
-        {
-            if (value)
-            {
-                leftStack = 0;
-            }
-        }
+        protected set => leftStack = value ? 0 : Item.stack;
     }
     protected Item _item = item;
     public Item Item

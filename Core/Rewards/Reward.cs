@@ -99,6 +99,10 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate
     public virtual void ReceiveMessageFromClient(BinaryReader reader) { }
     #endregion
 
+    public virtual void Reset()
+    {
+        Received = false;
+    }
     public virtual void Initialize(Achievement achievement)
     {
         Achievement = achievement;
