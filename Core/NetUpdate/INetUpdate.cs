@@ -4,64 +4,64 @@ namespace ProgressSystem.Core.NetUpdate;
 
 public interface INetUpdate
 {
-    void WriteMessageFromServer(BinaryWriter writer);
-    void ReceiveMessageFromServer(BinaryReader reader);
-    void WriteMessageFromClient(BinaryWriter writer);
-    void ReceiveMessageFromClient(BinaryReader reader);
+    void WriteMessageFromServer(BinaryWriter writer, BitWriter bitWriter);
+    void ReceiveMessageFromServer(BinaryReader reader, BitReader bitReader);
+    void WriteMessageFromClient(BinaryWriter writer, BitWriter bitWriter);
+    void ReceiveMessageFromClient(BinaryReader reader, BitReader bitReader);
     bool NetUpdate { get; set; }
     IEnumerable<INetUpdate> GetNetUpdateChildren() => [];
 
     /// <summary>
     /// 需要先判断 <see cref="Main.netMode"/> 不为 <see cref="NetmodeID.SinglePlayer"/> 才能使用
     /// </summary>
-    void WriteMessageTree(BinaryWriter writer)
+    void WriteMessageTree(BinaryWriter writer, BitWriter bitWriter)
     {
         if (Main.netMode == NetmodeID.Server)
         {
-            WriteMessageFromServerTree(writer);
+            WriteMessageFromServerTree(writer, bitWriter);
         }
         else
         {
-            WriteMessageFromClient(writer);
+            WriteMessageFromClient(writer, bitWriter);
         }
     }
-    void WriteMessageFromServerTree(BinaryWriter writer)
+    void WriteMessageFromServerTree(BinaryWriter writer, BitWriter bitWriter)
     {
         int index = START_INDEX;
-        WriteMessageFromServerTreeInner(writer, ref index);
+        WriteMessageFromServerTreeInner(writer, bitWriter, ref index);
     }
-    private void WriteMessageFromServerTreeInner(BinaryWriter writer, ref int index)
+    private void WriteMessageFromServerTreeInner(BinaryWriter writer, BitWriter bitWriter, ref int index)
     {
         if (NetUpdate)
         {
             NetUpdate = false;
             writer.Write7BitEncodedInt(index);
-            WriteMessageFromServer(writer);
+            WriteMessageFromServer(writer, bitWriter);
         }
         index += 1;
         foreach (var child in GetNetUpdateChildren())
         {
-            child.WriteMessageFromServerTreeInner(writer, ref index);
+            child.WriteMessageFromServerTreeInner(writer, bitWriter, ref index);
         }
         writer.Write7BitEncodedInt(TO_THE_END);
     }
-    void WriteMessageFromClientTree(BinaryWriter writer)
+    void WriteMessageFromClientTree(BinaryWriter writer, BitWriter bitWriter)
     {
         int index = START_INDEX;
-        WriteMessageFromClientTreeInner(writer, ref index);
+        WriteMessageFromClientTreeInner(writer, bitWriter, ref index);
     }
-    private void WriteMessageFromClientTreeInner(BinaryWriter writer, ref int index)
+    private void WriteMessageFromClientTreeInner(BinaryWriter writer, BitWriter bitWriter, ref int index)
     {
         if (NetUpdate)
         {
             NetUpdate = false;
             writer.Write7BitEncodedInt(index);
-            WriteMessageFromClient(writer);
+            WriteMessageFromClient(writer, bitWriter);
         }
         index += 1;
         foreach (var child in GetNetUpdateChildren())
         {
-            child.WriteMessageFromClientTreeInner(writer, ref index);
+            child.WriteMessageFromClientTreeInner(writer, bitWriter, ref index);
         }
         writer.Write7BitEncodedInt(TO_THE_END);
     }
@@ -69,24 +69,24 @@ public interface INetUpdate
     /// <summary>
     /// 需要先判断 <see cref="Main.netMode"/> 不为 <see cref="NetmodeID.SinglePlayer"/> 才能使用
     /// </summary>
-    void ReceiveMessageTree(BinaryReader reader)
+    void ReceiveMessageTree(BinaryReader reader, BitReader bitReader)
     {
         if (Main.netMode == NetmodeID.MultiplayerClient)
         {
-            ReceiveMessageFromServerTree(reader);
+            ReceiveMessageFromServerTree(reader, bitReader);
         }
         else
         {
-            ReceiveMessageFromClientTree(reader);
+            ReceiveMessageFromClientTree(reader, bitReader);
         }
     }
-    void ReceiveMessageFromServerTree(BinaryReader reader)
+    void ReceiveMessageFromServerTree(BinaryReader reader, BitReader bitReader)
     {
         int index = START_INDEX;
         int readIndex = reader.Read7BitEncodedInt();
-        ReceiveMessageFromServerTreeInner(reader, ref index, ref readIndex);
+        ReceiveMessageFromServerTreeInner(reader, bitReader, ref index, ref readIndex);
     }
-    private void ReceiveMessageFromServerTreeInner(BinaryReader reader, ref int index, ref int readIndex)
+    private void ReceiveMessageFromServerTreeInner(BinaryReader reader, BitReader bitReader, ref int index, ref int readIndex)
     {
         if (readIndex == TO_THE_END)
         {
@@ -94,7 +94,7 @@ public interface INetUpdate
         }
         if (readIndex == index)
         {
-            ReceiveMessageFromServer(reader);
+            ReceiveMessageFromServer(reader, bitReader);
             readIndex = reader.Read7BitEncodedInt();
             if (readIndex == TO_THE_END)
             {
@@ -104,16 +104,16 @@ public interface INetUpdate
         index += 1;
         foreach (var child in GetNetUpdateChildren())
         {
-            child.ReceiveMessageFromServerTreeInner(reader, ref index, ref readIndex);
+            child.ReceiveMessageFromServerTreeInner(reader, bitReader, ref index, ref readIndex);
         }
     }
-    void ReceiveMessageFromClientTree(BinaryReader reader)
+    void ReceiveMessageFromClientTree(BinaryReader reader, BitReader bitReader)
     {
         int index = START_INDEX;
         int readIndex = reader.Read7BitEncodedInt();
-        ReceiveMessageFromClientTreeInner(reader, ref index, ref readIndex);
+        ReceiveMessageFromClientTreeInner(reader, bitReader, ref index, ref readIndex);
     }
-    private void ReceiveMessageFromClientTreeInner(BinaryReader reader, ref int index, ref int readIndex)
+    private void ReceiveMessageFromClientTreeInner(BinaryReader reader, BitReader bitReader, ref int index, ref int readIndex)
     {
         if (readIndex == TO_THE_END)
         {
@@ -121,7 +121,7 @@ public interface INetUpdate
         }
         if (readIndex == index)
         {
-            ReceiveMessageFromClient(reader);
+            ReceiveMessageFromClient(reader, bitReader);
             readIndex = reader.Read7BitEncodedInt();
             if (readIndex == TO_THE_END)
             {
@@ -131,7 +131,7 @@ public interface INetUpdate
         index += 1;
         foreach (var child in GetNetUpdateChildren())
         {
-            child.ReceiveMessageFromClientTreeInner(reader, ref index, ref readIndex);
+            child.ReceiveMessageFromClientTreeInner(reader, bitReader, ref index, ref readIndex);
         }
     }
 

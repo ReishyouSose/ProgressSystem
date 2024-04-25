@@ -19,12 +19,18 @@ public static class NetHandler
     {
         var packet = ModInstance.GetPacket();
         WriteMessageID(packet, AchievementMessageID.ManagerNetUpdate);
-        ((INetUpdate)AchievementManager.Instance).WriteMessageTree(packet);
+        using MemoryStream stream = new();
+        using BinaryWriter writer = new(stream);
+        BitWriter bitWriter = new();
+        ((INetUpdate)AchievementManager.Instance).WriteMessageTree(writer, bitWriter);
+        bitWriter.Flush(packet);
+        packet.Write(stream.ToArray());
         packet.Send();
     }
     public static void HandleManagerNetUpdate(BinaryReader reader, int whoAmI)
     {
-        ((INetUpdate)AchievementManager.Instance).ReceiveMessageTree(reader);
+        BitReader bitReader = new(reader);
+        ((INetUpdate)AchievementManager.Instance).ReceiveMessageTree(reader, bitReader);
     }
     public static void TryShowPlayerCompleteMessage(Achievement achievement, bool handle = false, int whoAmI = -1)
     {

@@ -1,6 +1,5 @@
 ﻿using ProgressSystem.Configs;
 using ProgressSystem.Core.NetUpdate;
-using ProgressSystem.Core.Requirements;
 using ProgressSystem.Core.Requirements.ItemRequirements;
 using ProgressSystem.Core.Requirements.MiscRequirements;
 using ProgressSystem.Core.Requirements.NPCRequirements;
@@ -195,10 +194,10 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgr
     public static bool NeedNetUpdate { get; private set; }
     public static void SetNeedNetUpdate() => NeedNetUpdate = true;
     public bool NetUpdate { get; set; }
-    public void WriteMessageFromServer(BinaryWriter writer) { }
-    public void ReceiveMessageFromServer(BinaryReader reader) { }
-    public void WriteMessageFromClient(BinaryWriter writer) { }
-    public void ReceiveMessageFromClient(BinaryReader reader) { }
+    public void WriteMessageFromServer(BinaryWriter writer, BitWriter bitWriter) { }
+    public void ReceiveMessageFromServer(BinaryReader reader, BitReader bitReader) { }
+    public void WriteMessageFromClient(BinaryWriter writer, BitWriter bitWriter) { }
+    public void ReceiveMessageFromClient(BinaryReader reader, BitReader bitReader) { }
     public IEnumerable<INetUpdate> GetNetUpdateChildren() => Pages.Values;
     /// <summary>
     /// 由大到小缩减

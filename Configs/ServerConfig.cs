@@ -12,7 +12,7 @@ public class ServerConfig : ModConfig
         Instance = this;
     }
 
-    [Range(0, 600), DefaultValue(2)]
+    [Range(0, 600), DefaultValue(59)]
     public int NetUpdateFrequency { get => netUpdateFrequency.WithMin(0); set => netUpdateFrequency = value; }
     private int netUpdateFrequency;
 

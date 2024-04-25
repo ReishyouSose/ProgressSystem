@@ -32,25 +32,37 @@ public abstract class ItemWorldRequirement : ItemRequirement
             NetUpdate = true;
         }
     }
-    public override void WriteMessageFromServer(BinaryWriter writer)
+    public override void WriteMessageFromServer(BinaryWriter writer, BitWriter bitWriter)
     {
-        base.WriteMessageFromServer(writer);
-        writer.Write7BitEncodedInt(CountNow);
+        base.WriteMessageFromServer(writer, bitWriter);
+        bool completed = Completed;
+        bitWriter.WriteBit(completed);
+        if (!completed)
+        {
+            writer.Write7BitEncodedInt(CountNow);
+        }
     }
-    public override void ReceiveMessageFromServer(BinaryReader reader)
+    public override void ReceiveMessageFromServer(BinaryReader reader, BitReader bitReader)
     {
-        base.ReceiveMessageFromServer(reader);
-        CountNow = reader.Read7BitEncodedInt();
+        base.ReceiveMessageFromServer(reader, bitReader);
+        if (bitReader.ReadBit())
+        {
+            Completed = true;
+        }
+        else
+        {
+            CountNow = reader.Read7BitEncodedInt();
+        }
     }
-    public override void WriteMessageFromClient(BinaryWriter writer)
+    public override void WriteMessageFromClient(BinaryWriter writer, BitWriter bitWriter)
     {
-        base.WriteMessageFromClient(writer);
+        base.WriteMessageFromClient(writer, bitWriter);
         writer.Write7BitEncodedInt(countToAdd);
         countToAdd = 0;
     }
-    public override void ReceiveMessageFromClient(BinaryReader reader)
+    public override void ReceiveMessageFromClient(BinaryReader reader, BitReader bitReader)
     {
-        base.ReceiveMessageFromClient(reader);
+        base.ReceiveMessageFromClient(reader, bitReader);
         int cta = reader.Read7BitEncodedInt();
         if (cta > 0)
         {

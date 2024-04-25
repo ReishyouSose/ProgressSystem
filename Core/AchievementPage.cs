@@ -402,10 +402,10 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable
     protected bool _netUpdate;
     public bool NetUpdate { get => _netUpdate; set => DoIf(_netUpdate = value, AchievementManager.SetNeedNetUpdate); }
     public IEnumerable<INetUpdate> GetNetUpdateChildren() => Achievements.Values;
-    public virtual void WriteMessageFromServer(BinaryWriter writer) { }
-    public virtual void ReceiveMessageFromServer(BinaryReader reader) { }
-    public virtual void WriteMessageFromClient(BinaryWriter writer) { }
-    public virtual void ReceiveMessageFromClient(BinaryReader reader) { }
+    public virtual void WriteMessageFromServer(BinaryWriter writer, BitWriter bitWriter) { }
+    public virtual void ReceiveMessageFromServer(BinaryReader reader, BitReader bitReader) { }
+    public virtual void WriteMessageFromClient(BinaryWriter writer, BitWriter bitWriter) { }
+    public virtual void ReceiveMessageFromClient(BinaryReader reader, BitReader bitReader) { }
     #endregion
 
     #region 进度
