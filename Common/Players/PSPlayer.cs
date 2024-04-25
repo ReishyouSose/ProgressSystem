@@ -19,28 +19,6 @@ namespace ProgressSystem.Common.Players
         {
             Instance = this;
         }
-        public override void SaveData(TagCompound tag)
-        {
-            tag.SetWithDefault("MaxLife", maxLife);
-            tag.SetWithDefault("MaxMana", maxMana);
-            tag.SetWithDefault("Defense", defense);
-            tag.SetWithDefault("MoveSpeed", moveSpeed);
-            tag.SetWithDefault("MoveAccel", moveAccel);
-            tag.SetWithDefault("Damage", damage);
-            tag.SetWithDefault("Endurance", endurance);
-            tag.SetWithDefault("Crit", crit);
-        }
-        public override void LoadData(TagCompound tag)
-        {
-            tag.GetWithDefault("MaxLife", out maxLife);
-            tag.GetWithDefault("MaxMana", out maxMana);
-            tag.GetWithDefault("Defense", out defense);
-            tag.GetWithDefault("MoveSpeed", out moveSpeed);
-            tag.GetWithDefault("MoveAccel", out moveAccel);
-            tag.GetWithDefault("Damage", out damage);
-            tag.GetWithDefault("Endurance", out endurance);
-            tag.GetWithDefault("Crit", out crit);
-        }
 
         public override void ProcessTriggers(TriggersSet triggersSet)
         {

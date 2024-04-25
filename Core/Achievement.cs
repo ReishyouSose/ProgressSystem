@@ -501,6 +501,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     {
         CheckState();
         Requirements.ForeachDo(r => r.Start());
+        Rewards.ForeachDo(r => r.Start());
         OnStartStatic?.Invoke(this);
         OnStart?.Invoke();
     }

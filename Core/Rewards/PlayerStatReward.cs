@@ -12,7 +12,13 @@ namespace ProgressSystem.Core.Rewards
         public float damage;
         public float endurance;
         public int crit;
-
+        public override void Start()
+        {
+            if (Received)
+            {
+                Receive();
+            }
+        }
         protected override bool Receive()
         {
             var psPlayer = PSPlayer.Instance;
