@@ -371,7 +371,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     public virtual bool GetAllReward()
     {
         bool result = true;
-        Rewards.ForeachDo(r => result &= r.Receive());
+        Rewards.ForeachDo(r => result &= r.ReceiveSafe());
         OnGetAllReward?.Invoke(result);
         return result;
     }

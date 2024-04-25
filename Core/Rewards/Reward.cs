@@ -23,15 +23,18 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate
     #region 获取奖励
     public virtual bool Received { get; protected set; }
 
-    /// <summary>
-    /// 可否重复获取，多用于属性型奖励
-    /// </summary>
+    [Obsolete($"是否可重复获取取决于成就是否可重复  (见 Achievement.Repeatable)", true)]
     public virtual bool Repeatable => false;
     /// <summary>
     /// 获取奖励
     /// </summary>
     /// <returns>是否全部获取</returns>
-    public abstract bool Receive();
+    public bool ReceiveSafe() => Received || (Received = Receive());
+    /// <summary>
+    /// 获取奖励
+    /// </summary>
+    /// <returns>是否全部获取</returns>
+    protected abstract bool Receive();
     #endregion
 
     #region 数据存取

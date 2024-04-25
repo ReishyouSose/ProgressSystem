@@ -36,7 +36,7 @@ public class ItemReward(Item item) : Reward
     protected ItemReward() : this(new(0, 1)) { }
     public ItemReward(int itemType, int stack = 1) : this(new(itemType, stack)) { }
 
-    public override bool Receive()
+    protected override bool Receive()
     {
         if (leftStack <= 0)
         {

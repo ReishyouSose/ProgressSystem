@@ -1,11 +1,9 @@
-﻿using ProgressSystem.System;
+﻿using ProgressSystem.Common.Players;
 
 namespace ProgressSystem.Core.Rewards
 {
     public class PlayerStatReward : Reward
     {
-        public static PSPlayer PSPlayer => PSPlayer.Instance;
-        public override bool Repeatable => true;
         public int maxLife;
         public int maxMana;
         public int defense;
@@ -15,16 +13,21 @@ namespace ProgressSystem.Core.Rewards
         public float endurance;
         public int crit;
 
-        public override bool Receive()
+        protected override bool Receive()
         {
-            PSPlayer.maxLife += maxLife;
-            PSPlayer.maxMana += maxMana;
-            PSPlayer.defense += defense;
-            PSPlayer.moveSpeed += moveSpeed;
-            PSPlayer.moveAccel += moveAccel;
-            PSPlayer.damage += damage;
-            PSPlayer.endurance += endurance;
-            PSPlayer.crit += crit;
+            var psPlayer = PSPlayer.Instance;
+            if (psPlayer == null || !psPlayer.Player.active)
+            {
+                return false;
+            }
+            psPlayer.maxLife += maxLife;
+            psPlayer.maxMana += maxMana;
+            psPlayer.defense += defense;
+            psPlayer.moveSpeed += moveSpeed;
+            psPlayer.moveAccel += moveAccel;
+            psPlayer.damage += damage;
+            psPlayer.endurance += endurance;
+            psPlayer.crit += crit;
             return true;
         }
     }
