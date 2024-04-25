@@ -99,6 +99,7 @@ Achievements: {
 Rewards: {
 	EmptyReward.DisplayName: Empty Reward
 	ItemReward.DisplayName: Receive {0}
+	PlayerStatReward.DisplayName: Mods.ProgressSystem.Rewards.PlayerStatReward.DisplayName
 }
 
 Configs: {

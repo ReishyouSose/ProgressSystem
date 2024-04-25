@@ -1,4 +1,5 @@
-﻿using ProgressSystem.Core.NetUpdate;
+﻿using ProgressSystem.Core.Interfaces;
+using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.StaticData;
 using System.IO;
 using Terraria.Localization;
@@ -9,7 +10,7 @@ namespace ProgressSystem.Core.Requirements;
 /// <br/>达成成就所需的条件
 /// <br/>继承它的非抽象类需要有一个无参构造 (用以读取静态数据)
 /// </summary>
-public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IProgressable
+public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IProgressable, IAchievementNode
 {
     public Achievement Achievement = null!;
     public TextGetter DisplayName;

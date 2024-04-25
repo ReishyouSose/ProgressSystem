@@ -1,4 +1,5 @@
-﻿using ProgressSystem.Core.NetUpdate;
+﻿using ProgressSystem.Core.Interfaces;
+using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.StaticData;
 
 namespace ProgressSystem.Core.Requirements;
@@ -24,16 +25,13 @@ public class CombineRequirement : Requirement
             Requirements.AddRange(requirements);
         }
     }
-    public override void Reset()
-    {
-        base.Reset();
-        Requirements.ForeachDo(r => r.Reset());
-    }
     public override void Initialize(Achievement achievement)
     {
         base.Initialize(achievement);
         Requirements.AddOnAddAndDo(r => r.Initialize(achievement));
     }
+
+    public IEnumerable<IAchievementNode> NodeChildren => Requirements;
 
     #region 数据存取
     public override void SaveDataInPlayer(TagCompound tag)

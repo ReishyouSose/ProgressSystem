@@ -248,7 +248,7 @@ namespace ProgressSystem.UIEditor
             condition.Events.OnLeftDown += evt => SwitchPanel(1);
             editBg.Register(condition);
 
-            UIImage reward = new(RUIHelper.T2D(path + "reward")) { hoverText = "奖励设置" };
+            UIImage reward = new(RUIHelper.T2D(path + "Reward")) { hoverText = "奖励设置" };
             reward.SetPos(-22, 64, 1);
             reward.Events.OnLeftDown += evt => SwitchPanel(2);
             editBg.Register(reward);
@@ -259,7 +259,7 @@ namespace ProgressSystem.UIEditor
             //TODO: 分开注册基础、条件、奖励面板
             RegisterBaseInfoPanel(editPanels[0]);
             RegisterConditionPanel(editPanels[1]);
-            RegisterRewardPanle(editPanels[2]);
+            RegisterRewardPanel(editPanels[2]);
         }
         private void RegisterBaseInfoPanel(BaseUIElement panel)
         {
@@ -682,7 +682,7 @@ namespace ProgressSystem.UIEditor
             }
             constructList.ChangeShowElement(0);
         }
-        private void RegisterRewardPanle(BaseUIElement panel)
+        private void RegisterRewardPanel(BaseUIElement panel)
         {
             int leftWidth = 150;
             UIVnlPanel constructBg = new(0, 0);
@@ -712,7 +712,7 @@ namespace ProgressSystem.UIEditor
             constructList.expandView.autoPos[0] = true;
             constructList.expandView.Vscroll.canDrag = false;
 
-            string end = "reward";
+            string end = "Reward";
             int len = end.Length;
 
             foreach (Reward reward in ModContent.GetContent<Reward>())
@@ -737,6 +737,9 @@ namespace ProgressSystem.UIEditor
                 constructList.AddElement(rewardType);
                 constructList.ChangeShowElement(0);
             }
+
+            // TODO
+            rewardView = new();
         }
         private void RegisterEditPagePanel()
         {

@@ -1,4 +1,5 @@
 ﻿using ProgressSystem.Configs;
+using ProgressSystem.Core.Interfaces;
 using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.Requirements.ItemRequirements;
 using ProgressSystem.Core.Requirements.MiscRequirements;
@@ -15,7 +16,7 @@ namespace ProgressSystem.Core;
 /// <summary>
 /// 储存并管理所有的成就
 /// </summary>
-public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgressable
+public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgressable, IAchievementNode
 {
     public static AchievementManager Instance { get; set; } = null!;
     public static int GeneralTimer { get; private set; }
@@ -263,25 +264,20 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgr
     /// 在 <see cref="ModPlayer.OnEnterWorld"/> 中调用
     /// 此时玩家的和世界的数据都已加载完毕
     /// </summary>
-    public static void Start()
-    {
-        Pages.Values.ForeachDo(p => p.Start());
-    }
+    public static void StartTree() => IAchievementNodeHelper.StartTree(Instance);
     /// <summary>
     /// 重置所有的成就数据,
     /// 一般在世界卸载时使用
     /// </summary>
-    public static void Reset()
-    {
-        Pages.Values.ForeachDo(p => p.Reset());
-    }
+    public static void ResetTree() => IAchievementNodeHelper.ResetTree(Instance);
+    public IEnumerable<IAchievementNode> NodeChildren => Pages.Values;
     /// <summary>
     /// 在游戏中调用, 重置所有成就的进度
     /// </summary>
     public static void Restart()
     {
-        Reset();
-        Start();
+        ResetTree();
+        StartTree();
     }
     #endregion
 
@@ -298,7 +294,7 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgr
     public override void OnWorldUnload()
     {
         // 在 SaveWorldData 后执行
-        Reset();
+        ResetTree();
     }
     #endregion
 
@@ -334,7 +330,7 @@ public class AchievementPlayerManager : ModPlayer
         {
             LoadDataOnEnterWorld(loadedData);
         }
-        AchievementManager.Start();
+        AchievementManager.StartTree();
     }
     /// <summary>
     /// 同<see cref="AchievementManager.Pages"/>

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ProgressSystem.Core;
+namespace ProgressSystem.Core.Interfaces;
 
 public interface IProgressable
 {

@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework.Graphics;
+using ProgressSystem.Core.Interfaces;
 using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.Requirements;
 using ProgressSystem.Core.Rewards;
@@ -15,7 +16,7 @@ namespace ProgressSystem.Core;
 /// <br/>修改的数据是它本身的数据时才设置, 如设置了条件但成就原来就存在的话
 /// <br/>就不需要设置 <see cref="ShouldSaveStaticData"/>, 而只需要设置条件的就好
 /// </summary>
-public class Achievement : IWithStaticData, INetUpdate, IProgressable
+public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievementNode
 {
     #region 不会在正常游玩时改变的 字段 / 属性
     /// <summary>
@@ -485,13 +486,12 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     #endregion
 
     #region 重置与开始
+    public IEnumerable<IAchievementNode> NodeChildren => Requirements.Concat<IAchievementNode>(Rewards);
     public static event Action<Achievement>? OnResetStatic;
     public event Action? OnReset;
     public virtual void Reset()
     {
         State = StateEnum.Locked;
-        Requirements.ForeachDo(r => r.Reset());
-        Rewards.ForeachDo(r => r.Reset());
         OnResetStatic?.Invoke(this);
         OnReset?.Invoke();
     }
@@ -500,8 +500,6 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     public virtual void Start()
     {
         CheckState();
-        Requirements.ForeachDo(r => r.Start());
-        Rewards.ForeachDo(r => r.Start());
         OnStartStatic?.Invoke(this);
         OnStart?.Invoke();
     }
@@ -630,10 +628,13 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
         }
         RepeatSafe();
     }
+    public bool InRepeat;
     public virtual void RepeatSafe()
     {
-        Reset();
-        Start();
+        InRepeat = true;
+        ((IAchievementNode)this).ResetTree();
+        ((IAchievementNode)this).StartTree();
+        InRepeat = false;
     }
     #endregion
 
