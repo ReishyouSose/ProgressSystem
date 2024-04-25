@@ -512,7 +512,7 @@ namespace ProgressSystem.UIEditor
             addCombineBg.SetSize(-leftWidth - 10, 30, 1);
             panel.Register(addCombineBg);
 
-            UIText addCombine = new("添加组合条件") { hoverText = "默认需求一个" };
+            UIText addCombine = new("添加组合需求") { hoverText = "默认需求一个" };
             addCombine.SetSize(addCombine.TextSize);
             addCombine.SetCenter(0, 5, 0.5f, 0.5f);
             addCombine.HoverToGold();
