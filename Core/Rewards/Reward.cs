@@ -1,11 +1,12 @@
-﻿using ProgressSystem.Core.NetUpdate;
+﻿using ProgressSystem.Core.Interfaces;
+using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.StaticData;
 using System.IO;
 using Terraria.Localization;
 
 namespace ProgressSystem.Core.Rewards;
 
-public abstract class Reward : ILoadable, IWithStaticData, INetUpdate
+public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievementNode
 {
     public Achievement Achievement = null!;
     public TextGetter DisplayName;
@@ -22,9 +23,7 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate
 
     #region 获取奖励
     public virtual bool Received { get; protected set; }
-
-    [Obsolete($"是否可重复获取取决于成就是否可重复  (见 Achievement.Repeatable)", true)]
-    public virtual bool Repeatable => false;
+    
     /// <summary>
     /// 获取奖励
     /// </summary>
@@ -100,6 +99,14 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate
     #endregion
 
     #region 重置与开始
+    public bool Repeatable { get; set; } = true;
+    void IAchievementNode.Reset()
+    {
+        if (Repeatable || !Achievement.InRepeat)
+        {
+            Reset();
+        }
+    }
     public virtual void Reset()
     {
         Received = false;

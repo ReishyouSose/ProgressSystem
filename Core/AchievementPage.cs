@@ -1,4 +1,5 @@
-﻿using ProgressSystem.Core.NetUpdate;
+﻿using ProgressSystem.Core.Interfaces;
+using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.StaticData;
 using System.IO;
 
@@ -8,7 +9,7 @@ namespace ProgressSystem.Core;
 /// 成就页
 /// 代表一个显示多个成就的界面
 /// </summary>
-public class AchievementPage : IWithStaticData, INetUpdate, IProgressable
+public class AchievementPage : IWithStaticData, INetUpdate, IProgressable, IAchievementNode
 {
     #region Vars
     public Mod Mod = null!;
@@ -38,14 +39,11 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable
     #endregion
 
     #region 重置与开始
+    public IEnumerable<IAchievementNode> NodeChildren => Achievements.Values;
     public static event Action<AchievementPage>? OnResetStatic;
     public event Action? OnReset;
-    /// <summary>
-    /// 在初始化时就会调用一次
-    /// </summary>
     public virtual void Reset()
     {
-        Achievements.Values.ForeachDo(a => a.Reset());
         OnResetStatic?.Invoke(this);
         OnReset?.Invoke();
     }
@@ -54,7 +52,6 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable
     public virtual void Start()
     {
         CheckState();
-        Achievements.Values.ForeachDo(a => a.Start());
         OnStartStatic?.Invoke(this);
         OnStart?.Invoke();
     }
@@ -89,18 +86,12 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable
     /// </summary>
     public Func<bool> UnlockCondition;
     public static bool DefaultUnlockCondition() => true;
-    public void InitializeStateToUnlock()
-    {
-        State = StateEnum.Unlocked;
-        OnReset += () => State = StateEnum.Unlocked;
-    }
 
     /// <summary>
     /// 将解锁条件设置为所有的前置页已完成
     /// </summary>
     public void SetPredecessorsOfAllComplete(IEnumerable<AchievementPage> pages)
     {
-        InitializeStateToUnlock();
         UnlockCondition = () => pages.All(p => p.State == StateEnum.Completed);
         pages.ForeachDo(p => p.OnComplete += TryUnlock);
         OnUnlock += () => pages.ForeachDo(p => p.OnComplete -= TryUnlock);
@@ -110,7 +101,6 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable
     /// </summary>
     public void SetPredecessorsOfAnyComplete(IEnumerable<AchievementPage> pages)
     {
-        InitializeStateToUnlock();
         UnlockCondition = () => pages.Any(p => p.State == StateEnum.Completed);
         pages.ForeachDo(p => p.OnComplete += UnlockSafe);
         OnUnlock += () => pages.ForeachDo(p => p.OnComplete -= TryUnlock);
@@ -120,7 +110,6 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable
     /// </summary>
     public void SetPredecessorComplete(AchievementPage page)
     {
-        InitializeStateToUnlock();
         UnlockCondition = () => page.State == StateEnum.Completed;
         page.OnComplete += TryUnlock;
         OnUnlock += () => page.OnComplete -= TryUnlock;
@@ -225,7 +214,6 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable
         }
         AchievementPage result = new(mod, name);
         AchievementManager.AddPage(result);
-        result.Reset();
         return result;
     }
 

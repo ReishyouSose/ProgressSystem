@@ -4,6 +4,7 @@ public class EmptyRequirement : Requirement
 {
     public EmptyRequirement() : base() {
         Texture = Texture2DGetter.Default;
+        Completed = true;
     }
     public override void Reset()
     {
