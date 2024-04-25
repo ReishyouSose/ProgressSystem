@@ -4,7 +4,6 @@ using ProgressSystem.Core.Requirements;
 using ProgressSystem.Core.Rewards;
 using ProgressSystem.Core.StaticData;
 using System.IO;
-using Terraria.Localization;
 
 namespace ProgressSystem.Core;
 
@@ -153,7 +152,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
                     Modular(AchievementManager.GeneralTimer, Requirements.Count * rollTime.Value) / rollTime.Value
                 ].SourceRect
             : null;
-                
+
     }
     public bool UseRollingRequirementTexture
     {
@@ -171,7 +170,8 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     public int? UseRequirementTextureRollTime
     {
         get => _useRequirementTextureRollTime;
-        set {
+        set
+        {
             if (value == _useRequirementTextureRollTime)
             {
                 return;
@@ -329,14 +329,6 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
     /// 条件
     /// </summary>
     public RequirementList Requirements = null!;
-
-    /// <summary>
-    /// <br/>需要多少个条件才能完成此成就
-    /// <br/>默认 0 代表需要所有条件完成
-    /// <br/>如果此值大于条件数, 那么以条件数为准
-    /// <br/>例如 1 代表只需要任意条件完成即可
-    /// </summary>
-    public int RequirementCountNeeded;
 
     #region 提交
     public bool NeedSubmit;
@@ -563,13 +555,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
 
     #region 完成
     public Func<bool> CompleteCondition;
-    public bool DefaultCompleteCondition()
-    {
-        return (!NeedSubmit || InSubmitting) &&
-            (RequirementCountNeeded == 0 || RequirementCountNeeded >= Requirements.Count ?
-            Requirements.All(r => r.Completed) :
-            Requirements.Sum(r => r.Completed.ToInt()) >= RequirementCountNeeded);
-    }
+    public bool DefaultCompleteCondition() => (!NeedSubmit || InSubmitting) && Requirements.All(r => r.Completed);
 
     public static event Action<Achievement>? OnCompleteStatic;
     public event Action? OnComplete;
@@ -687,7 +673,6 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
             tag.SetWithDefaultN("Position", Position);
             tag.SetWithDefaultN("UseRequirementTextureIndex", UseRequirementTextureIndex);
             tag.SetWithDefaultN("UseRequirementTextureRollTime", UseRequirementTextureRollTime);
-            tag.SetWithDefault("RequirementCountNeeded", RequirementCountNeeded);
             tag.SetWithDefaultN("PredecessorCountNeeded", PredecessorCountNeeded);
             tag.SetWithDefault("NeedSubmit", NeedSubmit);
             tag.SetWithDefault("Repeatable", Repeatable);
@@ -731,7 +716,6 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable
             Position = tag.GetWithDefaultN<Vector2>("Position");
             UseRequirementTextureIndex = tag.GetWithDefaultN<int>("UseRequirementTextureIndex");
             UseRequirementTextureRollTime = tag.GetWithDefaultN<int>("UseRequirementTextureRollTime");
-            RequirementCountNeeded = tag.GetWithDefault<int>("RequirementCountNeeded");
             PredecessorCountNeeded = tag.GetWithDefaultN<int>("PredecessorCountNeeded");
             tag.GetWithDefault("NeedSubmit", out NeedSubmit);
             Repeatable = tag.GetWithDefault<bool>("Repeatable");

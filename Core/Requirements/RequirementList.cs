@@ -4,6 +4,7 @@ namespace ProgressSystem.Core.Requirements;
 
 public class RequirementList : IList<Requirement>, IReadOnlyList<Requirement>
 {
+    public CombineRequirement Parent { get; init; }
     private readonly List<Requirement> data;
 
     public event Action<Requirement>? OnAdd;

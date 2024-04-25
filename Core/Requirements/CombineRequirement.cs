@@ -6,14 +6,24 @@ namespace ProgressSystem.Core.Requirements;
 public class CombineRequirement : Requirement
 {
     public RequirementList Requirements;
+    private int needCount;
 
-    public int needCount;
-    public CombineRequirement() : base() {
-        Requirements = new(null, r => r.OnComplete += ElementComplete, r => r.OnComplete -= ElementComplete);
+    public int NeedCount
+    {
+        get => needCount;
+        set => needCount = Math.Max(value, 1);
+    }
+    public CombineRequirement() : base()
+    {
+        Requirements = new(null, r => r.OnComplete += ElementComplete, r => r.OnComplete -= ElementComplete)
+        {
+            Parent = this
+        };
     }
 
-    public CombineRequirement(int count) : this() {
-        needCount = count;
+    public CombineRequirement(int count) : this()
+    {
+        NeedCount = count;
     }
 
     [SpecializeAutoConstruct(Disabled = true)]
@@ -41,7 +51,7 @@ public class CombineRequirement : Requirement
         base.SaveDataInPlayer(tag);
         if (ShouldSaveStaticData)
         {
-            tag.SetWithDefault("Count", needCount);
+            tag.SetWithDefault("Count", NeedCount);
         }
         tag.SaveListData("Requirements", Requirements, (r, t) => r.SaveDataInPlayer(t));
     }
@@ -108,7 +118,7 @@ public class CombineRequirement : Requirement
 
     protected void ElementComplete()
     {
-        if (Requirements.Sum(r => r.Completed.ToInt()) >= needCount)
+        if (Requirements.Sum(r => r.Completed.ToInt()) >= NeedCount)
         {
             CompleteSafe();
         }

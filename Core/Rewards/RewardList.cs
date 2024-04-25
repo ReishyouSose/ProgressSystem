@@ -4,6 +4,7 @@ namespace ProgressSystem.Core.Rewards;
 
 public class RewardList : IList<Reward>, IReadOnlyList<Reward>
 {
+    public CombineReward Parent { get; init; }
     private Achievement? Achievement;
 
     private readonly List<Reward> data;

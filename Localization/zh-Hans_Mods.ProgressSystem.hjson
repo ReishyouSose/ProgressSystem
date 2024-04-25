@@ -99,6 +99,8 @@ Achievements: {
 Rewards: {
 	EmptyReward.DisplayName: 空条件
 	ItemReward.DisplayName: 获得{0}
+	// CombineReward.DisplayName: Mods.ProgressSystem.Rewards.CombineReward.DisplayName
+	// PlayerStatReward.DisplayName: Mods.ProgressSystem.Rewards.PlayerStatReward.DisplayName
 }
 
 Configs: {

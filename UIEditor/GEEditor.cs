@@ -49,7 +49,7 @@ namespace ProgressSystem.UIEditor
         /// <summary>
         /// 已添加的条件视区
         /// </summary>
-        private UIContainerPanel conditionView;
+        private UIContainerPanel requireView;
         private UIContainerPanel rewardView;
         private UIVnlPanel editPanel;
         private UIVnlPanel pagePanel;
@@ -57,9 +57,15 @@ namespace ProgressSystem.UIEditor
         private UIInputBox achNameInputer;
         private UIInputBox savePathInputer;
         private UIText submit;
-        private UIText cdsCount;
         private UIText preCount;
-        private UIText combineCount;
+        /// <summary>
+        /// require组合需求数文本
+        /// </summary>
+        private UIText rqsNeedCount;
+        /// <summary>
+        /// Reward组合可选数文本
+        /// </summary>
+        private UIText rwsSelectCount;
 
         private UIDropDownList<UIText> pageList;
         /// <summary>
@@ -73,7 +79,7 @@ namespace ProgressSystem.UIEditor
         private UIAchSlot preSetting;
         private string editingAchName;
         private RequirementList? editingRequires;
-        private CombineRequirement? editingCombine;
+        private RewardList? editingRewards;
         private Dictionary<string, UIAchSlot> slotByFullName;
         private AchievementPage? EditingPage => AchievementManager.PagesByMod.TryGetValue(editingMod, out var pages)
                     && pages.TryGetValue(editingPage, out var page) ? page : null;
@@ -243,12 +249,12 @@ namespace ProgressSystem.UIEditor
             baseInfo.Events.OnLeftDown += evt => SwitchPanel(0);
             editBg.Register(baseInfo);
 
-            UIImage condition = new(RUIHelper.T2D(path + "Condition")) { hoverText = "条件设置" };
-            condition.SetPos(-22, 32, 1);
-            condition.Events.OnLeftDown += evt => SwitchPanel(1);
-            editBg.Register(condition);
+            UIImage require = new(RUIHelper.T2D(path + "Require")) { hoverText = "需求设置" };
+            require.SetPos(-22, 32, 1);
+            require.Events.OnLeftDown += evt => SwitchPanel(1);
+            editBg.Register(require);
 
-            UIImage reward = new(RUIHelper.T2D(path + "reward")) { hoverText = "奖励设置" };
+            UIImage reward = new(RUIHelper.T2D(path + "Reward")) { hoverText = "奖励设置" };
             reward.SetPos(-22, 64, 1);
             reward.Events.OnLeftDown += evt => SwitchPanel(2);
             editBg.Register(reward);
@@ -258,7 +264,7 @@ namespace ProgressSystem.UIEditor
 
             //TODO: 分开注册基础、条件、奖励面板
             RegisterBaseInfoPanel(editPanels[0]);
-            RegisterConditionPanel(editPanels[1]);
+            RegisterRequirePanel(editPanels[1]);
             RegisterRewardPanle(editPanels[2]);
         }
         private void RegisterBaseInfoPanel(BaseUIElement panel)
@@ -431,58 +437,8 @@ namespace ProgressSystem.UIEditor
                 ChangeSaveState(false);
             };
             preNeedCountBg.Register(preDecrease);
-
-            UIVnlPanel cdsNeedCountBg = new(0, 0);
-            cdsNeedCountBg.SetPos(0, y);
-            cdsNeedCountBg.SetSize(0, 30, 1);
-            panel.Register(cdsNeedCountBg);
-
-            UIText cdsNeedCount = new("达成条件需求量");
-            cdsNeedCount.SetPos(10, 5);
-            cdsNeedCount.SetSize(cdsNeedCount.TextSize);
-            cdsNeedCountBg.Register(cdsNeedCount);
-
-            left = 0;
-            UIImage cdsIncrease = new(AssetLoader.Increase);
-            cdsIncrease.Info.Left.Set(-30, 1);
-            cdsIncrease.Info.Top.Pixel = 5;
-            cdsIncrease.Events.OnLeftDown += evt =>
-            {
-                if (EditingAch == null)
-                    return;
-                ref int need = ref EditingAch.RequirementCountNeeded;
-                need += 1;
-                cdsCount.ChangeText(need.ToString(), false);
-                EditingAch.ShouldSaveStaticData = true;
-                ChangeSaveState(false);
-            };
-            cdsNeedCountBg.Register(cdsIncrease);
-            left += 40;
-
-            cdsCount = new("未选", drawStyle: 1);
-            cdsCount.SetSize(cdsCount.TextSize);
-            cdsCount.SetPos(-cdsCount.TextSize.X - left, 5, 1);
-            cdsNeedCountBg.Register(cdsCount);
-            left += cdsCount.Width + 10;
-
-            UIImage cdsDecrease = new(AssetLoader.Decrease);
-            cdsDecrease.Info.Left.Set(-left - 20, 1);
-            cdsDecrease.Info.Top.Pixel = 5;
-            cdsDecrease.Events.OnLeftDown += evt =>
-            {
-                if (EditingAch == null)
-                    return;
-                ref int need = ref EditingAch.RequirementCountNeeded;
-                if (need == 0)
-                    return;
-                need -= 1;
-                cdsCount.ChangeText(need.ToString(), false);
-                EditingAch.ShouldSaveStaticData = true;
-                ChangeSaveState(false);
-            };
-            cdsNeedCountBg.Register(cdsDecrease);
         }
-        private void RegisterConditionPanel(BaseUIElement panel)
+        private void RegisterRequirePanel(BaseUIElement panel)
         {
             int leftWidth = 150;
             UIVnlPanel constructBg = new(0, 0);
@@ -512,79 +468,44 @@ namespace ProgressSystem.UIEditor
             cdsNeedCountBg.Register(needCount);
 
             int left = 0;
-            UIImage cdsIncrease = new(AssetLoader.Increase);
-            cdsIncrease.Info.Left.Set(-30, 1);
-            cdsIncrease.Info.Top.Pixel = 5;
-            cdsIncrease.Events.OnLeftDown += evt =>
+            UIImage increase = new(AssetLoader.Increase);
+            increase.Info.Left.Set(-30, 1);
+            increase.Info.Top.Pixel = 5;
+            increase.Events.OnLeftDown += evt =>
             {
-                if (editingCombine == null)
+                CombineRequirement combine = editingRequires.Parent;
+                if (combine != null)
                 {
-                    if (EditingAch == null)
-                        return;
-                    else
-                    {
-                        ref int count = ref EditingAch.RequirementCountNeeded;
-                        count++;
-                        string c = count.ToString();
-                        cdsCount.ChangeText(c, false);
-                        combineCount.ChangeText(c, false);
-                        EditingAch.ShouldSaveStaticData = true;
-                        ChangeSaveState(false);
-                    }
-                }
-                else
-                {
-                    editingCombine.needCount++;
-                    combineCount.ChangeText(editingCombine.needCount.ToString(), false);
-                    editingCombine.ShouldSaveStaticData = true;
-                    CheckConditions(EditingAch.Requirements, 0);
+                    rqsNeedCount.ChangeText((++combine.NeedCount).ToString(), false);
+                    combine.ShouldSaveStaticData = true;
+                    CheckRequirements(EditingAch.Requirements, 0);
                     ChangeSaveState(false);
                 }
             };
-            cdsNeedCountBg.Register(cdsIncrease);
+            cdsNeedCountBg.Register(increase);
             left += 40;
 
-            combineCount = new("未选", drawStyle: 1);
-            combineCount.SetSize(combineCount.TextSize);
-            combineCount.SetPos(-combineCount.TextSize.X - left, 5, 1);
-            cdsNeedCountBg.Register(combineCount);
-            left += combineCount.Width + 10;
+            rqsNeedCount = new("未选", drawStyle: 1);
+            rqsNeedCount.SetSize(rqsNeedCount.TextSize);
+            rqsNeedCount.SetPos(-rqsNeedCount.TextSize.X - left, 5, 1);
+            cdsNeedCountBg.Register(rqsNeedCount);
+            left += rqsNeedCount.Width + 10;
 
-            UIImage cdsDecrease = new(AssetLoader.Decrease);
-            cdsDecrease.Info.Left.Set(-left - 20, 1);
-            cdsDecrease.Info.Top.Pixel = 5;
-            cdsDecrease.Events.OnLeftDown += evt =>
+            UIImage decrease = new(AssetLoader.Decrease);
+            decrease.Info.Left.Set(-left - 20, 1);
+            decrease.Info.Top.Pixel = 5;
+            decrease.Events.OnLeftDown += evt =>
             {
-                if (editingCombine == null)
+                CombineRequirement combine = editingRequires.Parent;
+                if (combine != null)
                 {
-                    if (EditingAch == null)
-                        return;
-                    else
-                    {
-                        ref int count = ref EditingAch.RequirementCountNeeded;
-                        if (count == 0)
-                            return;
-                        count--;
-                        string c = count.ToString();
-                        combineCount.ChangeText(c, false);
-                        cdsCount.ChangeText(c, false);
-                        EditingAch.ShouldSaveStaticData = true;
-                        ChangeSaveState(false);
-                    }
-                }
-                else
-                {
-                    ref int count = ref editingCombine.needCount;
-                    if (count == 0)
-                        return;
-                    count--;
-                    combineCount.ChangeText(count.ToString(), false);
-                    editingCombine.ShouldSaveStaticData = true;
-                    CheckConditions(EditingAch.Requirements, 0);
+                    rqsNeedCount.ChangeText((--combine.NeedCount).ToString(), false);
+                    combine.ShouldSaveStaticData = true;
+                    CheckRequirements(EditingAch.Requirements, 0);
                     ChangeSaveState(false);
                 }
             };
-            cdsNeedCountBg.Register(cdsDecrease);
+            cdsNeedCountBg.Register(decrease);
 
             UIVnlPanel addCombineBg = new(0, 0);
             addCombineBg.SetPos(leftWidth + 10, 40);
@@ -599,44 +520,42 @@ namespace ProgressSystem.UIEditor
             {
                 if (editingRequires == null)
                 {
-                    Main.NewText("请先选择一个成就栏位/条件层级");
+                    Main.NewText("请先选择一个条件层级");
                     return;
                 }
-                CombineRequirement condition = new(1)
+                CombineRequirement require = new(1)
                 {
                     ShouldSaveStaticData = true
                 };
-                editingRequires.Add(condition);
-                editingCombine = condition;
-                editingRequires = condition.Requirements;
-                combineCount.ChangeText(editingCombine.needCount.ToString(), false);
-                CheckConditions(EditingAch.Requirements, 0);
+                editingRequires.Add(require);
+                editingRequires = require.Requirements;
+                rqsNeedCount.ChangeText(editingRequires.Parent.NeedCount.ToString(), false);
+                CheckRequirements(EditingAch.Requirements, 0);
                 ChangeSaveState(false);
             };
             addCombineBg.Register(addCombine);
 
-            UIVnlPanel conditionPanel = new(0, 0);
-            conditionPanel.SetSize(-leftWidth - 10, -80, 1, 1);
-            conditionPanel.SetPos(leftWidth + 10, 80);
-            conditionPanel.Info.SetMargin(10);
-            panel.Register(conditionPanel);
+            UIVnlPanel requirePanel = new(0, 0);
+            requirePanel.SetSize(-leftWidth - 10, -80, 1, 1);
+            requirePanel.SetPos(leftWidth + 10, 80);
+            requirePanel.Info.SetMargin(10);
+            panel.Register(requirePanel);
 
-            conditionView = new();
-            conditionView.SetSize(-20, -10, 1, 1);
-            conditionView.autoPos[0] = true;
-            conditionView.spaceY = 10;
-            conditionView.Events.OnRightDown += evt => editingRequires = EditingAch.Requirements;
-            conditionPanel.Register(conditionView);
+            requireView = new();
+            requireView.SetSize(-20, -10, 1, 1);
+            requireView.autoPos[0] = true;
+            requireView.spaceY = 10;
+            requirePanel.Register(requireView);
 
-            VerticalScrollbar cdsV = new();
-            cdsV.Info.Left.Pixel += 10;
-            conditionView.SetVerticalScrollbar(cdsV);
-            conditionPanel.Register(cdsV);
+            VerticalScrollbar rqsV = new();
+            rqsV.Info.Left.Pixel += 10;
+            requireView.SetVerticalScrollbar(rqsV);
+            requirePanel.Register(rqsV);
 
-            HorizontalScrollbar cdsH = new() { useScrollWheel = false };
-            cdsH.Info.Top.Pixel += 10;
-            conditionView.SetHorizontalScrollbar(cdsH);
-            conditionPanel.Register(cdsH);
+            HorizontalScrollbar rqsH = new() { useScrollWheel = false };
+            rqsH.Info.Top.Pixel += 10;
+            requireView.SetHorizontalScrollbar(rqsH);
+            requirePanel.Register(rqsH);
 
             UIDropDownList<UIText> constructList = new(panel, constructBg, x =>
             {
@@ -686,8 +605,8 @@ namespace ProgressSystem.UIEditor
         {
             int leftWidth = 150;
             UIVnlPanel constructBg = new(0, 0);
-            constructBg.SetSize(leftWidth, -30, 0, 1);
-            constructBg.SetPos(0, 30);
+            constructBg.SetPos(0, 80);
+            constructBg.SetSize(leftWidth, -80, 0, 1);
             panel.Register(constructBg);
 
             UIContainerPanel constructView = new() { spaceY = 10 };
@@ -699,24 +618,27 @@ namespace ProgressSystem.UIEditor
             UIDropDownList<UIText> constructList = new(panel, constructBg, x =>
             {
                 UIText text = new(x.text);
-                x.SetPos(10, 5);
+                text.SetPos(10, 5);
                 return text;
             })
             { buttonXoffset = 10 };
 
+            constructList.showArea.SetPos(0, 40);
             constructList.showArea.SetSize(leftWidth, 30);
 
-            constructList.expandArea.SetPos(0, 40);
-            constructList.expandArea.SetSize(leftWidth, 100);
+            constructList.expandArea.SetPos(0, 80);
+            constructList.expandArea.SetSize(leftWidth, -80, 0, 1);
 
             constructList.expandView.autoPos[0] = true;
             constructList.expandView.Vscroll.canDrag = false;
 
-            string end = "reward";
+            string end = "Reward";
             int len = end.Length;
 
             foreach (Reward reward in ModContent.GetContent<Reward>())
             {
+                if (reward is CombineReward)
+                    continue;
                 var tables = reward.GetConstructInfoTables();
                 var rewardName = reward.GetType().Name;
                 if (rewardName.EndsWith(end))
@@ -737,6 +659,103 @@ namespace ProgressSystem.UIEditor
                 constructList.AddElement(rewardType);
                 constructList.ChangeShowElement(0);
             }
+            UIVnlPanel rwsSelectCountBg = new(0, 0);
+            rwsSelectCountBg.SetSize(0, 30, 1);
+            panel.Register(rwsSelectCountBg);
+
+            UIText selectCount = new("奖励可选数");
+            selectCount.SetPos(10, 5);
+            selectCount.SetSize(selectCount.TextSize);
+            rwsSelectCountBg.Register(selectCount);
+
+            int left = 0;
+            UIImage increase = new(AssetLoader.Increase);
+            increase.Info.Left.Set(-30, 1);
+            increase.Info.Top.Pixel = 5;
+            increase.Events.OnLeftDown += evt =>
+            {
+                CombineReward combine = editingRewards.Parent;
+                if (combine != null)
+                {
+                    rwsSelectCount.ChangeText((++combine.SelectCount).ToString(), false);
+                    combine.ShouldSaveStaticData = true;
+                    CheckRewards(EditingAch.Rewards, 0);
+                    ChangeSaveState(false);
+                }
+            };
+            rwsSelectCountBg.Register(increase);
+            left += 40;
+
+            rwsSelectCount = new("未选", drawStyle: 1);
+            rwsSelectCount.SetSize(rwsSelectCount.TextSize);
+            rwsSelectCount.SetPos(-rwsSelectCount.TextSize.X - left, 5, 1);
+            rwsSelectCountBg.Register(rwsSelectCount);
+            left += rwsSelectCount.Width + 10;
+
+            UIImage decrease = new(AssetLoader.Decrease);
+            decrease.Info.Left.Set(-left - 20, 1);
+            decrease.Info.Top.Pixel = 5;
+            decrease.Events.OnLeftDown += evt =>
+            {
+                CombineReward combine = editingRewards.Parent;
+                if (combine != null)
+                {
+                    rwsSelectCount.ChangeText((--combine.SelectCount).ToString(), false);
+                    combine.ShouldSaveStaticData = true;
+                    CheckRewards(EditingAch.Rewards, 0);
+                    ChangeSaveState(false);
+                }
+            };
+            rwsSelectCountBg.Register(decrease);
+
+            UIVnlPanel addCombineBg = new(0, 0);
+            addCombineBg.SetPos(leftWidth + 10, 40);
+            addCombineBg.SetSize(-leftWidth - 10, 30, 1);
+            panel.Register(addCombineBg);
+
+            UIText addCombine = new("添加选择奖励") { hoverText = "默认可选一个" };
+            addCombine.SetSize(addCombine.TextSize);
+            addCombine.SetCenter(0, 5, 0.5f, 0.5f);
+            addCombine.HoverToGold();
+            addCombine.Events.OnLeftDown += evt =>
+            {
+                if (editingRewards == null)
+                {
+                    Main.NewText("请先选择一个奖励层级");
+                    return;
+                }
+                CombineReward combine = new()
+                {
+                    ShouldSaveStaticData = true
+                };
+                editingRewards.Add(combine);
+                editingRewards = combine.Rewards;
+                rwsSelectCount.ChangeText(editingRewards.Parent.SelectCount.ToString(), false);
+                CheckRewards(EditingAch.Rewards, 0);
+                ChangeSaveState(false);
+            };
+            addCombineBg.Register(addCombine);
+
+            UIVnlPanel rewardPanel = new(0, 0);
+            rewardPanel.SetPos(leftWidth + 10, 80);
+            rewardPanel.SetSize(-leftWidth - 10, -80, 1, 1);
+            rewardPanel.Info.SetMargin(10);
+            panel.Register(rewardPanel);
+
+            rewardView = new();
+            rewardView.SetSize(-20, -10, 1, 1);
+            rewardView.autoPos[0] = true;
+            rewardPanel.Register(rewardView);
+
+            VerticalScrollbar rwsV = new();
+            rwsV.Info.Left.Pixel += 10;
+            rewardView.SetVerticalScrollbar(rwsV);
+            rewardPanel.Register(rwsV);
+
+            HorizontalScrollbar rwsH = new() { useScrollWheel = false };
+            rwsH.Info.Top.Pixel += 10;
+            rewardView.SetHorizontalScrollbar(rwsH);
+            rewardPanel.Register(rwsH);
         }
         private void RegisterEditPagePanel()
         {
@@ -1379,11 +1398,11 @@ namespace ProgressSystem.UIEditor
                     Main.NewText("请先选择一个成就栏位/条件层级");
                     return;
                 }
-                if (data.TryConstruct(out Requirement? condition))
+                if (data.TryConstruct(out Requirement? require))
                 {
-                    condition.ShouldSaveStaticData = true;
-                    editingRequires.Add(condition);
-                    CheckConditions(EditingAch.Requirements, 0);
+                    require.ShouldSaveStaticData = true;
+                    editingRequires.Add(require);
+                    CheckRequirements(EditingAch.Requirements, 0);
                     ChangeSaveState(false);
                 }
             };
@@ -1452,7 +1471,7 @@ namespace ProgressSystem.UIEditor
                 {
                     reward.ShouldSaveStaticData = true;
                     EditingAch.Rewards.Add(reward);
-                    CheckRewards(EditingAch.Rewards);
+                    CheckRewards(EditingAch.Rewards, 0);
                     ChangeSaveState(false);
                 }
             };
@@ -1559,16 +1578,14 @@ namespace ProgressSystem.UIEditor
         }
         private void ChangeEditingAch(Achievement ach)
         {
-            editingCombine = null;
             if (ach == null)
             {
                 editingRequires = null;
+                editingRewards = null;
                 editingAchName = "";
                 achNameInputer.ClearText();
                 preCount.ChangeText("未选", false);
-                cdsCount.ChangeText("未选", false);
-                combineCount.ChangeText("未选", false);
-                conditionView.ClearAllElements();
+                requireView.ClearAllElements();
                 rewardView.ClearAllElements();
                 return;
             }
@@ -1576,21 +1593,22 @@ namespace ProgressSystem.UIEditor
             {
                 int? pre = ach.PredecessorCountNeeded;
                 preCount.ChangeText(pre.HasValue ? pre.Value.ToString() : "null", false);
-                cdsCount.ChangeText(ach.RequirementCountNeeded.ToString(), false);
-                combineCount.ChangeText(ach.RequirementCountNeeded.ToString(), false);
+                rqsNeedCount.ChangeText("未选", false);
+                rwsSelectCount.ChangeText("未选", false);
                 submit.ChangeText($"需要手动提交  {(ach.NeedSubmit ? "是" : "否")}");
                 editingAchName = ach.FullName;
                 achNameInputer.Text = ach.Name;
                 achNameInputer.OnInputText?.Invoke(ach.Name);
-                CheckConditions(ach.Requirements, 0);
-                CheckRewards(ach.Rewards);
+                CheckRequirements(ach.Requirements, 0);
+                CheckRewards(ach.Rewards, 0);
                 editingRequires = ach.Requirements;
+                editingRewards = ach.Rewards;
             }
         }
-        private void CheckConditions(RequirementList requires, int index)
+        private void CheckRequirements(RequirementList requires, int index)
         {
             if (index == 0)
-                conditionView.ClearAllElements();
+                requireView.ClearAllElements();
             if (requires.Any())
             {
                 foreach (Requirement require in requires)
@@ -1600,10 +1618,9 @@ namespace ProgressSystem.UIEditor
                     text.delete.Events.OnLeftDown += evt =>
                     {
                         text.requirements.Remove(text.requirement);
-                        CheckConditions(EditingAch.Requirements, 0);
-                        conditionView.Calculation();
+                        CheckRequirements(EditingAch.Requirements, 0);
                     };
-                    conditionView.AddElement(text);
+                    requireView.AddElement(text);
                     if (require is CombineRequirement combine)
                     {
                         text.text.HoverToGold();
@@ -1612,14 +1629,13 @@ namespace ProgressSystem.UIEditor
                         text.text.Events.OnLeftDown += evt =>
                         {
                             editingRequires = requireList;
-                            editingCombine = cb;
-                            combineCount.ChangeText(editingCombine.needCount.ToString(), false);
+                            rqsNeedCount.ChangeText(editingRequires.Parent.NeedCount.ToString(), false);
                         };
                         text.text.Events.OnUpdate += evt =>
                         {
                             text.text.overrideColor = editingRequires == requireList ? Color.Red : null;
                         };
-                        CheckConditions(combine.Requirements, index + 1);
+                        CheckRequirements(combine.Requirements, index + 1);
                     }
                 }
             }
@@ -1628,25 +1644,54 @@ namespace ProgressSystem.UIEditor
                 UIText none = new("空条件");
                 none.SetPos(index * 30, 0);
                 none.SetSize(none.TextSize);
-                conditionView.AddElement(none);
+                requireView.AddElement(none);
             }
             if (index == 0)
-                conditionView.Calculation();
+                requireView.Calculation();
         }
-        private void CheckRewards(RewardList rewards)
+        private void CheckRewards(RewardList rewards, int index)
         {
-            rewardView.ClearAllElements();
-            foreach (Reward reward in rewards)
+            if (index == 0)
+                rewardView.ClearAllElements();
+            if (rewards.Any())
             {
-                UIRewardText text = new(reward, rewards);
-                text.delete.Events.OnLeftDown += evt =>
+                foreach (Reward reward in rewards)
                 {
-                    text.rewards.Remove(text.reward);
-                    CheckConditions(EditingAch.Requirements, 0);
-                };
-                rewardView.AddElement(text);
+                    UIRewardText text = new(reward, rewards);
+                    text.SetPos(index * 30, 0);
+                    text.delete.Events.OnLeftDown += evt =>
+                    {
+                        text.rewards.Remove(text.reward);
+                        CheckRewards(EditingAch.Rewards, 0);
+                    };
+                    rewardView.AddElement(text);
+                    if (reward is CombineReward combine)
+                    {
+                        text.text.HoverToGold();
+                        var cb = combine;
+                        var rewardList = combine.Rewards;
+                        text.text.Events.OnLeftDown += evt =>
+                        {
+                            editingRewards = rewardList;
+                            rwsSelectCount.ChangeText(editingRewards.Parent.SelectCount.ToString(), false);
+                        };
+                        text.text.Events.OnUpdate += evt =>
+                        {
+                            text.text.overrideColor = editingRewards == rewardList ? Color.Red : null;
+                        };
+                        CheckRewards(combine.Rewards, index + 1);
+                    }
+                }
             }
-            rewardView.Calculation();
+            else
+            {
+                UIText none = new("空奖励");
+                none.SetPos(index * 30, 0);
+                none.SetSize(none.TextSize);
+                rewardView.AddElement(none);
+            }
+            if (index == 0)
+                rewardView.Calculation();
         }
     }
 }

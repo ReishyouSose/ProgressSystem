@@ -78,7 +78,7 @@ public class KillNPCRequirement : Requirement
         if (ShouldSaveStaticData)
         {
             tag.SetWithDefault("NPCType", NPCType);
-            tag.SetWithDefault("needCount", Count);
+            tag.SetWithDefault("NeedCount", Count);
         }
     }
     public override void LoadStaticData(TagCompound tag)
@@ -87,7 +87,7 @@ public class KillNPCRequirement : Requirement
         if (ShouldSaveStaticData)
         {
             tag.GetWithDefault("NPCType", out NPCType);
-            tag.GetWithDefault("needCount", out Count);
+            tag.GetWithDefault("NeedCount", out Count);
         }
     }
 
