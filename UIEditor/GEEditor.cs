@@ -47,7 +47,7 @@ namespace ProgressSystem.UIEditor
         private UIContainerPanel achView;
 
         /// <summary>
-        /// 已添加的条件视区
+        /// 已添加的需求视区
         /// </summary>
         private UIContainerPanel requireView;
         private UIContainerPanel rewardView;
@@ -262,7 +262,6 @@ namespace ProgressSystem.UIEditor
             UIAdjust adjust = new(AssetLoader.VnlAdjust, new(20, 20));
             editBg.Register(adjust);
 
-            //TODO: 分开注册基础、条件、奖励面板
             RegisterBaseInfoPanel(editPanels[0]);
             RegisterRequirePanel(editPanels[1]);
             RegisterRewardPanle(editPanels[2]);
@@ -520,7 +519,7 @@ namespace ProgressSystem.UIEditor
             {
                 if (editingRequires == null)
                 {
-                    Main.NewText("请先选择一个条件层级");
+                    Main.NewText("请先选择一个需求层级");
                     return;
                 }
                 CombineRequirement require = new(1)
@@ -1386,7 +1385,7 @@ namespace ProgressSystem.UIEditor
                 valueInputBg.Register(clear);
                 innerY += 48;
             }
-            UIText create = new("添加条件");
+            UIText create = new("添加需求");
             create.SetSize(create.TextSize);
             create.SetPos(0, innerY);
             create.Events.OnMouseOver += evt => create.color = Color.Gold;
@@ -1395,7 +1394,7 @@ namespace ProgressSystem.UIEditor
             {
                 if (editingRequires == null)
                 {
-                    Main.NewText("请先选择一个成就栏位/条件层级");
+                    Main.NewText("请先选择一个成就栏位/需求层级");
                     return;
                 }
                 if (data.TryConstruct(out Requirement? require))
@@ -1641,7 +1640,7 @@ namespace ProgressSystem.UIEditor
             }
             else
             {
-                UIText none = new("空条件");
+                UIText none = new("空需求");
                 none.SetPos(index * 30, 0);
                 none.SetSize(none.TextSize);
                 requireView.AddElement(none);
