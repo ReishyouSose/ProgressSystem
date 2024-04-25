@@ -4,8 +4,17 @@ namespace ProgressSystem.Core.Rewards;
 
 public class PlayerStatReward : Reward
 {
-    public PlayerStatReward()
+    public PlayerStatReward(int maxLife = 0, int maxMana = 0, int defense = 0, float moveSpeed = 0,
+        float moveAccel = 0, float damage = 0, float endurance = 0, int crit = 0)
     {
+        this.maxLife = maxLife;
+        this.maxMana = maxMana;
+        this.defense = defense;
+        this.moveSpeed = moveSpeed;
+        this.moveAccel = moveAccel;
+        this.damage = damage;
+        this.endurance = endurance;
+        this.crit = crit;
         Repeatable = false;
     }
     public int maxLife;

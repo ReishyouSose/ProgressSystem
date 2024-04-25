@@ -50,6 +50,10 @@ namespace ProgressSystem.UIEditor
         /// 已添加的需求视区
         /// </summary>
         private UIContainerPanel requireView;
+
+        /// <summary>
+        /// 已添加的奖励视区
+        /// </summary>
         private UIContainerPanel rewardView;
         private UIVnlPanel editPanel;
         private UIVnlPanel pagePanel;
@@ -86,11 +90,12 @@ namespace ProgressSystem.UIEditor
 
         private Achievement? EditingAch => editingAchName == "" ? null : slotByFullName[editingAchName].ach;
         private UIAchSlot? EditingAchSlot => editingAchName == "" ? null : slotByFullName[editingAchName];
+        private Mod editingMod;
+        private int editingPanel;
         private UIText saveTip;
         private static bool LeftShift;
         private static bool LeftCtrl;
         private static bool LeftAlt;
-        private Mod editingMod;
         /// <summary>
         /// 正在编辑的进度组名
         /// </summary>
@@ -240,23 +245,36 @@ namespace ProgressSystem.UIEditor
 
             void SwitchPanel(int id)
             {
+                editingPanel = id;
                 for (int i = 0; i < 3; i++)
                     editPanels[i].Info.IsVisible = i == id;
+            }
+
+            void DrawFocusFrame(SpriteBatch sb, BaseUIElement uie, int id)
+            {
+                uie.DrawSelf(sb);
+                if (editingPanel == id)
+                {
+                    RUIHelper.DrawRec(sb, uie.HitBox(), 2f, Color.Gold);
+                }
             }
 
             UIImage baseInfo = new(RUIHelper.T2D(path + "BaseInfo")) { hoverText = "基本信息" };
             baseInfo.SetPos(-22, 0, 1);
             baseInfo.Events.OnLeftDown += evt => SwitchPanel(0);
+            baseInfo.ReDraw = sb => DrawFocusFrame(sb, baseInfo, 0);
             editBg.Register(baseInfo);
 
             UIImage require = new(RUIHelper.T2D(path + "Require")) { hoverText = "需求设置" };
             require.SetPos(-22, 32, 1);
             require.Events.OnLeftDown += evt => SwitchPanel(1);
+            require.ReDraw = sb => DrawFocusFrame(sb, require, 1);
             editBg.Register(require);
 
             UIImage reward = new(RUIHelper.T2D(path + "Reward")) { hoverText = "奖励设置" };
             reward.SetPos(-22, 64, 1);
             reward.Events.OnLeftDown += evt => SwitchPanel(2);
+            reward.ReDraw = sb => DrawFocusFrame(sb, reward, 2);
             editBg.Register(reward);
 
             UIAdjust adjust = new(AssetLoader.VnlAdjust, new(20, 20));
@@ -544,6 +562,7 @@ namespace ProgressSystem.UIEditor
             requireView.SetSize(-20, -10, 1, 1);
             requireView.autoPos[0] = true;
             requireView.spaceY = 10;
+            requireView.Events.OnRightDown += evt => editingRequires = EditingAch?.Requirements;
             requirePanel.Register(requireView);
 
             VerticalScrollbar rqsV = new();
@@ -613,6 +632,12 @@ namespace ProgressSystem.UIEditor
             constructView.SetPos(10, 10);
             constructView.SetSize(-40, -20, 1, 1);
             constructBg.Register(constructView);
+
+            VerticalScrollbar dataV = new(28, false, false);
+            dataV.Info.Top.Pixel += 5;
+            dataV.Info.Height.Pixel -= 10;
+            constructView.SetVerticalScrollbar(dataV);
+            constructBg.Register(dataV);
 
             UIDropDownList<UIText> constructList = new(panel, constructBg, x =>
             {
@@ -744,6 +769,7 @@ namespace ProgressSystem.UIEditor
             rewardView = new();
             rewardView.SetSize(-20, -10, 1, 1);
             rewardView.autoPos[0] = true;
+            rewardView.Events.OnRightDown += evt => editingRewards = EditingAch?.Rewards;
             rewardPanel.Register(rewardView);
 
             VerticalScrollbar rwsV = new();
