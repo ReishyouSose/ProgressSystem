@@ -222,7 +222,7 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable, IAchi
         Achievements.Values.ForeachDo(a => a.PostInitialize());
         SetDefaultPositionForAchievements();
     }
-    void SetDefaultPositionForAchievements()
+    public void SetDefaultPositionForAchievements()
     {
         var values = Achievements.Values;
         int achievementCount = values.Count;

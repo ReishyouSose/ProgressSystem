@@ -7,24 +7,24 @@ namespace ProgressSystem.Core.Requirements;
 public class CombineRequirement : Requirement
 {
     public RequirementList Requirements;
-    private int needCount;
+    private int count;
 
-    public int NeedCount
+    /// <summary>
+    /// 需要的条件数, 默认 0 代表需要所有条件满足
+    /// </summary>
+    public int Count
     {
-        get => needCount;
-        set => needCount = Math.Max(value, 1);
+        get => count;
+        set => count = Math.Max(value, 0);
     }
     public CombineRequirement() : base()
     {
-        Requirements = new(null, r => r.OnComplete += ElementComplete, r => r.OnComplete -= ElementComplete)
-        {
-            Parent = this
-        };
+        Requirements = new(null, r => r.OnComplete += ElementComplete, r => r.OnComplete -= ElementComplete);
     }
 
     public CombineRequirement(int count) : this()
     {
-        NeedCount = count;
+        Count = count;
     }
 
     [SpecializeAutoConstruct(Disabled = true)]
@@ -49,7 +49,7 @@ public class CombineRequirement : Requirement
         base.SaveDataInPlayer(tag);
         if (ShouldSaveStaticData)
         {
-            tag.SetWithDefault("Count", NeedCount);
+            tag.SetWithDefault("Count", Count);
         }
         tag.SaveListData("Requirements", Requirements, (r, t) => r.SaveDataInPlayer(t));
     }
@@ -58,7 +58,7 @@ public class CombineRequirement : Requirement
         base.LoadDataInPlayer(tag);
         if (ShouldSaveStaticData)
         {
-            tag.GetWithDefault("Count", out needCount);
+            Count = tag.GetWithDefault<int>("Count");
         }
         tag.LoadListData("Requirements", Requirements, (r, t) => r.LoadDataInPlayer(t));
     }
@@ -116,7 +116,15 @@ public class CombineRequirement : Requirement
 
     protected void ElementComplete()
     {
-        if (Requirements.Sum(r => r.Completed.ToInt()) >= NeedCount)
+        if (Count == 0)
+        {
+            if (Requirements.All(r => r.Completed))
+            {
+                CompleteSafe();
+            }
+            return;
+        }
+        if (Requirements.Sum(r => r.Completed.ToInt()) >= Count)
         {
             CompleteSafe();
         }

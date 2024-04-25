@@ -65,12 +65,12 @@ public class KillNPCRequirement : Requirement
     public override void SaveDataInPlayer(TagCompound tag)
     {
         base.SaveDataInPlayer(tag);
-        tag.SetWithDefault("countNow", CountNow);
+        tag.SetWithDefault("CountNow", CountNow);
     }
     public override void LoadDataInPlayer(TagCompound tag)
     {
         base.LoadDataInPlayer(tag);
-        tag.GetWithDefault("countNow", out CountNow);
+        tag.GetWithDefault("CountNow", out CountNow);
     }
     public override void SaveStaticData(TagCompound tag)
     {
@@ -78,7 +78,7 @@ public class KillNPCRequirement : Requirement
         if (ShouldSaveStaticData)
         {
             tag.SetWithDefault("NPCType", NPCType);
-            tag.SetWithDefault("NeedCount", Count);
+            tag.SetWithDefault("Count", Count);
         }
     }
     public override void LoadStaticData(TagCompound tag)
@@ -87,7 +87,7 @@ public class KillNPCRequirement : Requirement
         if (ShouldSaveStaticData)
         {
             tag.GetWithDefault("NPCType", out NPCType);
-            tag.GetWithDefault("NeedCount", out Count);
+            tag.GetWithDefault("Count", out Count);
         }
     }
 

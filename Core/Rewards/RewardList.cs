@@ -1,22 +1,35 @@
-﻿using System.Collections;
+﻿using ProgressSystem.Core.Requirements;
+using ProgressSystem.Core.Rewards;
+using ProgressSystem.TheUtils;
+using System.Collections;
 
 namespace ProgressSystem.Core.Rewards;
 
 public class RewardList : IList<Reward>, IReadOnlyList<Reward>
 {
-    public CombineReward Parent { get; init; }
-    private Achievement? Achievement;
-
     private readonly List<Reward> data;
-
-    public RewardList(Achievement achievement, IEnumerable<Reward>? rewards = null) : this(rewards) => Initialize(achievement);
-    public RewardList(IEnumerable<Reward>? rewards = null) => data = rewards == null ? [] : [.. rewards];
-    public void Initialize(Achievement achievement)
+    
+    public event Action<Reward>? OnAdd;
+    public event Action<Reward>? OnRemove;
+    public void AddOnAddAndDo(Action<Reward> onAdd)
     {
-        Achievement = achievement;
+        OnAdd += onAdd;
         foreach (var reward in data)
         {
-            reward.Initialize(achievement);
+            onAdd(reward);
+        }
+    }
+    
+    public RewardList(Achievement achievement, IEnumerable<Reward>? rewards = null, Action<Reward>? onAdd = null, Action<Reward>? onRemove = null)
+        : this(rewards, onAdd + (a => a.Initialize(achievement)), onRemove) { }
+    public RewardList(IEnumerable<Reward>? rewards = null, Action<Reward>? onAdd = null, Action<Reward>? onRemove = null)
+    {
+        data = rewards == null ? [] : [.. rewards];
+        OnAdd = onAdd;
+        OnRemove = onRemove;
+        if (OnAdd != null)
+        {
+            data.ForeachDo(OnAdd);
         }
     }
 
@@ -32,28 +45,28 @@ public class RewardList : IList<Reward>, IReadOnlyList<Reward>
             {
                 return;
             }
+            OnRemove?.Invoke(data[index]);
             data[index] = value;
-            if (Achievement != null)
-            {
-                value.Initialize(Achievement);
-            }
+            OnAdd?.Invoke(value);
         }
     }
 
     public void Add(Reward reward)
     {
         data.Add(reward);
-        if (Achievement != null)
-        {
-            reward.Initialize(Achievement);
-        }
+        OnAdd?.Invoke(reward);
     }
     public void Insert(int index, Reward reward)
     {
         data.Insert(index, reward);
-        if (Achievement != null)
+        OnAdd?.Invoke(reward);
+    }
+    public void AddRange(IEnumerable<Reward> rewards)
+    {
+        data.AddRange(rewards);
+        foreach (var reward in rewards)
         {
-            reward.Initialize(Achievement);
+            OnAdd?.Invoke(reward);
         }
     }
 
@@ -62,9 +75,31 @@ public class RewardList : IList<Reward>, IReadOnlyList<Reward>
     public IEnumerator<Reward> GetEnumerator() => data.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => data.GetEnumerator();
 
-    public bool Remove(Reward reward) => data.Remove(reward);
-    public void RemoveAt(int index) => data.RemoveAt(index);
-    public void Clear() => data.Clear();
+    public bool Remove(Reward item)
+    {
+        if(data.Remove(item))
+        {
+            OnRemove?.Invoke(item);
+            return true;
+        }
+        return false;
+    }
+    public void RemoveAt(int index)
+    {
+        OnRemove?.Invoke(data[index]);
+        data.RemoveAt(index);
+    }
+    public void Clear()
+    {
+        if (OnRemove != null)
+        {
+            foreach (var item in data)
+            {
+                OnRemove(item);
+            }
+        }
+        data.Clear();
+    }
 
     public void CopyTo(Reward[] array, int arrayIndex) => Range(Count).ForeachDo(i => array[arrayIndex + i] = this[i]);
 }

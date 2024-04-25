@@ -16,11 +16,11 @@ namespace ProgressSystem.UIEditor
     public class GEEditor : ContainerElement
     {
         private const string BaseName = "成就";
-        internal static GEEditor Ins;
+        internal static GEEditor Ins = null!;
         /// <summary>
         /// 当前进度组GESlot位置
         /// </summary>
-        internal static HashSet<Vector2> AchPos;
+        internal static HashSet<Vector2> AchPos = [];
         public GEEditor() => Ins = this;
         private bool dragging;
         private bool draggingSelected;
@@ -29,72 +29,135 @@ namespace ProgressSystem.UIEditor
         /// <summary>
         /// 已经被选中的GESlot
         /// </summary>
-        private HashSet<UIAchSlot> frameSelect;
+        private readonly HashSet<UIAchSlot> frameSelect = [];
 
         /// <summary>
         /// 临时被选中的GESlot
         /// </summary>
-        private HashSet<UIAchSlot> tempSelect;
+        private readonly HashSet<UIAchSlot> tempSelect = [];
 
         /// <summary>
         /// 本次碰撞判定已经交互过的GESlot
         /// </summary>
-        private HashSet<UIAchSlot> interacted;
+        private readonly HashSet<UIAchSlot> interacted = [];
 
         /// <summary>
         /// 成就视区
         /// </summary>
-        private UIContainerPanel achView;
+        private UIContainerPanel achView = null!;
 
         /// <summary>
         /// 已添加的需求视区
         /// </summary>
-        private UIContainerPanel requireView;
-        private UIContainerPanel rewardView;
-        private UIVnlPanel editPanel;
-        private UIVnlPanel pagePanel;
-        private UIInputBox pageInputer;
-        private UIInputBox achNameInputer;
-        private UIInputBox savePathInputer;
-        private UIText submit;
-        private UIText preCount;
+        private UIContainerPanel requireView = null!;
+        private UIContainerPanel rewardView = null!;
+        private UIVnlPanel editPanel = null!;
+        private UIVnlPanel pagePanel = null!;
+        private UIInputBox pageInputer = null!;
+        private UIInputBox achNameInputer = null!;
+        private UIInputBox savePathInputer = null!;
+        private UIText submit = null!;
+        private UIText preCount = null!;
         /// <summary>
         /// require组合需求数文本
         /// </summary>
-        private UIText rqsNeedCount;
+        private UIText rqsCountText = null!;
         /// <summary>
         /// Reward组合可选数文本
         /// </summary>
-        private UIText rwsSelectCount;
+        private UIText rwsCountText = null!;
+        private void UpdateRqsCountText()
+        {
+            if (EditingCombineRequire != null)
+            {
+                rqsCountText.ChangeText(EditingCombineRequire.Count.ToString(), false);
+            }
+            else if (EditingAch != null)
+            {
+                rqsCountText.ChangeText(EditingAch.RequirementCountNeeded.ToString(), false);
+            }
+            else
+            {
+                rqsCountText.ChangeText("未选", false);
+            }
+        }
+        private void UpdateRwsCountText()
+        {
+            if (EditingCombineReward != null)
+            {
+                rwsCountText.ChangeText(EditingCombineReward.Count.ToString(), false);
+            }
+            else
+            {
+                rwsCountText.ChangeText("未选", false);
+            }
+        }
 
-        private UIDropDownList<UIText> pageList;
+        private UIDropDownList<UIText> pageList = null!;
         /// <summary>
         /// 用于判定包含的GE鼠标碰撞箱
         /// </summary>
-        private static UIAchCollision collision;
+        private static UIAchCollision? collision;
 
         /// <summary>
         /// 选中的作为前置的Ach
         /// </summary>
-        private UIAchSlot preSetting;
-        private string editingAchName;
-        private RequirementList? editingRequires;
-        private RewardList? editingRewards;
-        private Dictionary<string, UIAchSlot> slotByFullName;
-        private AchievementPage? EditingPage => AchievementManager.PagesByMod.TryGetValue(editingMod, out var pages)
-                    && pages.TryGetValue(editingPage, out var page) ? page : null;
+        private UIAchSlot? preSetting;
+        /// <summary>
+        /// 正在编辑的成就的全名
+        /// </summary>
+        private string EditingAchFullName
+        {
+            get => EditingAch?.FullName ?? string.Empty;
+            set => EditingAchSlot = slotByFullName.TryGetValue(value, out var achSlot) ? achSlot : null;
+        }
+        private CombineRequirement? _editingCombineRequire;
+        private CombineRequirement? EditingCombineRequire
+        {
+            get => _editingCombineRequire;
+            set
+            {
+                _editingCombineRequire = value;
+                UpdateRqsCountText();
+            }
+        }
+        private IList<Requirement>? EditingRequires => EditingCombineRequire?.Requirements ?? EditingAch?.Requirements;
+        private CombineReward? _editingCombineReward;
+        private CombineReward? EditingCombineReward
+        {
+            get => _editingCombineReward;
+            set
+            {
+                _editingCombineReward = value;
+                UpdateRwsCountText();
+            }
+        }
+        private IList<Reward>? EditingRewards => EditingCombineReward?.Rewards ?? EditingAch?.Rewards;
+        private readonly Dictionary<string, UIAchSlot> slotByFullName = [];
+        private AchievementPage? EditingPage { get; set; }
 
-        private Achievement? EditingAch => editingAchName == "" ? null : slotByFullName[editingAchName].ach;
-        private UIAchSlot? EditingAchSlot => editingAchName == "" ? null : slotByFullName[editingAchName];
-        private UIText saveTip;
+        private Achievement? EditingAch
+        {
+            get => EditingAchSlot?.ach;
+            set => EditingAchSlot = value == null ? null :
+                slotByFullName.TryGetValue(value.FullName, out var achSlot) ? achSlot : null;
+        }
+
+        private UIAchSlot? EditingAchSlot { get; set; }
+        private UIText saveTip = null!;
         private static bool LeftShift;
         private static bool LeftCtrl;
         private static bool LeftAlt;
-        private Mod editingMod;
+        private Mod editingMod = null!;
         /// <summary>
         /// 正在编辑的进度组名
         /// </summary>
-        private string editingPage;
+        private string EditingPageName
+        {
+            get => EditingPage?.Name ?? string.Empty;
+            set => _ = AchievementManager.PagesByMod.TryGetValue(editingMod, out var pages)
+                && pages.TryGetValue(value, out var page) ? EditingPage = page : null;
+        }
         private bool trySave;
         private bool tryDelete;
         public override void OnInitialization()
@@ -106,11 +169,6 @@ namespace ProgressSystem.UIEditor
             RemoveAll();
 
             editingMod = ProgressSystem.Instance;
-            AchPos = [];
-            tempSelect = [];
-            frameSelect = [];
-            interacted = [];
-            slotByFullName = [];
 
             RegisterEditPagePanel();
             RegisterEditAchPanel();
@@ -283,13 +341,15 @@ namespace ProgressSystem.UIEditor
             achNameInputer.SetSize(-70, 0, 1, 1);
             achNameInputer.OnInputText += text =>
             {
-                var achs = EditingPage?.Achievements;
-                if (achs == null)
+                if (EditingPage == null || EditingAch == null)
+                {
                     return;
+                }
                 Achievement current = EditingAch;
+                var achs = EditingPage.Achievements;
                 if (text.Any())
                 {
-                    if (text == EditingAch.Name)
+                    if (text == current.Name)
                     {
                         nameChecker.ChangeText("名称可用", false);
                         nameChecker.color = Color.Green;
@@ -325,16 +385,17 @@ namespace ProgressSystem.UIEditor
             changeName.HoverToGold();
             changeName.Events.OnLeftDown += evt =>
             {
-                if (nameChecker.color == Color.Green)
+                UIAchSlot? currentSlot = EditingAchSlot;
+                if (nameChecker.color == Color.Green && currentSlot != null)
                 {
-                    Achievement current = EditingAch;
-                    UIAchSlot currentSlot = EditingAchSlot;
-                    slotByFullName.Remove(editingAchName);
-                    EditingPage.Achievements.Remove(editingAchName);
-                    current.Name = achNameInputer.Text;
-                    editingAchName = current.FullName;
-                    slotByFullName.Add(current.FullName, currentSlot);
-                    EditingPage.Achievements.Add(editingAchName, current);
+                    Achievement currentAch = EditingAch!;
+                    string oldName = EditingAchFullName;
+                    string newName = achNameInputer.Text;
+                    slotByFullName.Remove(oldName);
+                    EditingPage!.Achievements.Remove(oldName);
+                    currentAch.Name = newName;
+                    slotByFullName.Add(newName, currentSlot);
+                    EditingPage.Achievements.Add(newName, currentAch);
                     ChangeSaveState(false);
                 }
             };
@@ -386,7 +447,7 @@ namespace ProgressSystem.UIEditor
                 if (need == null)
                     return;
                 need++;
-                preCount.ChangeText(need.ToString(), false);
+                preCount.ChangeText(need.Value.ToString(), false);
                 EditingAch.ShouldSaveStaticData = true;
                 ChangeSaveState(false);
             };
@@ -431,7 +492,7 @@ namespace ProgressSystem.UIEditor
                 if (need == null)
                     return;
                 need--;
-                preCount.ChangeText(need.ToString(), false);
+                preCount.ChangeText(need.Value.ToString(), false);
                 EditingAch.ShouldSaveStaticData = true;
                 ChangeSaveState(false);
             };
@@ -472,11 +533,20 @@ namespace ProgressSystem.UIEditor
             increase.Info.Top.Pixel = 5;
             increase.Events.OnLeftDown += evt =>
             {
-                CombineRequirement combine = editingRequires.Parent;
+                CombineRequirement? combine = EditingCombineRequire;
                 if (combine != null)
                 {
-                    rqsNeedCount.ChangeText((++combine.NeedCount).ToString(), false);
+                    combine.Count += 1;
+                    UpdateRqsCountText();
                     combine.ShouldSaveStaticData = true;
+                    CheckRequirements(EditingAch!.Requirements, 0);
+                    ChangeSaveState(false);
+                }
+                else if (EditingAch != null)
+                {
+                    EditingAch.RequirementCountNeeded += 1;
+                    UpdateRqsCountText();
+                    EditingAch.ShouldSaveStaticData = true;
                     CheckRequirements(EditingAch.Requirements, 0);
                     ChangeSaveState(false);
                 }
@@ -484,22 +554,31 @@ namespace ProgressSystem.UIEditor
             cdsNeedCountBg.Register(increase);
             left += 40;
 
-            rqsNeedCount = new("未选", drawStyle: 1);
-            rqsNeedCount.SetSize(rqsNeedCount.TextSize);
-            rqsNeedCount.SetPos(-rqsNeedCount.TextSize.X - left, 5, 1);
-            cdsNeedCountBg.Register(rqsNeedCount);
-            left += rqsNeedCount.Width + 10;
+            rqsCountText = new("未选", drawStyle: 1);
+            rqsCountText.SetSize(rqsCountText.TextSize);
+            rqsCountText.SetPos(-rqsCountText.TextSize.X - left, 5, 1);
+            cdsNeedCountBg.Register(rqsCountText);
+            left += rqsCountText.Width + 10;
 
             UIImage decrease = new(AssetLoader.Decrease);
             decrease.Info.Left.Set(-left - 20, 1);
             decrease.Info.Top.Pixel = 5;
             decrease.Events.OnLeftDown += evt =>
             {
-                CombineRequirement combine = editingRequires.Parent;
+                CombineRequirement? combine = EditingCombineRequire;
                 if (combine != null)
                 {
-                    rqsNeedCount.ChangeText((--combine.NeedCount).ToString(), false);
+                    combine.Count -= 1;
+                    UpdateRqsCountText();
                     combine.ShouldSaveStaticData = true;
+                    CheckRequirements(EditingAch!.Requirements, 0);
+                    ChangeSaveState(false);
+                }
+                else if (EditingAch != null)
+                {
+                    EditingAch.RequirementCountNeeded -= 1;
+                    UpdateRqsCountText();
+                    EditingAch.ShouldSaveStaticData = true;
                     CheckRequirements(EditingAch.Requirements, 0);
                     ChangeSaveState(false);
                 }
@@ -517,6 +596,7 @@ namespace ProgressSystem.UIEditor
             addCombine.HoverToGold();
             addCombine.Events.OnLeftDown += evt =>
             {
+                var editingRequires = EditingRequires;
                 if (editingRequires == null)
                 {
                     Main.NewText("请先选择一个需求层级");
@@ -527,9 +607,9 @@ namespace ProgressSystem.UIEditor
                     ShouldSaveStaticData = true
                 };
                 editingRequires.Add(require);
-                editingRequires = require.Requirements;
-                rqsNeedCount.ChangeText(editingRequires.Parent.NeedCount.ToString(), false);
-                CheckRequirements(EditingAch.Requirements, 0);
+                EditingCombineRequire = require;
+                UpdateRqsCountText();
+                CheckRequirements(EditingAch!.Requirements, 0);
                 ChangeSaveState(false);
             };
             addCombineBg.Register(addCombine);
@@ -673,35 +753,37 @@ namespace ProgressSystem.UIEditor
             increase.Info.Top.Pixel = 5;
             increase.Events.OnLeftDown += evt =>
             {
-                CombineReward combine = editingRewards.Parent;
+                CombineReward? combine = EditingCombineReward;
                 if (combine != null)
                 {
-                    rwsSelectCount.ChangeText((++combine.SelectCount).ToString(), false);
+                    combine.Count += 1;
+                    UpdateRwsCountText();
                     combine.ShouldSaveStaticData = true;
-                    CheckRewards(EditingAch.Rewards, 0);
+                    CheckRewards(EditingAch!.Rewards, 0);
                     ChangeSaveState(false);
                 }
             };
             rwsSelectCountBg.Register(increase);
             left += 40;
 
-            rwsSelectCount = new("未选", drawStyle: 1);
-            rwsSelectCount.SetSize(rwsSelectCount.TextSize);
-            rwsSelectCount.SetPos(-rwsSelectCount.TextSize.X - left, 5, 1);
-            rwsSelectCountBg.Register(rwsSelectCount);
-            left += rwsSelectCount.Width + 10;
+            rwsCountText = new("未选", drawStyle: 1);
+            rwsCountText.SetSize(rwsCountText.TextSize);
+            rwsCountText.SetPos(-rwsCountText.TextSize.X - left, 5, 1);
+            rwsSelectCountBg.Register(rwsCountText);
+            left += rwsCountText.Width + 10;
 
             UIImage decrease = new(AssetLoader.Decrease);
             decrease.Info.Left.Set(-left - 20, 1);
             decrease.Info.Top.Pixel = 5;
             decrease.Events.OnLeftDown += evt =>
             {
-                CombineReward combine = editingRewards.Parent;
+                CombineReward? combine = EditingCombineReward;
                 if (combine != null)
                 {
-                    rwsSelectCount.ChangeText((--combine.SelectCount).ToString(), false);
+                    combine.Count -= 1;
+                    UpdateRwsCountText();
                     combine.ShouldSaveStaticData = true;
-                    CheckRewards(EditingAch.Rewards, 0);
+                    CheckRewards(EditingAch!.Rewards, 0);
                     ChangeSaveState(false);
                 }
             };
@@ -718,6 +800,7 @@ namespace ProgressSystem.UIEditor
             addCombine.HoverToGold();
             addCombine.Events.OnLeftDown += evt =>
             {
+                var editingRewards = EditingRewards;
                 if (editingRewards == null)
                 {
                     Main.NewText("请先选择一个奖励层级");
@@ -728,9 +811,8 @@ namespace ProgressSystem.UIEditor
                     ShouldSaveStaticData = true
                 };
                 editingRewards.Add(combine);
-                editingRewards = combine.Rewards;
-                rwsSelectCount.ChangeText(editingRewards.Parent.SelectCount.ToString(), false);
-                CheckRewards(EditingAch.Rewards, 0);
+                EditingCombineReward = combine;
+                CheckRewards(EditingAch!.Rewards, 0);
                 ChangeSaveState(false);
             };
             addCombineBg.Register(addCombine);
@@ -895,6 +977,10 @@ namespace ProgressSystem.UIEditor
             deleteProgress.Events.OnMouseOut += evt => deleteProgress.color = Color.White;
             deleteProgress.Events.OnLeftDown += evt =>
             {
+                if (EditingPage == null)
+                {
+                    return;
+                }
                 if (AchievementManager.RemovePage(EditingPage))
                 {
                     pageList.ChangeShowElement(0);
@@ -985,6 +1071,10 @@ namespace ProgressSystem.UIEditor
             };
             achView.Events.OnLeftDoubleClick += evt =>
             {
+                if (EditingPage == null)
+                {
+                    return;
+                }
                 Point mouse = (Main.MouseScreen - achView.ChildrenElements[0].HitBox(false).TopLeft()).ToPoint();
                 Vector2 pos = new(mouse.X / 80, mouse.Y / 80);
                 if (EditingAchSlot?.pos == pos)
@@ -1020,37 +1110,37 @@ namespace ProgressSystem.UIEditor
                 collision = null;
                 tempSelect.Clear();
                 interacted.Clear();
-                if (LeftAlt && preSetting != null)
+                if (!LeftAlt || preSetting == null || !frameSelect.Any())
                 {
-                    if (frameSelect.Any())
-                    {
-                        foreach (UIAchSlot ge in frameSelect)
-                        {
-                            if (preSetting != ge)
-                            {
-                                Achievement orig = preSetting.ach;
-                                Achievement pre = ge.ach;
-                                if (pre.Predecessors.Contains(orig))
-                                {
-                                    Main.NewText("不可互为前置");
-                                    continue;
-                                }
-                                if (preSetting.PreAch.Contains(ge))
-                                {
-                                    RemoveRequireLine(orig, pre);
-                                }
-                                else
-                                {
-                                    RegisterRequireLine(orig, pre);
-                                }
-                                ChangeSaveState(false);
-                            }
-                            ge.selected = false;
-                        }
-                        ChangeSaveState(false);
-                        frameSelect.Clear();
-                    }
+                    return;
                 }
+                foreach (UIAchSlot ge in frameSelect)
+                {
+                    if (preSetting == ge)
+                    {
+                        ge.selected = false;
+                        continue;
+                    }
+                    Achievement orig = preSetting.ach;
+                    Achievement pre = ge.ach;
+                    if (pre.Predecessors.Contains(orig))
+                    {
+                        Main.NewText("不可互为前置");
+                        continue;
+                    }
+                    if (preSetting.PreAch.Contains(ge))
+                    {
+                        RemoveRequireLine(orig, pre);
+                    }
+                    else
+                    {
+                        RegisterRequireLine(orig, pre);
+                    }
+                    ChangeSaveState(false);
+                    ge.selected = false;
+                }
+                ChangeSaveState(false);
+                frameSelect.Clear();
             };
             eventPanel.Register(achView);
 
@@ -1113,18 +1203,18 @@ namespace ProgressSystem.UIEditor
             {
                 if (report.color == Color.Green)
                 {
-                    editingPage = pageInputer.Text;
+                    EditingPageName = pageInputer.Text;
                     //datas[EditMod][EditPage] = [];
                     editPanel.LockInteract(true);
                     pagePanel.Info.IsVisible = false;
-                    UIText pageName = new(editingPage);
+                    UIText pageName = new(EditingPageName);
                     pageName.SetSize(pageName.TextSize);
                     pageName.Events.OnMouseOver += evt => pageName.color = Color.Gold;
                     pageName.Events.OnMouseOut += evt => pageName.color = Color.White;
                     pageName.Events.OnLeftDown += evt => LoadPage(pageName.text);
                     pageList.AddElement(pageName);
                     pageList.ChangeShowElement(pageName);
-                    var page = AchievementPage.Create(editingMod, editingPage);
+                    var page = AchievementPage.Create(editingMod, EditingPageName);
                     page.ShouldSaveStaticData = true;
                     ClearTemp();
                     SaveProgress();
@@ -1146,7 +1236,7 @@ namespace ProgressSystem.UIEditor
         }
         private void AchSlotLeftCheck(BaseUIElement uie)
         {
-            UIAchSlot ge = uie as UIAchSlot;
+            UIAchSlot ge = (UIAchSlot)uie;
             Achievement ach = ge.ach;
             if (LeftAlt)
             {
@@ -1203,7 +1293,7 @@ namespace ProgressSystem.UIEditor
         }
         private void GESlotUpdate(BaseUIElement uie)
         {
-            UIAchSlot ge = uie as UIAchSlot;
+            UIAchSlot ge = (UIAchSlot)uie;
             if (collision != null)
             {
                 bool intersects = ge.HitBox().Intersects(collision.selector);
@@ -1279,7 +1369,7 @@ namespace ProgressSystem.UIEditor
             tempSelect.Clear();
             frameSelect.Clear();
             interacted.Clear();
-            editingAchName = "";
+            EditingAchFullName = "";
             achView?.InnerUIE.RemoveAll(MatchTempGE);
             achView?.Vscroll.ForceSetPixel(0);
             achView?.Hscroll.ForceSetPixel(0);
@@ -1287,11 +1377,16 @@ namespace ProgressSystem.UIEditor
         }
         private void LoadPage(string pageName)
         {
-            editingPage = pageName;
+            EditingPageName = pageName;
+            if (EditingPage == null)
+            {
+                return;
+            }
             ClearTemp();
+            EditingPage.SetDefaultPositionForAchievements();
             foreach (Achievement ach in EditingPage.Achievements.Values)
             {
-                RegisterAchSlot(ach, ach.Position.Value, false);
+                RegisterAchSlot(ach, ach.Position!.Value, false);
             }
             foreach (UIAchSlot slot in slotByFullName.Values)
             {
@@ -1334,7 +1429,7 @@ namespace ProgressSystem.UIEditor
             ge.ReDraw = sb =>
             {
                 ge.DrawSelf(sb);
-                if (ge.ach.FullName == editingAchName)
+                if (ge.ach.FullName == EditingAchFullName)
                 {
                     RUIHelper.DrawRec(sb, ge.HitBox().Modified(4, 4, -8, -8), 2f, Color.SkyBlue);
                 }
@@ -1392,6 +1487,7 @@ namespace ProgressSystem.UIEditor
             create.Events.OnMouseOut += evt => create.color = Color.White;
             create.Events.OnLeftDown += evt =>
             {
+                var editingRequires = EditingRequires;
                 if (editingRequires == null)
                 {
                     Main.NewText("请先选择一个成就栏位/需求层级");
@@ -1399,9 +1495,9 @@ namespace ProgressSystem.UIEditor
                 }
                 if (data.TryConstruct(out Requirement? require))
                 {
-                    require.ShouldSaveStaticData = true;
+                    require!.ShouldSaveStaticData = true;
                     editingRequires.Add(require);
-                    CheckRequirements(EditingAch.Requirements, 0);
+                    CheckRequirements(EditingAch!.Requirements, 0);
                     ChangeSaveState(false);
                 }
             };
@@ -1468,7 +1564,7 @@ namespace ProgressSystem.UIEditor
                 }
                 if (data.TryConstruct(out Reward? reward))
                 {
-                    reward.ShouldSaveStaticData = true;
+                    reward!.ShouldSaveStaticData = true;
                     EditingAch.Rewards.Add(reward);
                     CheckRewards(EditingAch.Rewards, 0);
                     ChangeSaveState(false);
@@ -1547,9 +1643,9 @@ namespace ProgressSystem.UIEditor
             if (range)
                 slot.Info.NeedRemove = true;
             else
-                EditingPage.Achievements.Remove(achName);
+                EditingPage!.Achievements.Remove(achName);
             AchPos.Remove(slot.pos);
-            if (editingAchName == achName)
+            if (EditingAchFullName == achName)
             {
                 ChangeEditingAch(null);
             }
@@ -1575,13 +1671,13 @@ namespace ProgressSystem.UIEditor
             me.preLine.Remove(line);
             orig.RemovePredecessor(pre.FullName, true);
         }
-        private void ChangeEditingAch(Achievement ach)
+        private void ChangeEditingAch(Achievement? ach)
         {
             if (ach == null)
             {
-                editingRequires = null;
-                editingRewards = null;
-                editingAchName = "";
+                EditingAchFullName = "";
+                EditingCombineRequire = null;
+                EditingCombineReward = null;
                 achNameInputer.ClearText();
                 preCount.ChangeText("未选", false);
                 requireView.ClearAllElements();
@@ -1590,18 +1686,16 @@ namespace ProgressSystem.UIEditor
             }
             else
             {
+                EditingAchFullName = ach.FullName;
                 int? pre = ach.PredecessorCountNeeded;
                 preCount.ChangeText(pre.HasValue ? pre.Value.ToString() : "null", false);
-                rqsNeedCount.ChangeText("未选", false);
-                rwsSelectCount.ChangeText("未选", false);
                 submit.ChangeText($"需要手动提交  {(ach.NeedSubmit ? "是" : "否")}");
-                editingAchName = ach.FullName;
                 achNameInputer.Text = ach.Name;
                 achNameInputer.OnInputText?.Invoke(ach.Name);
                 CheckRequirements(ach.Requirements, 0);
                 CheckRewards(ach.Rewards, 0);
-                editingRequires = ach.Requirements;
-                editingRewards = ach.Rewards;
+                EditingCombineRequire = null;
+                EditingCombineReward = null;
             }
         }
         private void CheckRequirements(RequirementList requires, int index)
@@ -1616,23 +1710,29 @@ namespace ProgressSystem.UIEditor
                     text.SetPos(index * 30, 0);
                     text.delete.Events.OnLeftDown += evt =>
                     {
+                        if (EditingAch == null)
+                        {
+                            return;
+                        }
                         text.requirements.Remove(text.requirement);
+                        if (EditingCombineRequire == text.requirement)
+                        {
+                            EditingCombineRequire = null;
+                        }
                         CheckRequirements(EditingAch.Requirements, 0);
                     };
                     requireView.AddElement(text);
                     if (require is CombineRequirement combine)
                     {
                         text.text.HoverToGold();
-                        var cb = combine;
-                        var requireList = combine.Requirements;
                         text.text.Events.OnLeftDown += evt =>
                         {
-                            editingRequires = requireList;
-                            rqsNeedCount.ChangeText(editingRequires.Parent.NeedCount.ToString(), false);
+                            EditingCombineRequire = combine;
+                            UpdateRqsCountText();
                         };
                         text.text.Events.OnUpdate += evt =>
                         {
-                            text.text.overrideColor = editingRequires == requireList ? Color.Red : null;
+                            text.text.overrideColor = EditingCombineRequire == combine ? Color.Red : null;
                         };
                         CheckRequirements(combine.Requirements, index + 1);
                     }
@@ -1660,7 +1760,15 @@ namespace ProgressSystem.UIEditor
                     text.SetPos(index * 30, 0);
                     text.delete.Events.OnLeftDown += evt =>
                     {
+                        if (EditingAch == null)
+                        {
+                            return;
+                        }
                         text.rewards.Remove(text.reward);
+                        if (EditingCombineReward == text.reward)
+                        {
+                            EditingCombineReward = null;
+                        }
                         CheckRewards(EditingAch.Rewards, 0);
                     };
                     rewardView.AddElement(text);
@@ -1671,12 +1779,11 @@ namespace ProgressSystem.UIEditor
                         var rewardList = combine.Rewards;
                         text.text.Events.OnLeftDown += evt =>
                         {
-                            editingRewards = rewardList;
-                            rwsSelectCount.ChangeText(editingRewards.Parent.SelectCount.ToString(), false);
+                            EditingCombineReward = combine;
                         };
                         text.text.Events.OnUpdate += evt =>
                         {
-                            text.text.overrideColor = editingRewards == rewardList ? Color.Red : null;
+                            text.text.overrideColor = EditingCombineReward == combine ? Color.Red : null;
                         };
                         CheckRewards(combine.Rewards, index + 1);
                     }

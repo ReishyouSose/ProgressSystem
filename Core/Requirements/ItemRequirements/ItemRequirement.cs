@@ -124,7 +124,7 @@ public abstract class ItemRequirement : Requirement
         if (ShouldSaveStaticData)
         {
             tag.SetWithDefault("ItemType", ItemType);
-            tag.SetWithDefault("NeedCount", Count);
+            tag.SetWithDefault("Count", Count);
         }
     }
     public override void LoadStaticData(TagCompound tag)
@@ -133,7 +133,7 @@ public abstract class ItemRequirement : Requirement
         if (ShouldSaveStaticData)
         {
             ItemType = tag.GetWithDefault<int>("ItemType");
-            Count = tag.GetWithDefault<int>("NeedCount");
+            Count = tag.GetWithDefault<int>("Count");
         }
     }
 }

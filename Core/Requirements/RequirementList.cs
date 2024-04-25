@@ -4,7 +4,6 @@ namespace ProgressSystem.Core.Requirements;
 
 public class RequirementList : IList<Requirement>, IReadOnlyList<Requirement>
 {
-    public CombineRequirement Parent { get; init; }
     private readonly List<Requirement> data;
 
     public event Action<Requirement>? OnAdd;
@@ -73,9 +72,33 @@ public class RequirementList : IList<Requirement>, IReadOnlyList<Requirement>
     public IEnumerator<Requirement> GetEnumerator() => data.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => data.GetEnumerator();
 
-    public bool Remove(Requirement requirement) => data.Remove(requirement);
-    public void RemoveAt(int index) => data.RemoveAt(index);
-    public void Clear() => data.Clear();
+    public bool Remove(Requirement item)
+    {
+        if(data.Remove(item))
+        {
+            OnRemove?.Invoke(item);
+            return true;
+        }
+        return false;
+    }
+
+    public void RemoveAt(int index)
+    {
+        OnRemove?.Invoke(data[index]);
+        data.RemoveAt(index);
+    }
+
+    public void Clear()
+    {
+        if (OnRemove != null)
+        {
+            foreach (var item in data)
+            {
+                OnRemove(item);
+            }
+        }
+        data.Clear();
+    }
 
     public void CopyTo(Requirement[] array, int arrayIndex) => Range(Count).ForeachDo(i => array[arrayIndex + i] = this[i]);
 }

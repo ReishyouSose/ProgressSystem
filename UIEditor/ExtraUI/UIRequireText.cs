@@ -18,7 +18,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
             string tooltip;
             if (requirement is CombineRequirement combine)
             {
-                int needCount = combine.NeedCount;
+                int needCount = combine.Count;
                 tooltip = needCount switch
                 {
                     0 => "达成下列所有",

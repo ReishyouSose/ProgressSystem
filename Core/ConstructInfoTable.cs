@@ -220,5 +220,10 @@ namespace ProgressSystem.Core
             public bool HasValue { get; private set; }
             public bool IsMet => !Important || HasValue;
         }
+        public override string ToString()
+        {
+            string entryNames = string.Join(", ", _entries.Select(e => e.DisplayName.Value));
+            return $"{nameof(ConstructInfoTable<T>)}<{typeof(T).Name}>: [{entryNames}]";
+        }
     }
 }
