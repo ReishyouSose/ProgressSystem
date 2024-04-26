@@ -1592,7 +1592,7 @@ namespace ProgressSystem.UI.DeveloperMode
                 if (data.TryConstruct(out Reward? reward))
                 {
                     reward!.ShouldSaveStaticData = true;
-                    EditingAch.Rewards.Add(reward);
+                    EditingRewards.Add(reward);
                     CheckRewards(EditingAch.Rewards, 0);
                     ChangeSaveState(false);
                 }
@@ -1803,16 +1803,15 @@ namespace ProgressSystem.UI.DeveloperMode
                     {
                         text.text.HoverToGold();
                         var cb = combine;
-                        var rewardList = combine.Rewards;
                         text.text.Events.OnLeftDown += evt =>
                         {
-                            EditingCombineReward = combine;
+                            EditingCombineReward = cb;
                         };
                         text.text.Events.OnUpdate += evt =>
                         {
-                            text.text.overrideColor = EditingCombineReward == combine ? Color.Red : null;
+                            text.text.overrideColor = EditingCombineReward == cb ? Color.Red : null;
                         };
-                        CheckRewards(combine.Rewards, index + 1);
+                        CheckRewards(cb.Rewards, index + 1);
                     }
                 }
             }

@@ -26,7 +26,7 @@ namespace ProgressSystem.UI.PlayerMode
             Info.IsVisible = true;
             RemoveAll();
 
-            UIVnlPanel bg = new(1000, 800);
+            UIVnlPanel bg = new(1000, 600);
             bg.SetCenter(0, 0, 0.55f, 0.5f);
             bg.Info.SetMargin(10);
             bg.canDrag = true;
@@ -55,7 +55,7 @@ namespace ProgressSystem.UI.PlayerMode
             UIVnlPanel eventPanel = new(0, 0);
             eventPanel.Info.SetMargin(10);
             eventPanel.SetPos(110, 40);
-            eventPanel.SetSize(-320, -40, 1, 1, false);
+            eventPanel.SetSize(-420, -40, 1, 1, false);
             bg.Register(eventPanel);
             int left = 110;
 
@@ -136,8 +136,8 @@ namespace ProgressSystem.UI.PlayerMode
         private void RegisterFocus(UIVnlPanel bg)
         {
             UIVnlPanel selectBg = new(0, 0);
-            selectBg.SetPos(-200, 0, 1);
-            selectBg.SetSize(200, 0, 0, 1);
+            selectBg.SetPos(-300, 0, 1);
+            selectBg.SetSize(300, 0, 0, 1);
             selectBg.Info.SetMargin(10);
             bg.Register(selectBg);
 
@@ -252,7 +252,7 @@ namespace ProgressSystem.UI.PlayerMode
                     Main.NewText("未选中成就");
                     return;
                 }
-                focusAch.TryComplete();
+                focusAch.GetAllReward();
             };
             recieveBg.Register(recieve);
         }
@@ -318,8 +318,6 @@ namespace ProgressSystem.UI.PlayerMode
         }
         private void CheckRequirements(RequirementList requires, int index)
         {
-            if (index == 0)
-                requireView.ClearAllElements();
             if (requires.Any())
             {
                 foreach (Requirement require in requires)
@@ -329,7 +327,6 @@ namespace ProgressSystem.UI.PlayerMode
                     requireView.AddElement(text);
                     if (require is CombineRequirement combine)
                     {
-                        text.text.HoverToGold();
                         CheckRequirements(combine.Requirements, index + 1);
                     }
                 }
@@ -344,10 +341,8 @@ namespace ProgressSystem.UI.PlayerMode
             if (index == 0)
                 requireView.Calculation();
         }
-        private void CheckRewards(RewardList rewards, int index)
+        private void CheckRewards(RewardList rewards, int index, CombineReward? combineR = null)
         {
-            if (index == 0)
-                rewardView.ClearAllElements();
             if (rewards.Any())
             {
                 foreach (Reward reward in rewards)
@@ -355,12 +350,21 @@ namespace ProgressSystem.UI.PlayerMode
                     UIRewardText text = new(reward, rewards);
                     text.SetPos(index * 30, 0);
                     rewardView.AddElement(text);
+                    if (combineR != null)
+                    {
+                        text.seleted.color = combineR.Contains(index) ? Color.Green : Color.Red;
+                        text.text.HoverToGold();
+                        text.text.Events.OnLeftDown += evt =>
+                        {
+                            bool? result = combineR.TrySelect(text.reward);
+                            if (result == null)
+                                return;
+                            text.seleted.color = result.Value ? Color.Green : Color.Red;
+                        };
+                    }
                     if (reward is CombineReward combine)
                     {
-                        text.text.HoverToGold();
-                        var cb = combine;
-                        var rewardList = combine.Rewards;
-                        CheckRewards(combine.Rewards, index + 1);
+                        CheckRewards(combine.Rewards, index + 1, combine);
                     }
                 }
             }
