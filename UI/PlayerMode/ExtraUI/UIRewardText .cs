@@ -7,16 +7,16 @@ namespace ProgressSystem.UI.PlayerMode.ExtraUI
     {
         public readonly RewardList rewards;
         public readonly Reward reward;
-        public readonly UIImage seleted;
+        public readonly UIImage selected;
         public readonly UIText text;
         public readonly int index;
         public UIRewardText(Reward reward, RewardList rewards)
         {
             this.rewards = rewards;
             this.reward = reward;
-            seleted = new(TextureAssets.MagicPixel.Value, new(16), Color.Green);
-            seleted.SetCenter(20, -3, 0, 0.5f);
-            Register(seleted);
+            selected = new(TextureAssets.MagicPixel.Value, new(16), Color.Green);
+            selected.SetCenter(20, -3, 0, 0.5f);
+            Register(selected);
             string tooltip = reward is CombineReward combine ? $"选择下列中的 {combine.Count} 项" :
                 (reward.DisplayName.Value ?? reward.GetType().Name)
             + (reward.ReportDetails(out string details) ? details : string.Empty);

@@ -5,12 +5,13 @@ namespace ProgressSystem.Core.Rewards;
 public class CombineReward : Reward
 {
     public readonly RewardList Rewards = [];
-    private readonly HashSet<int> seleted = [];
+    private readonly HashSet<int> selected = [];
     private int count = 1;
     /// <summary>
     /// 可选择的奖励数, 默认 1
     /// </summary>
     public int Count { get => count; set => count = Math.Max(value, 1); }
+    private bool selectLocked;
 
     public CombineReward() : base() { }
     public CombineReward(int count) : this()
@@ -33,29 +34,35 @@ public class CombineReward : Reward
 
     public bool? TrySelect(Reward reward)
     {
+        if (selectLocked)
+        {
+            Main.NewText("已锁定");
+            return null;
+        }
         int index = Rewards.IndexOf(reward);
         if (index == -1)
             return null;
-        if (seleted.Contains(index))
+        if (selected.Contains(index))
         {
-            seleted.Remove(index);
+            selected.Remove(index);
             return false;
         }
-        if (seleted.Count >= Count)
+        if (selected.Count >= Count)
         {
             Main.NewText("已达上限");
             return false;
         }
-        seleted.Add(index);
+        selected.Add(index);
         return true;
     }
-    public bool Contains(int index) => seleted.Contains(index);
+    public bool Contains(int index) => selected.Contains(index);
     protected override bool Receive()
     {
+        selectLocked = true;
         int i = 0;
         foreach (Reward reward in Rewards)
         {
-            if (seleted.Contains(i) && !reward.ReceiveSafe())
+            if (selected.Contains(i) && !reward.ReceiveSafe())
                 return false;
             i++;
         }

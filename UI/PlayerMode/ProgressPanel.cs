@@ -10,7 +10,7 @@ namespace ProgressSystem.UI.PlayerMode
     {
         internal static ProgressPanel Ins = null!;
         public ProgressPanel() => Ins = this;
-        private Mod seletedMod;
+        private Mod selectedMod;
         private Achievement? focusAch;
         private UIContainerPanel achView;
         private UIContainerPanel descriptionView;
@@ -85,7 +85,7 @@ namespace ProgressSystem.UI.PlayerMode
                 modSlot.ReDraw = sb =>
                 {
                     modSlot.DrawSelf(sb);
-                    if (seletedMod.Name == modSlot.modName)
+                    if (selectedMod.Name == modSlot.modName)
                     {
                         RUIHelper.DrawRec(sb, modSlot.HitBox(), 5f, Color.Red);
                     }
@@ -94,8 +94,8 @@ namespace ProgressSystem.UI.PlayerMode
                 {
                     pageList.ClearAllElements();
                     ClearTemp();
-                    seletedMod = ModLoader.GetMod(modSlot.modName);
-                    if (AchievementManager.PagesByMod.TryGetValue(seletedMod, out var modPages))
+                    selectedMod = ModLoader.GetMod(modSlot.modName);
+                    if (AchievementManager.PagesByMod.TryGetValue(selectedMod, out var modPages))
                     {
                         bool have = false;
                         foreach (var (page, ges) in modPages)
@@ -270,7 +270,7 @@ namespace ProgressSystem.UI.PlayerMode
         {
             ClearTemp();
             Dictionary<string, UIAchSlot> slotByFullName = [];
-            var page = AchievementManager.PagesByMod[seletedMod][pageName];
+            var page = AchievementManager.PagesByMod[selectedMod][pageName];
             page.SetDefaultPositionForAchievements();
             foreach (Achievement ach in page.Achievements.Values)
             {
@@ -352,14 +352,14 @@ namespace ProgressSystem.UI.PlayerMode
                     rewardView.AddElement(text);
                     if (combineR != null)
                     {
-                        text.seleted.color = combineR.Contains(index) ? Color.Green : Color.Red;
+                        text.selected.color = combineR.Contains(index) ? Color.Green : Color.Red;
                         text.text.HoverToGold();
                         text.text.Events.OnLeftDown += evt =>
                         {
                             bool? result = combineR.TrySelect(text.reward);
                             if (result == null)
                                 return;
-                            text.seleted.color = result.Value ? Color.Green : Color.Red;
+                            text.selected.color = result.Value ? Color.Green : Color.Red;
                         };
                     }
                     if (reward is CombineReward combine)

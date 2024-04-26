@@ -326,9 +326,9 @@ public class AchievementPlayerManager : ModPlayer
 {
     public override void OnEnterWorld()
     {
-        if (loadedData != null)
+        if (loadedata != null)
         {
-            LoadDataOnEnterWorld(loadedData);
+            LoadDataOnEnterWorld(loadedata);
         }
         AchievementManager.StartTree();
     }
@@ -347,8 +347,8 @@ public class AchievementPlayerManager : ModPlayer
     }
     public override void LoadData(TagCompound tag)
     {
-        loadedData = tag;
+        loadedata = tag;
     }
-    private TagCompound? loadedData;
+    private TagCompound? loadedata;
 }
 

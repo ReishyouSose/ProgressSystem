@@ -307,11 +307,11 @@ public static class PlayerListener
     public static long LocalPlayerTotalHealthLose => PlayerStatistics.Ins?.TotalHealthLose ?? 0;
     public static long LocalPlayerTotalManaConsumed => PlayerStatistics.Ins?.TotalManaConsumed ?? 0;
 
-    public delegate void OnLocalPlayerTotalHealthLoseChangedDelegate(long totalHealthLose);
-    public delegate void OnLocalPlayerTotalManaConsumedChangedDelegate(long totalManaConsumed);
+    public delegate void OnLocalPlayerTotalHealthLoseChangedelegate(long totalHealthLose);
+    public delegate void OnLocalPlayerTotalManaConsumedChangedelegate(long totalManaConsumed);
 
-    public static event OnLocalPlayerTotalHealthLoseChangedDelegate? OnLocalPlayerTotalHealthLoseChanged;
-    public static event OnLocalPlayerTotalManaConsumedChangedDelegate? OnLocalPlayerTotalManaConsumedChanged;
+    public static event OnLocalPlayerTotalHealthLoseChangedelegate? OnLocalPlayerTotalHealthLoseChanged;
+    public static event OnLocalPlayerTotalManaConsumedChangedelegate? OnLocalPlayerTotalManaConsumedChanged;
 
     internal static void ListenLocalPlayerTotalHealthLoseChanged(long totalHealthLose)
     {
