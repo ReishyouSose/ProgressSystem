@@ -18,6 +18,8 @@ namespace ProgressSystem.UI.PlayerMode
         private UIContainerPanel rewardView;
         private UIText submit;
         private UIText recieve;
+        private UIVnlPanel achPanel;
+        private UIVnlPanel detailsPanel;
         public override void OnInitialization()
         {
             base.OnInitialization();
@@ -26,14 +28,14 @@ namespace ProgressSystem.UI.PlayerMode
             Info.IsVisible = true;
             RemoveAll();
 
-            UIVnlPanel bg = new(1000, 600);
-            bg.SetCenter(0, 0, 0.55f, 0.5f);
-            bg.Info.SetMargin(10);
-            bg.canDrag = true;
-            Register(bg);
+            achPanel = new(1000, 800);
+            achPanel.SetCenter(0, 0, 0.55f, 0.5f);
+            achPanel.Info.SetMargin(10);
+            achPanel.canDrag = true;
+            Register(achPanel);
 
-            RegisterMainPanel(bg);
-            RegisterFocus(bg);
+            RegisterMainPanel(achPanel);
+            RegisterFocus(achPanel);
         }
         private void RegisterMainPanel(UIVnlPanel bg)
         {
@@ -55,7 +57,7 @@ namespace ProgressSystem.UI.PlayerMode
             UIVnlPanel eventPanel = new(0, 0);
             eventPanel.Info.SetMargin(10);
             eventPanel.SetPos(110, 40);
-            eventPanel.SetSize(-420, -40, 1, 1, false);
+            eventPanel.SetSize(-110, -40, 1, 1, false);
             bg.Register(eventPanel);
             int left = 110;
 
@@ -135,16 +137,18 @@ namespace ProgressSystem.UI.PlayerMode
         }
         private void RegisterFocus(UIVnlPanel bg)
         {
-            UIVnlPanel selectBg = new(0, 0);
-            selectBg.SetPos(-300, 0, 1);
-            selectBg.SetSize(300, 0, 0, 1);
-            selectBg.Info.SetMargin(10);
-            bg.Register(selectBg);
+            detailsPanel = new(800, 600) { canDrag = true };
+            detailsPanel.SetCenter(0, 0, 0.5f, 0.5f);
+            detailsPanel.Info.SetMargin(10);
+            detailsPanel.Info.IsVisible = false;
+            detailsPanel.Events.OnMouseOver += evt => bg.LockInteract(false);
+            detailsPanel.Events.OnMouseOut += evt => bg.LockInteract(true);
+            Register(detailsPanel);
 
             UIVnlPanel descriptionBg = new(0, 0);
             descriptionBg.Info.SetMargin(10);
-            descriptionBg.SetSize(0, -10, 1, 0.3f);
-            selectBg.Register(descriptionBg);
+            descriptionBg.SetSize(-5, -40, 0.33f, 1);
+            detailsPanel.Register(descriptionBg);
 
             UIText desc = new("详情");
             desc.SetSize(desc.TextSize);
@@ -162,11 +166,23 @@ namespace ProgressSystem.UI.PlayerMode
             descriptionView.SetVerticalScrollbar(dV);
             descriptionBg.Register(dV);
 
+            UIVnlPanel submitBg = new(0, 0);
+            submitBg.SetPos(0, -30, 0, 1);
+            submitBg.SetSize(-5, 30, 0.33f);
+            detailsPanel.Register(submitBg);
+
+            submit = new("提交");
+            submit.SetSize(submit.TextSize);
+            submit.SetCenter(0, 5, 0.5f, 0.5f);
+            submit.HoverToGold();
+            submit.Events.OnLeftDown += evt => focusAch.Submit();
+            submitBg.Register(submit);
+
             UIVnlPanel requireBg = new(0, 0);
-            requireBg.SetPos(0, 0, 0, 0.3f);
-            requireBg.SetSize(0, -10, 1, 0.3f);
+            requireBg.SetPos(5, 0, 0.33f, 0);
+            requireBg.SetSize(-2, -40, 0.33f, 1);
             requireBg.Info.SetMargin(10);
-            selectBg.Register(requireBg);
+            detailsPanel.Register(requireBg);
 
             UIText require = new("需求");
             require.SetSize(require.TextSize);
@@ -189,11 +205,23 @@ namespace ProgressSystem.UI.PlayerMode
             requireView.SetHorizontalScrollbar(requireH);
             requireBg.Register(requireH);
 
+            UIVnlPanel recieveBg = new(0, 0);
+            recieveBg.SetPos(5, -30, 0.33f, 1);
+            recieveBg.SetSize(-2, 30, 0.33f);
+            detailsPanel.Register(recieveBg);
+
+            recieve = new("领取");
+            recieve.SetSize(recieve.TextSize);
+            recieve.SetCenter(0, 5, 0.5f, 0.5f);
+            recieve.HoverToGold();
+            recieve.Events.OnLeftDown += evt => focusAch.GetAllReward();
+            recieveBg.Register(recieve);
+
             UIVnlPanel rewardBg = new(0, 0);
-            rewardBg.SetPos(0, 0, 0, 0.6f);
-            rewardBg.SetSize(0, -10, 1, 0.3f);
+            rewardBg.SetPos(5, 0, 0.67f, 0);
+            rewardBg.SetSize(-5, -40, 0.33f, 1);
             rewardBg.Info.SetMargin(10);
-            selectBg.Register(rewardBg);
+            detailsPanel.Register(rewardBg);
 
             UIText reward = new("奖励");
             reward.SetSize(reward.TextSize);
@@ -202,7 +230,7 @@ namespace ProgressSystem.UI.PlayerMode
 
             rewardView = new();
             rewardView.SetPos(0, 30);
-            rewardView.SetSize(-10, -40, 1, 1);
+            rewardView.SetSize(-5, -40, 1, 1);
             rewardView.autoPos[0] = true;
             rewardBg.Register(rewardView);
 
@@ -216,45 +244,21 @@ namespace ProgressSystem.UI.PlayerMode
             rewardView.SetHorizontalScrollbar(rewardH);
             rewardBg.Register(rewardH);
 
-            UIVnlPanel submitBg = new(0, 0);
-            submitBg.SetPos(0, 0, 0, 0.9f);
-            submitBg.SetSize(-5, 0, 0.5f, 0.1f);
-            selectBg.Register(submitBg);
+            UIVnlPanel closeBg = new(0, 0);
+            closeBg.SetPos(5, -30, 0.67f, 1);
+            closeBg.SetSize(-5, 30, 0.33f);
+            detailsPanel.Register(closeBg);
 
-            submit = new("提交");
-            submit.SetSize(submit.TextSize);
-            submit.SetCenter(0, 0, 0.5f, 0.5f);
-            submit.HoverToGold();
-            submit.Events.OnLeftDown += evt =>
+            UIText close = new("关闭");
+            close.SetSize(close.TextSize);
+            close.SetCenter(0, 5, 0.5f, 0.5f);
+            close.HoverToGold();
+            close.Events.OnLeftDown += evt =>
             {
-                if (focusAch == null)
-                {
-                    Main.NewText("未选中成就");
-                    return;
-                }
-                focusAch.Submit();
+                detailsPanel.Info.IsVisible = false;
+                bg.LockInteract(true);
             };
-            submitBg.Register(submit);
-
-            UIVnlPanel recieveBg = new(0, 0);
-            recieveBg.SetPos(5, 0, 0.5f, 0.9f);
-            recieveBg.SetSize(-5, 0, 0.5f, 0.1f);
-            selectBg.Register(recieveBg);
-
-            recieve = new("领取");
-            recieve.SetSize(recieve.TextSize);
-            recieve.SetCenter(0, 0, 0.5f, 0.5f);
-            recieve.HoverToGold();
-            recieve.Events.OnLeftDown += evt =>
-            {
-                if (focusAch == null)
-                {
-                    Main.NewText("未选中成就");
-                    return;
-                }
-                focusAch.GetAllReward();
-            };
-            recieveBg.Register(recieve);
+            closeBg.Register(close);
         }
         private void ClearTemp()
         {
@@ -314,6 +318,8 @@ namespace ProgressSystem.UI.PlayerMode
 
                 CheckRequirements(ach.Requirements, 0);
                 CheckRewards(ach.Rewards, 0);
+                detailsPanel.Info.IsVisible = true;
+                achPanel.LockInteract(false);
             }
         }
         private void CheckRequirements(RequirementList requires, int index)
