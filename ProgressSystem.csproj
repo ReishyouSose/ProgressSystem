@@ -15,8 +15,4 @@
   <ItemGroup>
     <ProjectReference Include="..\RUIModule\RUIModule.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="UIEditor\" />
-    <Folder Include="UI\PlayerMode\" />
-  </ItemGroup>
 </Project>

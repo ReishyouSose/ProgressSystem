@@ -130,5 +130,10 @@ Configs: {
 			Label: Don't Show Other Player Complete Achievement Message
 			Tooltip: ""
 		}
+
+		DeveloperMode: {
+			Label: Developer Mode
+			Tooltip: ""
+		}
 	}
 }

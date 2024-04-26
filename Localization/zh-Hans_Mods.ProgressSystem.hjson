@@ -130,5 +130,10 @@ Configs: {
 			Label: 不显示他人的成就完成信息
 			Tooltip: ""
 		}
+
+		DeveloperMode: {
+			// Label: Developer Mode
+			// Tooltip: ""
+		}
 	}
 }

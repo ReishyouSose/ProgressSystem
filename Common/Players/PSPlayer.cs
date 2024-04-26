@@ -1,5 +1,7 @@
 ﻿using ProgressSystem.Common.Systems;
+using ProgressSystem.Configs;
 using ProgressSystem.UI.DeveloperMode;
+using ProgressSystem.UI.PlayerMode;
 using Terraria.GameInput;
 
 namespace ProgressSystem.Common.Players
@@ -24,7 +26,16 @@ namespace ProgressSystem.Common.Players
         {
             if (KeyBinds.Check.JustPressed)
             {
-                GEEditor.Ins.OnInitialization();
+                if (ClientConfig.Instance.DeveloperMode)
+                {
+                    GEEditor.Ins.OnInitialization();
+                    ProgressPanel.Ins.Info.IsVisible = false;
+                }
+                else
+                {
+                    ProgressPanel.Ins.OnInitialization();
+                    GEEditor.Ins.Info.IsVisible = false;
+                }
             }
         }
     }

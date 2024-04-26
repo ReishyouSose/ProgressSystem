@@ -13,4 +13,5 @@ public class ClientConfig : ModConfig
 
     public bool DontShowAnyAchievementMessage;
     public bool DontShowOtherPlayerCompleteAchievementMessage;
+    public bool DeveloperMode;
 }
