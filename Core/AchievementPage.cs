@@ -1,7 +1,7 @@
 ﻿using ProgressSystem.Core.Interfaces;
 using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.StaticData;
-using System.IO;
+using System.Collections;
 
 namespace ProgressSystem.Core;
 
@@ -9,7 +9,7 @@ namespace ProgressSystem.Core;
 /// 成就页
 /// 代表一个显示多个成就的界面
 /// </summary>
-public class AchievementPage : IWithStaticData, INetUpdate, IProgressable, IAchievementNode
+public class AchievementPage : ICollection<Achievement>, IWithStaticData, INetUpdate, IProgressable, IAchievementNode
 {
     #region Vars
     public Mod Mod = null!;
@@ -28,7 +28,8 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable, IAchi
     /// 成就页包含的所有成就<br/>
     /// 键为<see cref="Achievement.FullName"/>
     /// </summary>
-    public Dictionary<string, Achievement> Achievements = [];
+    public IReadOnlyDictionary<string, Achievement> Achievements => achievements;
+    private readonly Dictionary<string, Achievement> achievements = [];
 
     /// <summary>
     /// UI 面板上是否可编辑
@@ -224,7 +225,7 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable, IAchi
     }
     public void SetDefaultPositionForAchievements()
     {
-        var values = Achievements.Values;
+        var values = achievements.Values;
         int achievementCount = values.Count;
         int sqrt = (int)Math.Ceiling(Math.Sqrt(achievementCount));
         bool[,] cell = new bool[sqrt, sqrt];
@@ -254,6 +255,8 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable, IAchi
     #endregion
 
     #region 添加及获取成就
+
+    #region 添加成就
     /// <summary>
     /// 向此成就页添加一个成就
     /// </summary>
@@ -265,17 +268,28 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable, IAchi
         {
             return false;
         }
-        Achievements.Add(achievement.FullName, achievement);
+        achievements.Add(achievement.FullName, achievement);
         return true;
     }
     /// <summary>
     /// 强制向此成就页添加一个成就, 若有同名成就则报错
     /// </summary>
     /// <param name="achievement">要添加的成就</param>
-    /// <returns>是否成功添加(当此成就页内有同名成就时失败)</returns>
     public void AddF(Achievement achievement)
     {
-        Achievements.Add(achievement.FullName, achievement);
+        achievements.Add(achievement.FullName, achievement);
+    }
+    /// <summary>
+    /// 强制向此成就页添加一个成就, 若有同名成就则替换它
+    /// </summary>
+    /// <param name="achievement">要添加的成就</param>
+    /// <returns>被替换掉的成就</returns>
+    public Achievement? AddR(Achievement achievement)
+    {
+        string key = achievement.FullName;
+        achievements.TryGetValue(key, out var orig);
+        achievements[key] = achievement;
+        return orig;
     }
     /// <summary>
     /// 向此成就页添加一个成就
@@ -287,33 +301,54 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable, IAchi
         Add(achievement);
         return this;
     }
+    /// <summary>
+    /// 强制向此成就页添加一个成就, 若有同名成就则报错
+    /// </summary>
+    /// <param name="achievement">要添加的成就</param>
+    /// <returns>自身</returns>
+    public AchievementPage AddFL(Achievement achievement)
+    {
+        AddF(achievement);
+        return this;
+    }
+    /// <summary>
+    /// 强制向此成就页添加一个成就, 若有同名成就则替换它
+    /// </summary>
+    /// <param name="achievement">要添加的成就</param>
+    /// <returns>自身</returns>
+    public AchievementPage AddRL(Achievement achievement)
+    {
+        achievements[achievement.FullName] = achievement;
+        return this;
+    }
+    void ICollection<Achievement>.Add(Achievement item) => AddF(item);
+    #endregion
 
+    #region 获取成就
     /// <summary>
     /// 获得此成就页内某个名字的成就
     /// </summary>
     /// <param name="achievementFullName">成就名</param>
     /// <returns>找到的成就, 若没有这个名字的成就, 则返回<see langword="null"/></returns>
-    public Achievement? Get(string achievementFullName)
+    public Achievement? GetAchievement(string achievementFullName)
     {
         return Achievements.TryGetValue(achievementFullName, out Achievement? result) ? result : null;
     }
-
     /// <summary>
     /// 强制获得此成就页内某个名字的成就
     /// </summary>
     /// <param name="achievementFullName">成就名</param>
     /// <returns>找到的成就, 若没有这个名字的成就, 则报错</returns>
-    public Achievement GetF(string achievementFullName)
+    public Achievement GetAchievementF(string achievementFullName)
     {
         return Achievements[achievementFullName];
     }
-
     /// <summary>
     /// 获取一个成就, 若不存在则返回 <see langword="null"/>
     /// </summary>
     /// <param name="mod">此成就所在模组</param>
     /// <param name="name">此成就的名字 (<see cref="Achievement.Name"/>)</param>
-    public Achievement? Get(Mod mod, string name)
+    public Achievement? GetAchievement(Mod mod, string name)
     {
         return Achievements.Values.FirstOrDefault(a => a.Mod == mod && a.Name == name);
     }
@@ -322,7 +357,7 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable, IAchi
     /// </summary>
     /// <param name="mod">此成就所在模组</param>
     /// <param name="name">此成就的名字 (<see cref="Achievement.Name"/>)</param>
-    public Achievement GetF(Mod mod, string name)
+    public Achievement GetAchievementF(Mod mod, string name)
     {
         return Achievements.Values.First(a => a.Mod == mod && a.Name == name);
     }
@@ -330,7 +365,7 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable, IAchi
     /// 获取一个成就, 若不存在则返回 <see langword="null"/>
     /// </summary>
     /// <param name="name">此成就的名字 (<see cref="Achievement.Name"/>)</param>
-    public Achievement? GetByName(string name)
+    public Achievement? GetAchievementByName(string name)
     {
         return Achievements.Values.FirstOrDefault(a => a.Name == name);
     }
@@ -338,25 +373,64 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable, IAchi
     /// 强制获取一个成就, 若不存在则报错
     /// </summary>
     /// <param name="name">此成就的名字 (<see cref="Achievement.Name"/>)</param>
-    public Achievement GetByNameF(string name)
+    public Achievement GetAchievementByNameF(string name)
     {
         return Achievements.Values.First(a => a.Name == name);
     }
+
+    public int GetAchievementIndex(string achievementFullName)
+    {
+        return achievements.GetIndexByKey(achievementFullName);
+    }
+    public int GetAchievementIndex(Achievement achievement)
+    {
+        return achievements.GetIndexByKey(achievement.FullName);
+    }
+    public int GetAchievementIndexByName(string name)
+    {
+        var achievement = GetAchievementByName(name);
+        if (achievement == null)
+        {
+            return -1;
+        }
+        return GetAchievementIndex(achievement);
+    }
+    public int GetAchievementIndexByNameF(string name)
+    {
+        return GetAchievementIndex(GetAchievementByName(name)!);
+    }
+
+    public Achievement GetAchievementByIndexF(int index) => achievements.GetValueByIndex(index);
+    public Achievement? GetAchievementByIndexS(int index) => achievements.GetValueByIndexS(index);
+    #endregion
+
+    #region 移除成就
+    public bool Remove(Achievement item)
+    {
+        return achievements.Remove(item.FullName);
+    }
+    public bool Remove(string achievementFullName)
+    {
+        return achievements.Remove(achievementFullName);
+    }
+    public void Clear() => achievements.Clear();
+    #endregion
+
     #endregion
 
     #region 存取数据
     public virtual void SaveDataInWorld(TagCompound tag)
     {
-        tag.SaveDictionaryData("Achievements", Achievements, (a, t) => a.SaveDataInWorld(t));
+        tag.SaveDictionaryData("Achievements", achievements, (a, t) => a.SaveDataInWorld(t));
     }
     public virtual void LoadDataInWorld(TagCompound tag)
     {
-        tag.LoadDictionaryData("Achievements", Achievements, (a, t) => a.LoadDataInWorld(t));
+        tag.LoadDictionaryData("Achievements", achievements, (a, t) => a.LoadDataInWorld(t));
     }
     public virtual void SaveDataInPlayer(TagCompound tag)
     {
         tag.SetWithDefault("State", State.ToString(), StateEnum.Locked.ToString());
-        tag.SaveDictionaryData("Achievements", Achievements, (a, t) => a.SaveDataInPlayer(t));
+        tag.SaveDictionaryData("Achievements", achievements, (a, t) => a.SaveDataInPlayer(t));
     }
     public virtual void LoadDataInPlayer(TagCompound tag)
     {
@@ -364,24 +438,24 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable, IAchi
         {
             State = state;
         }
-        tag.LoadDictionaryData("Achievements", Achievements, (a, t) => a.LoadDataInPlayer(t));
+        tag.LoadDictionaryData("Achievements", achievements, (a, t) => a.LoadDataInPlayer(t));
     }
     public bool ShouldSaveStaticData { get; set; }
     public virtual void SaveStaticData(TagCompound tag)
     {
-        this.SaveStaticDataTemplate(Achievements.Values, a => a.FullName, "Achievements", tag);
+        this.SaveStaticDataTemplate(achievements.Values, a => a.FullName, "Achievements", tag);
     }
     public virtual void LoadStaticData(TagCompound tag)
     {
-        this.LoadStaticDataTemplate(fullName => Achievements.TryGetValue(fullName, out var a) ? a : null,
+        this.LoadStaticDataTemplate(fullName => achievements.TryGetValue(fullName, out var a) ? a : null,
             (a, m, n) =>
             {
                 a.Mod = m;
                 a.Name = n;
                 a.Page = this;
                 a.LocalizedKey = string.Join('.', FullName, n);
-                a.TexturePath = string.Join('/', Name, n);
-            }, Achievements.Add, "Achievements", tag);
+                a.TexturePath = string.Join('/', Mod.Name, Name, n);
+            }, achievements.Add, "Achievements", tag);
     }
     #endregion
 
@@ -390,10 +464,6 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable, IAchi
     protected bool _netUpdate;
     public bool NetUpdate { get => _netUpdate; set => DoIf(_netUpdate = value, AchievementManager.SetNeedNetUpdate); }
     public IEnumerable<INetUpdate> GetNetUpdateChildren() => Achievements.Values;
-    public virtual void WriteMessageFromServer(BinaryWriter writer, BitWriter bitWriter) { }
-    public virtual void ReceiveMessageFromServer(BinaryReader reader, BitReader bitReader) { }
-    public virtual void WriteMessageFromClient(BinaryWriter writer, BitWriter bitWriter) { }
-    public virtual void ReceiveMessageFromClient(BinaryReader reader, BitReader bitReader) { }
     #endregion
 
     #region 进度
@@ -425,4 +495,15 @@ public class AchievementPage : IWithStaticData, INetUpdate, IProgressable, IAchi
     {
         return $"{FullName}: {State}";
     }
+
+    #region ICollection 杂项的实现
+    public int Count => achievements.Count;
+    public bool IsReadOnly => false;
+    public Achievement this[int index] { get => GetAchievementByIndexF(index); set => throw new NotImplementedException(); }
+    public bool Contains(Achievement item) => Achievements.ContainsKey(item.FullName);
+    public void CopyTo(Achievement[] array, int arrayIndex)
+        => Achievements.Values.WithIndex().ForeachDo(pair => { array[arrayIndex + pair.index] = pair.value; });
+    public IEnumerator<Achievement> GetEnumerator() => Achievements.Values.GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => Achievements.Values.GetEnumerator();
+    #endregion
 }

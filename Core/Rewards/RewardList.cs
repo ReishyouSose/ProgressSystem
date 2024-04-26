@@ -91,7 +91,7 @@ public class RewardList : IList<Reward>, IReadOnlyList<Reward>
     }
     public void Clear()
     {
-        if (OnRemove != null)
+        if (OnRemove != null && data.Count > 0)
         {
             foreach (var item in data)
             {

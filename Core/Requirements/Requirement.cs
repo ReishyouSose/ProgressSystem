@@ -51,7 +51,7 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
     }
     protected Requirement()
     {
-        Reset();
+        WouldNetUpdate = WouldNetUpdateInitial;
     }
     /// <summary>
     /// 初始化, 在被加入 <see cref="RequirementList"/> 时被调用
@@ -71,7 +71,6 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
     #region 重置与开始
     /// <summary>
     /// 重置
-    /// 初始化时也会被调用
     /// </summary>
     public virtual void Reset()
     {
@@ -177,13 +176,20 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
     }
     #endregion
 
-    #region 多人同步
+    #region 网络同步
     protected bool _netUpdate;
     public bool NetUpdate { get => _netUpdate; set => DoIf(_netUpdate = value, AchievementManager.SetNeedNetUpdate); }
     public virtual void WriteMessageFromServer(BinaryWriter writer, BitWriter bitWriter) { }
     public virtual void ReceiveMessageFromServer(BinaryReader reader, BitReader bitReader) { }
     public virtual void WriteMessageFromClient(BinaryWriter writer, BitWriter bitWriter) { }
     public virtual void ReceiveMessageFromClient(BinaryReader reader, BitReader bitReader) { }
+
+    public bool WouldNetUpdate { get; set; }
+    public virtual bool WouldNetUpdateInitial => false;
+    public virtual void WriteMessageToEnteringPlayer(BinaryWriter writer, BitWriter bitWriter) => WriteMessageFromServer(writer, bitWriter);
+    public virtual void ReceiveMessageToEnteringPlayer(BinaryReader reader, BitReader bitReader) => ReceiveMessageFromServer(reader, bitReader);
+    public virtual void WriteMessageFromEnteringPlayer(BinaryWriter writer, BitWriter bitWriter) => WriteMessageFromClient(writer, bitWriter);
+    public virtual void ReceiveMessageFromEnteringPlayer(BinaryReader reader, BitReader bitReader) => ReceiveMessageFromClient(reader, bitReader);
     #endregion
 
     #region 进度

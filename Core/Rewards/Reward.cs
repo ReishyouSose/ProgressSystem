@@ -23,12 +23,42 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
 
     #region 获取奖励
     public virtual bool Received { get; protected set; }
-    
+
+    public delegate void OnTotallyReceivedDelegate();
+    public delegate void OnTotallyReceivedStaticDelegate(Reward reward);
+    public event OnTotallyReceivedDelegate? OnTotallyReceived;
+    public static event OnTotallyReceivedStaticDelegate? OnTotallyReceivedStatic;
+    /// <summary>
+    /// 尝试领取奖励 (当成就完成时)
+    /// </summary>
+    /// <returns>是否已领取</returns>
+    public bool TryReceive()
+    {
+        if (Achievement.State.IsCompleted())
+        {
+            ReceiveSafe();
+        }
+        return Received;
+    }
     /// <summary>
     /// 获取奖励
+    /// 不会重复领取
     /// </summary>
     /// <returns>是否全部获取</returns>
-    public bool ReceiveSafe() => Received || (Received = Receive());
+    public bool ReceiveSafe()
+    {
+        if (Received)
+        {
+            return true;
+        }
+        if (Received = Receive())
+        {
+            OnTotallyReceived?.Invoke();
+            OnTotallyReceivedStatic?.Invoke(this);
+        }
+        return Received;
+    }
+
     /// <summary>
     /// 获取奖励
     /// </summary>

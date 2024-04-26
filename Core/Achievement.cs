@@ -44,16 +44,32 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     public string FullNameWithPage => $"{Page.FullName}.{FullName}";
 
     #region 本地化文本和图片的储存路径
-    public string LocalizedKey = null!;
+    /// <summary>
+    /// 本地化路径, 默认 [page.FullName].[achievement.Name]
+    /// </summary>
+    public string LocalizedKey
+    {
+        get => _localizedKey ??= string.Join('.', Page.FullName, Name);
+        set => _localizedKey = value;
+    }
+    protected string? _localizedKey;
 
-    public string TexturePath = null!;
+    /// <summary>
+    /// 图片默认路径, 默认 [page.Mod.Name]/[page.Name]/[achievement.Name]
+    /// </summary>
+    public string TexturePath
+    {
+        get => _texturePath ??= string.Join('/', Page.Mod.Name, Page.Name, Name);
+        set => _texturePath = value;
+    }
+    protected string? _texturePath;
     #endregion
 
     #endregion
 
     #region 给 UI 提供的
     /// <summary>
-    /// 显示的名字
+    /// 显示的名字, 默认通过对应 Mod 的 Achievements.[LocalizedKey].DisplayName 获取
     /// </summary>
     public TextGetter DisplayName
     {
@@ -61,7 +77,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
         set => _displayName = value;
     }
     /// <summary>
-    /// 鼠标移上去时显示的提示
+    /// 鼠标移上去时显示的提示, 默认通过对应 Mod 的 Achievements.[LocalizedKey].Tooltip 获取
     /// </summary>
     public TextGetter Tooltip
     {
@@ -69,7 +85,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
         set => _tooltip = value;
     }
     /// <summary>
-    /// 详细说明
+    /// 详细说明, 默认通过对应 Mod 的 Achievements.[LocalizedKey].Description 获取
     /// </summary>
     public TextGetter Description
     {
@@ -234,46 +250,48 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     /// <summary>
     /// 设置所有的前置名(覆盖)
     /// </summary>
-    /// <param name="predecessorNames"></param>
-    public void SetPredecessorNames(List<string>? predecessorNames, bool isFullName)
+    /// <returns>自身</returns>
+    public Achievement SetPredecessorNames(List<string>? predecessorNames, bool isFullName = false)
     {
         predecessors?.ForEach(p => p.successors.Remove(this));
         predecessors = null;
         _predecessorNames = predecessorNames == null ? [] : [.. predecessorNames.Select(p => (p, isFullName))];
+        return this;
     }
     /// <summary>
     /// 添加一个前置
     /// </summary>
-    /// <param name="predecessorFullName"></param>
-    public void AddPredecessor(string predecessorName, bool isFullName)
+    /// <returns>自身</returns>
+    public Achievement AddPredecessor(string predecessorName, bool isFullName)
     {
         if (predecessors == null)
         {
             (_predecessorNames ??= []).Add((predecessorName, isFullName));
-            return;
+            return this;
         }
-        Achievement? predecessor = isFullName ? Page.Get(predecessorName) : Page.GetByName(predecessorName);
+        Achievement? predecessor = isFullName ? Page.GetAchievement(predecessorName) : Page.GetAchievementByName(predecessorName);
         if (predecessor == null)
         {
-            return;
+            return this;
         }
         predecessor.successors.Add(this);
         predecessors.Add(predecessor);
+        return this;
     }
     /// <summary>
     /// 移除一个前置
     /// </summary>
-    /// <param name="predecessorName"></param>
-    public void RemovePredecessor(string predecessorName, bool isFullName)
+    /// <returns>自身</returns>
+    public Achievement RemovePredecessor(string predecessorName, bool isFullName)
     {
         if (predecessors == null)
         {
             if (_predecessorNames == null)
             {
-                return;
+                return this;
             }
             _predecessorNames.Remove((predecessorName, isFullName));
-            return;
+            return this;
         }
         foreach (int i in predecessors.Count)
         {
@@ -287,8 +305,9 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
             break;
         }
         predecessors.Remove(isFullName ? a => a.FullName == predecessorName : a => a.Name == predecessorName);
+        return this;
     }
-    public void InitializePredecessorsSafe()
+    protected void InitializePredecessorsSafe()
     {
         if (predecessors == null)
         {
@@ -329,7 +348,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     /// <summary>
     /// 条件
     /// </summary>
-    public RequirementList Requirements = null!;
+    public RequirementList Requirements { get; protected init; }
 
     protected int _requirementCountNeeded;
     /// <summary>
@@ -345,6 +364,9 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     }
 
     #region 提交
+    /// <summary>
+    /// 是否需要在 UI 中提交才算作达成
+    /// </summary>
     public bool NeedSubmit;
 
     public void Submit()
@@ -359,6 +381,18 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     }
     protected bool InSubmitting;
     #endregion
+    
+    public Achievement SetRequirements(IEnumerable<Requirement> requirements)
+    {
+        Requirements.Clear();
+        Requirements.AddRange(requirements);
+        return this;
+    }
+    public Achievement AddRequirements(IEnumerable<Requirement> requirements)
+    {
+        Requirements.AddRange(requirements);
+        return this;
+    }
 
     #endregion
 
@@ -366,20 +400,52 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     /// <summary>
     /// 奖励
     /// </summary>
-    public RewardList Rewards;
+    public RewardList Rewards { get; protected init; }
+    
+    public delegate void OnReceiveAllRewardStaticDelegate(Achievement achievement, bool allReceived);
+    public delegate void OnReceiveAllRewardDelegate(bool allReceived);
+    public event OnReceiveAllRewardDelegate? OnReceiveAllReward;
+    public event OnReceiveAllRewardStaticDelegate? OnReceiveAllRewardStatic;
 
-    public delegate void OnGetAllRewardDelegate(bool allReceived);
-    public event OnGetAllRewardDelegate? OnGetAllReward;
+    /// <summary>
+    /// 是否全部领取
+    /// </summary>
+    public bool AllRewardsReceived { get; protected set; }
+    protected void UpdateAllRewardsReceived()
+    {
+        AllRewardsReceived = Rewards.All(r => r.Received);
+    }
+
+    public void TryReceiveAllReward()
+    {
+        if (State.IsCompleted())
+        {
+            AllRewardsReceived = ReceiveAllReward();
+        }
+    }
     /// <summary>
     /// 一键获得所有奖励
     /// </summary>
     /// <returns>是否全部获取</returns>
-    public virtual bool GetAllReward()
+    protected bool ReceiveAllReward()
     {
         bool result = true;
         Rewards.ForeachDo(r => result &= r.ReceiveSafe());
-        OnGetAllReward?.Invoke(result);
+        OnReceiveAllRewardStatic?.Invoke(this, result);
+        OnReceiveAllReward?.Invoke(result);
         return result;
+    }
+
+    public Achievement SetRewards(IEnumerable<Reward> rewards)
+    {
+        Rewards.Clear();
+        Rewards.AddRange(rewards);
+        return this;
+    }
+    public Achievement AddRewards(IEnumerable<Reward> rewards)
+    {
+        Rewards.AddRange(rewards);
+        return this;
     }
     #endregion
 
@@ -387,7 +453,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     static Achievement()
     {
         // 在成就页解锁时尝试解锁成就
-        AchievementPage.OnUnlockStatic += p => p.Achievements.Values.ForeachDo(a => a.TryComplete());
+        AchievementPage.OnUnlockStatic += p => p.Achievements.Values.ForeachDo(a => a.TryUnlock());
         // 在条件完成时尝试完成成就
         Requirement.OnCompleteStatic += r => r.Achievement.TryComplete();
         // 在成就解锁时尝试完成成就
@@ -398,72 +464,45 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
             a.TryClose();
             a.Successors.ForeachDo(s => s.CheckState());
         };
+        // 在完成时更新进度
         OnCompleteStatic += a => a.UpdateProgress();
+        // 在奖励完全领取后检查是否全部领取
+        Reward.OnTotallyReceivedStatic += r => r.Achievement.UpdateAllRewardsReceived();
     }
+
     /// <summary>
-    /// 创建一个成就, 若页内有同名成就则报错
+    /// <br/>创建一个成就, 需要通过 page.Add (或其变体) 将其加入到页面中
+    /// <para/>其它一些初始化设置:
+    /// <para/><see cref="SetPredecessorNames(List{string}?, bool)"/>: 设置前置
+    /// <para/><see cref="NeedSubmit"/>: 是否需要在 UI 中提交才算作达成
+    /// <br/><see cref="PredecessorCountNeeded"/>: 需要多少个前置才能开始此成就
+    /// <br/><see cref="RequirementCountNeeded"/>: 需要多少个条件才能完成此成就
+    /// <br/><see cref="Repeatable"/>: 是否可重复完成
+    /// <para/><see cref="TexturePath"/>: 图片的默认路径, 默认 [page.Mod.Name]/[page.Name]/[achievement.Name]
+    /// <br/><see cref="Texture"/>: 图片, 默认从 [Mod]/Assets/Textures/Achievements/[TexturePath] 获取
+    /// <br/><see cref="GetSourceRect"/>: 获取 SourceRect, 默认 null 代表全图
+    /// <br/><see cref="DisplayName"/>: 显示的名字, 默认通过对应 Mod 的 Achievements.[LocalizedKey].DisplayName 获取
+    /// <br/><see cref="Tooltip"/>: 鼠标移上去时显示的提示, 默认通过对应 Mod 的 Achievements.[LocalizedKey].Tooltip 获取
+    /// <br/><see cref="Description"/>: 详细说明, 默认通过对应 Mod 的 Achievements.[LocalizedKey].Description 获取
+    /// <br/><see cref="Position"/>: 默认位置
+    /// <para/><see cref="IsPredecessorsMet"/>: 自定义前置检索条件
+    /// <br/><see cref="UnlockCondition"/>: 自定义解锁条件
+    /// <br/><see cref="CompleteCondition"/>: 自定义完成条件
+    /// <br/><see cref="CloseCondition"/>: 自定义关闭条件
+    /// <br/><see cref="CloseCondition"/>: 自定义是否达到稳定状态
     /// </summary>
     /// <param name="page">属于哪一页</param>
     /// <param name="mod">所属模组, 用于查找对应资源, 注意不是 <paramref name="page"/> 的模组, 而是添加此成就的模组</param>
-    /// <param name="name">内部名, 同一成就页内不允许有相同内部名的成就</param>
-    /// <param name="predecessorNames">
-    /// <br/>前置的名字(需要在同一页)
-    /// <br/>在 Load 阶段不必需要前置在此时就存在
-    /// <br/>但在 PostSetup 阶段及之后就需要了
-    /// <br/>也可以通过 <see cref="AddPredecessor"/> 添加前置, 条件相同
-    /// </param>
+    /// <param name="name">内部名, 同一成就页内不允许有相同模组与内部名的成就</param>
     /// <param name="requirements">条件</param>
     /// <param name="rewards">奖励</param>
-    /// <param name="texture">图片</param>
-    /// <param name="displayName">显示的名字, 默认通过对应 Mod 的 Achievements.[ModName].[PageName].[AcievementName].DisplayName 获取</param>
-    /// <param name="tooltip">鼠标移上去时显示的提示, 默认通过对应 Mod 的 Achievements.[ModName].[PageName].[AcievementName].Tooltip 获取</param>
-    /// <param name="description">详细说明, 默认通过对应 Mod 的 Achievements.[ModName].[PageName].[AcievementName].Description 获取</param>
-    public static Achievement Create(AchievementPage page, Mod mod, string name,
-        List<string>? predecessorNames = null,
-        bool isPredecessorFullName = false,
-        List<Requirement>? requirements = null,
-        List<Reward>? rewards = null,
-        TextGetter displayName = default,
-        TextGetter tooltip = default,
-        TextGetter description = default,
-        Texture2DGetter texture = default,
-        Vector2? defaultPosition = null)
+    public Achievement(AchievementPage page, Mod mod, string name, IEnumerable<Requirement>? requirements = null, IEnumerable<Reward>? rewards = null) : this(requirements, rewards)
     {
-        Achievement achievement = new()
-        {
-            Mod = mod,
-            Page = page,
-            Name = name,
-            LocalizedKey = string.Join('.', page.FullName, name),
-            TexturePath = string.Join('/', page.Name, name)
-        };
-
-        achievement.SetPredecessorNames(predecessorNames, isPredecessorFullName);
-        achievement.Requirements = new(achievement, requirements);
-        achievement.Rewards = new(achievement, rewards);
-
-        achievement.DisplayName = displayName;
-        achievement.Tooltip = tooltip;
-        achievement.Description = description;
-        achievement.Texture = texture;
-        achievement.Position = defaultPosition;
-
-        page.AddF(achievement);
-        return achievement;
+        Page = page;
+        Mod = mod;
+        Name = name;
     }
-    public static bool TryCreate(AchievementPage page, Mod mod, string name, out Achievement? achievement)
-    {
-        string fullName = string.Join('.', mod.Name, name);
-        if (page.Achievements.ContainsKey(fullName))
-        {
-            achievement = null;
-            return false;
-        }
-        achievement = Create(page, mod, name);
-        return true;
-    }
-
-    protected Achievement()
+    protected Achievement(IEnumerable<Requirement>? requirements = null, IEnumerable<Reward>? rewards = null)
     {
         ReachedStableState = DefaultReachedStableState;
         CloseCondition = DefaultCloseCondition;
@@ -471,13 +510,15 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
         UnlockCondition = DefaultUnlockCondition;
         CompleteCondition = DefaultCompleteCondition;
         GetSourceRect = DefaultGetSourceRect;
-        Requirements = new(this);
-        Rewards = new(this);
+        WouldNetUpdate = WouldNetUpdateInitial;
+        Requirements = new(this, requirements);
+        Rewards = new(this, rewards);
     }
+    protected Achievement() : this(null, null) { }
 
     public void PostInitialize()
     {
-        InitializePredecessorsSafe();
+        _ = Predecessors;
         _ = DisplayName;
         _ = Tooltip;
         _ = Description;
@@ -486,7 +527,8 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
 
     public virtual IEnumerable<ConstructInfoTable<Achievement>> GetConstructInfoTables()
     {
-        yield return ConstructInfoTable<Achievement>.Create(Create);
+        ConstructInfoTable<Achievement>.TryAutoCreate<Achievement>(GetType(), null, out var constructors);
+        return constructors;
     }
     #endregion
 
@@ -505,6 +547,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     public virtual void Start()
     {
         CheckState();
+        UpdateAllRewardsReceived();
         OnStartStatic?.Invoke(this);
         OnStart?.Invoke();
     }
@@ -540,7 +583,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     public Func<bool> UnlockCondition;
     public bool DefaultUnlockCondition()
     {
-        return Page.State != AchievementPage.StateEnum.Locked && IsPredecessorsMet();
+        return Page.State is AchievementPage.StateEnum.Unlocked or AchievementPage.StateEnum.Completed && State.IsLocked() && IsPredecessorsMet();
     }
     public static event Action<Achievement>? OnUnlockStatic;
     public event Action? OnUnlock;
@@ -556,7 +599,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     }
     public virtual void TryUnlock()
     {
-        if (State.IsLocked() && IsPredecessorsMet())
+        if (UnlockCondition())
         {
             UnlockSafe();
         }
@@ -624,6 +667,9 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     #endregion
 
     #region 重复
+    /// <summary>
+    /// 是否可重复完成
+    /// </summary>
     public virtual bool Repeatable { get; set; }
     public virtual void TryRepeat()
     {
@@ -754,6 +800,13 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     public virtual void ReceiveMessageFromServer(BinaryReader reader, BitReader bitReader) { }
     public virtual void WriteMessageFromClient(BinaryWriter writer, BitWriter bitWriter) { }
     public virtual void ReceiveMessageFromClient(BinaryReader reader, BitReader bitReader) { }
+
+    public bool WouldNetUpdate { get; set; }
+    public virtual bool WouldNetUpdateInitial => false;
+    public virtual void WriteMessageToEnteringPlayer(BinaryWriter writer, BitWriter bitWriter) => WriteMessageFromServer(writer, bitWriter);
+    public virtual void ReceiveMessageToEnteringPlayer(BinaryReader reader, BitReader bitReader) => ReceiveMessageFromServer(reader, bitReader);
+    public virtual void WriteMessageFromEnteringPlayer(BinaryWriter writer, BitWriter bitWriter) => WriteMessageFromClient(writer, bitWriter);
+    public virtual void ReceiveMessageFromEnteringPlayer(BinaryReader reader, BitReader bitReader) => ReceiveMessageFromClient(reader, bitReader);
     #endregion
 
     #region 进度

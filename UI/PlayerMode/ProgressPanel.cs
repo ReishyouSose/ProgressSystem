@@ -214,7 +214,7 @@ namespace ProgressSystem.UI.PlayerMode
             recieve.SetSize(recieve.TextSize);
             recieve.SetCenter(0, 5, 0.5f, 0.5f);
             recieve.HoverToGold();
-            recieve.Events.OnLeftDown += evt => focusAch.GetAllReward();
+            recieve.Events.OnLeftDown += evt => focusAch.TryReceiveAllReward();
             recieveBg.Register(recieve);
 
             UIVnlPanel rewardBg = new(0, 0);

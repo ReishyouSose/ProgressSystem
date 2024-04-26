@@ -1,4 +1,5 @@
 ﻿using ProgressSystem.Common.Systems;
+using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Configs;
 using ProgressSystem.UI.DeveloperMode;
 using ProgressSystem.UI.PlayerMode;
@@ -20,6 +21,7 @@ namespace ProgressSystem.Common.Players
         public override void OnEnterWorld()
         {
             Instance = this;
+            NetHandler.SyncAchievementDataOnEnterWorld();
         }
 
         public override void ProcessTriggers(TriggersSet triggersSet)

@@ -103,6 +103,11 @@ Rewards: {
 	PlayerStatReward.DisplayName: Mods.ProgressSystem.Rewards.PlayerStatReward.DisplayName
 }
 
+Messages: {
+	LocalPlayerCompleteAchievement: Achievement {0} is completed!
+	OtherPlayerCompleteAchievement: "{0} completes achievement {1}!"
+}
+
 Configs: {
 	ServerConfig: {
 		DisplayName: Server Config

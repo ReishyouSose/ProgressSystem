@@ -384,10 +384,10 @@ namespace ProgressSystem.UI.DeveloperMode
                     string oldName = EditingAchFullName;
                     string newName = achNameInputer.Text;
                     slotByFullName.Remove(oldName);
-                    EditingPage!.Achievements.Remove(oldName);
+                    EditingPage!.Remove(oldName);
                     currentAch.Name = newName;
                     slotByFullName.Add(newName, currentSlot);
-                    EditingPage.Achievements.Add(newName, currentAch);
+                    EditingPage.Add(currentAch);
                     ChangeSaveState(false);
                 }
             };
@@ -1110,7 +1110,8 @@ namespace ProgressSystem.UI.DeveloperMode
                 int i = 1;
                 while (EditingPage.Achievements.ContainsKey(editingMod.Name + "." + name + i))
                     i++;
-                Achievement ach = Achievement.Create(EditingPage, editingMod, name + i);
+                Achievement ach = new(EditingPage, editingMod, name + i);
+                EditingPage.AddF(ach);
                 ach.ShouldSaveStaticData = true;
                 RegisterAchSlot(ach, pos);
             };
@@ -1670,7 +1671,7 @@ namespace ProgressSystem.UI.DeveloperMode
             if (range)
                 slot.Info.NeedRemove = true;
             else
-                EditingPage!.Achievements.Remove(achName);
+                EditingPage!.Remove(achName);
             AchPos.Remove(slot.pos);
             if (EditingAchFullName == achName)
             {

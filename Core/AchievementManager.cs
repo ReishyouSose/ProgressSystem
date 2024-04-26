@@ -24,30 +24,37 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgr
     public override void OnModLoad()
     {
         var page = AchievementPage.Create(ModInstance, "TestPage");
-        Achievement.Create(page, ModInstance, "First", rewards: [new ItemReward(ItemID.SilverCoin, 20)]).NeedSubmit = true;
-        Achievement.Create(page, ModInstance, "Workbench", predecessorNames: ["Wood"],
+        page.Add(new Achievement(page, ModInstance, "First", rewards: [new ItemReward(ItemID.SilverCoin, 20)]) { NeedSubmit = true });
+        page.Add(new Achievement(page, ModInstance, "Workbench",
             requirements: [new CraftItemRequirement(ItemID.WorkBench)],
-            rewards: [new ItemReward(ItemID.Wood, 100)]).UseRollingRequirementTexture = true;
-        Achievement.Create(page, ModInstance, "WoodTools", predecessorNames: ["Workbench"],
+            rewards: [new ItemReward(ItemID.Wood, 100)])
+        { UseRollingRequirementTexture = true }.SetPredecessorNames(["Wood"]));
+        page.Add(new Achievement(page, ModInstance, "WoodTools",
             requirements: [
                 new CraftItemRequirement(ItemID.WoodenSword),
                 new CraftItemRequirement(ItemID.WoodHelmet),
-                new CraftItemRequirement(ItemID.WoodBreastplate)],
-            rewards: [new ItemReward(ItemID.IronskinPotion, 5)]).UseRollingRequirementTexture = true;
-        Achievement.Create(page, ModInstance, "House", predecessorNames: ["Workbench", "Torch"],
+                new CraftItemRequirement(ItemID.WoodBreastplate)
+            ],
+            rewards: [new ItemReward(ItemID.IronskinPotion, 5)])
+        { UseRollingRequirementTexture = true }.SetPredecessorNames(["Workbench"]));
+        page.Add(new Achievement(page, ModInstance, "House",
             requirements: [new HouseRequirement()],
-            rewards: [new ItemReward(ItemID.Wood, 100)]);
-        Achievement.Create(page, ModInstance, "Slime",
+            rewards: [new ItemReward(ItemID.Wood, 100)]).SetPredecessorNames(["Workbench", "Torch"]));
+        page.Add(new Achievement(page, ModInstance, "Slime",
             requirements: [new KillNPCRequirement(NPCID.BlueSlime)],
-            rewards: [new ItemReward(ItemID.Gel, 30)]).UseRollingRequirementTexture = true;
-        Achievement.Create(page, ModInstance, "Torch", predecessorNames: ["Slime", "Wood"],
+            rewards: [new ItemReward(ItemID.Gel, 30)])
+        { UseRollingRequirementTexture = true });
+        page.Add(new Achievement(page, ModInstance, "Torch",
             requirements: [new CraftItemRequirement(ItemID.Torch)],
-            rewards: [new ItemReward(ItemID.Torch, 100)]).UseRollingRequirementTexture = true;
-        Achievement.Create(page, ModInstance, "Wood", predecessorNames: ["First"],
+            rewards: [new ItemReward(ItemID.Torch, 100)])
+        { UseRollingRequirementTexture = true }.SetPredecessorNames(["Wood", "Slime"]));
+        page.Add(new Achievement(page, ModInstance, "Wood",
             requirements: [new PickItemRequirement(ItemID.Wood)],
-            rewards: [new ItemReward(ItemID.Apple)]).UseRollingRequirementTexture = true;
-        Achievement.Create(page, ModInstance, "Wood In World",
-            requirements: [new CraftItemInWorldRequirement(ItemID.Wood, 9999)]).UseRollingRequirementTexture = true;
+            rewards: [new ItemReward(ItemID.Apple)])
+        { UseRollingRequirementTexture = true }.SetPredecessorNames(["First"]));
+        page.Add(new Achievement(page, ModInstance, "Wood In World",
+            requirements: [new CraftItemInWorldRequirement(ItemID.Wood, 9999)])
+        { UseRollingRequirementTexture = true });
     }
     #endregion
 
@@ -195,10 +202,6 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgr
     public static bool NeedNetUpdate { get; private set; }
     public static void SetNeedNetUpdate() => NeedNetUpdate = true;
     public bool NetUpdate { get; set; }
-    public void WriteMessageFromServer(BinaryWriter writer, BitWriter bitWriter) { }
-    public void ReceiveMessageFromServer(BinaryReader reader, BitReader bitReader) { }
-    public void WriteMessageFromClient(BinaryWriter writer, BitWriter bitWriter) { }
-    public void ReceiveMessageFromClient(BinaryReader reader, BitReader bitReader) { }
     public IEnumerable<INetUpdate> GetNetUpdateChildren() => Pages.Values;
     /// <summary>
     /// 由大到小缩减
@@ -326,9 +329,9 @@ public class AchievementPlayerManager : ModPlayer
 {
     public override void OnEnterWorld()
     {
-        if (loadedata != null)
+        if (loadedData != null)
         {
-            LoadDataOnEnterWorld(loadedata);
+            LoadDataOnEnterWorld(loadedData);
         }
         AchievementManager.StartTree();
     }
@@ -347,8 +350,8 @@ public class AchievementPlayerManager : ModPlayer
     }
     public override void LoadData(TagCompound tag)
     {
-        loadedata = tag;
+        loadedData = tag;
     }
-    private TagCompound? loadedata;
+    private TagCompound? loadedData;
 }
 

@@ -81,4 +81,11 @@ public partial class PlayerStatReward : Reward
         builder.Append(text);
         builder.AppendLine();
     }
+    public override void Reset()
+    {
+        if (!Achievement.InRepeat)
+        {
+            base.Reset();
+        }
+    }
 }

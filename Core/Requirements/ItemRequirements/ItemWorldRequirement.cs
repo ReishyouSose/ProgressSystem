@@ -32,6 +32,8 @@ public abstract class ItemWorldRequirement : ItemRequirement
             NetUpdate = true;
         }
     }
+
+    public override bool WouldNetUpdateInitial => true;
     public override void WriteMessageFromServer(BinaryWriter writer, BitWriter bitWriter)
     {
         base.WriteMessageFromServer(writer, bitWriter);

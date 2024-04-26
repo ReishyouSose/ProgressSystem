@@ -98,9 +98,14 @@ Achievements: {
 
 Rewards: {
 	EmptyReward.DisplayName: 空条件
-	ItemReward.DisplayName: 获得{0}
+	ItemReward.DisplayName: 获得 {0}
 	// CombineReward.DisplayName: Mods.ProgressSystem.Rewards.CombineReward.DisplayName
 	// PlayerStatReward.DisplayName: Mods.ProgressSystem.Rewards.PlayerStatReward.DisplayName
+}
+
+Messages: {
+	LocalPlayerCompleteAchievement: 成就{0}已完成!
+	OtherPlayerCompleteAchievement: "{0}已完成成就{1}!"
 }
 
 Configs: {

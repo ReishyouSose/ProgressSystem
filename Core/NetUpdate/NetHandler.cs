@@ -1,4 +1,5 @@
-﻿using ProgressSystem.Configs;
+﻿using Humanizer;
+using ProgressSystem.Configs;
 using System.IO;
 
 namespace ProgressSystem.Core.NetUpdate;
@@ -14,7 +15,11 @@ public static class NetHandler
         return reader.ReadByte();
     }
 
-    public static void HandleNone(BinaryReader reader, int whoAmI) { }
+    #region 0 无 None
+    private static void HandleNone(BinaryReader reader, int whoAmI) { }
+    #endregion
+
+    #region 1 成就系统的网络同步 ManagerNetUpdate
     public static void ManagerNetUpdate()
     {
         var packet = ModInstance.GetPacket();
@@ -22,16 +27,16 @@ public static class NetHandler
         using MemoryStream stream = new();
         using BinaryWriter writer = new(stream);
         BitWriter bitWriter = new();
-        ((INetUpdate)AchievementManager.Instance).WriteMessageTree(writer, bitWriter);
+        INetUpdate.WriteMessageList(writer, bitWriter);
         bitWriter.Flush(packet);
         packet.Write(stream.ToArray());
         packet.Send();
     }
-    public static void HandleManagerNetUpdate(BinaryReader reader, int whoAmI)
-    {
-        BitReader bitReader = new(reader);
-        ((INetUpdate)AchievementManager.Instance).ReceiveMessageTree(reader, bitReader);
-    }
+    private static void HandleManagerNetUpdate(BinaryReader reader, int whoAmI)
+        => INetUpdate.ReceiveMessageList(reader, new(reader));
+    #endregion
+
+    #region 2 玩家完成成就 PlayerCompleteAchievement
     public static void TryShowPlayerCompleteMessage(Achievement achievement, bool handle = false, int whoAmI = -1)
     {
         int pageIndex = AchievementManager.GetIndexOfPage(achievement.Page);
@@ -39,7 +44,7 @@ public static class NetHandler
         {
             return;
         }
-        int achievementIndex = achievement.Page.Achievements.GetIndexByKey(achievement.FullName);
+        int achievementIndex = achievement.Page.GetAchievementIndex(achievement.FullName);
         if (achievementIndex < 0)
         {
             return;
@@ -55,15 +60,11 @@ public static class NetHandler
                 return;
             }
             var packet = ModInstance.GetPacket();
-            if (whoAmI == -1)
-            {
-                whoAmI = 255;
-            }
             WriteMessageID(packet, AchievementMessageID.PlayerCompleteAchievement);
-            packet.Write((byte)whoAmI);
+            packet.Write((byte)whoAmI); // whoAmI == -1 时自动转化为 255
             packet.Write7BitEncodedInt(pageIndex);
             packet.Write7BitEncodedInt(achievementIndex);
-            packet.Send();
+            packet.Send(-1, whoAmI);
         }
         if (Main.netMode == NetmodeID.Server)
         {
@@ -71,10 +72,6 @@ public static class NetHandler
             {
                 TrySendPacket();
             }
-            return;
-        }
-        if (Main.netMode != NetmodeID.MultiplayerClient)
-        {
             return;
         }
         if (handle)
@@ -86,38 +83,82 @@ public static class NetHandler
                 {
                     return;
                 }
-                // TODO; 本地化
-                Main.NewText($"{player.name}已完成成就{achievement.DisplayName.Value}");
+                ModInstance.GetLocalizedValue("Messages.OtherPlayerCompleteAchievement").FormatWith(player.name, achievement.DisplayName.Value);
             }
             return;
         }
         if (!ClientConfig.Instance.DontShowAnyAchievementMessage)
         {
-            // TODO; 本地化
-            Main.NewText($"成就{achievement.DisplayName.Value}已完成");
+            ModInstance.GetLocalizedValue("Messages.LocalPlayerCompleteAchievement").FormatWith(achievement.DisplayName.Value);
+        }
+        if (Main.netMode != NetmodeID.MultiplayerClient)
+        {
+            return;
         }
         TrySendPacket();
     }
-    public static void HandlePlayerCompleteAchievement(BinaryReader reader, int whoAmI)
+    private static void HandlePlayerCompleteAchievement(BinaryReader reader, int whoAmI)
     {
         whoAmI = reader.ReadByte();
         int pageIndex = reader.Read7BitEncodedInt();
         int achievementIndex = reader.Read7BitEncodedInt();
         var page = AchievementManager.GetPageByIndex(pageIndex);
-        var achievement = page?.Achievements.GetValueByIndexS(achievementIndex);
+        var achievement = page?.GetAchievementByIndexS(achievementIndex);
         if (achievement == null)
         {
             return;
         }
         TryShowPlayerCompleteMessage(achievement, true, whoAmI);
     }
+    #endregion
+
+    #region 3 进入世界时同步数据 SyncAchievementDataOnEnterWorld
+    public static void SyncAchievementDataOnEnterWorld(int sendTo = -1)
+    {
+        if (Main.netMode == NetmodeID.SinglePlayer)
+        {
+            return;
+        }
+        var packet = ModInstance.GetPacket();
+        WriteMessageID(packet, AchievementMessageID.SyncAchievementDataOnEnterWorld);
+        using MemoryStream stream = new();
+        using BinaryWriter writer = new(stream);
+        BitWriter bitWriter = new();
+        if (Main.netMode == NetmodeID.MultiplayerClient)
+        {
+            INetUpdate.WriteMessageFromEnteringPlayerList(writer, bitWriter);
+        }
+        else
+        {
+            INetUpdate.WriteMessageToEnteringPlayerList(writer, bitWriter);
+        }
+        bitWriter.Flush(packet);
+        packet.Write(stream.ToArray());
+        packet.Send(sendTo);
+    }
+    private static void HandleSyncAchievementDataOnEnterWorld(BinaryReader reader, int whoAmI)
+    {
+        // 客户端接收数据
+        if (Main.netMode == NetmodeID.MultiplayerClient)
+        {
+            INetUpdate.ReceiveDataToEnteringPlayerList(reader, new(reader));
+            return;
+        }
+
+        // 服务器接收数据并再向客户端发送数据
+        INetUpdate.ReceiveDataFromEnteringPlayerList(reader, new(reader));
+        SyncAchievementDataOnEnterWorld(whoAmI);
+    }
+    #endregion
 
     public delegate void HandlerDelegate(BinaryReader reader, int whoAmI);
-#pragma warning disable IDE0300 // 简化集合初始化
-    public static HandlerDelegate[] Handlers = {
+
+    #region Handlers
+    public static HandlerDelegate[] Handlers = [
         /* 0  */HandleNone,
         /* 1  */HandleManagerNetUpdate,
         /* 2  */HandlePlayerCompleteAchievement,
-    };
-#pragma warning restore IDE0300 // 简化集合初始化
+        /* 3  */HandleSyncAchievementDataOnEnterWorld,
+    ];
+    #endregion
 }
