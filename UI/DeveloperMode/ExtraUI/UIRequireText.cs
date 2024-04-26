@@ -1,6 +1,6 @@
 ﻿using ProgressSystem.Core.Requirements;
 
-namespace ProgressSystem.UIEditor.ExtraUI
+namespace ProgressSystem.UI.DeveloperMode.ExtraUI
 {
     public class UIRequireText : BaseUIElement
     {
@@ -28,7 +28,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
             }
             else
                 tooltip = requirement.DisplayName.Value ?? requirement.GetType().Name;
-            text = new(tooltip);
+            text = new(requires.IndexOf(requirement) + 1 + ". " + tooltip);
             text.SetPos(30, 0);
             text.SetSize(text.TextSize);
             Register(text);

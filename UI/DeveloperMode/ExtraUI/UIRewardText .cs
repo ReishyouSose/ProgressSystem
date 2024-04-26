@@ -1,6 +1,6 @@
 ﻿using ProgressSystem.Core.Rewards;
 
-namespace ProgressSystem.UIEditor.ExtraUI
+namespace ProgressSystem.UI.DeveloperMode.ExtraUI
 {
     public class UIRewardText : BaseUIElement
     {
@@ -15,7 +15,10 @@ namespace ProgressSystem.UIEditor.ExtraUI
             delete = new();
             delete.SetCenter(20, -3, 0, 0.5f);
             Register(delete);
-            text = new(reward.ReportDetails(out string details) ? details : reward.DisplayName.Value ?? reward.GetType().Name);
+            string tooltip = reward is CombineReward combine ? $"选择下列中的 {combine.Count} 项" :
+                (reward.DisplayName.Value ?? reward.GetType().Name)
+            + (reward.ReportDetails(out string details) ? details : string.Empty);
+            text = new(rewards.IndexOf(reward) + 1 + ". " + tooltip);
             text.SetPos(30, 0);
             text.SetSize(text.TextSize);
             Register(text);

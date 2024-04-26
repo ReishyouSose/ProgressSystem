@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 
-namespace ProgressSystem.UIEditor.ExtraUI
+namespace ProgressSystem.UI.DeveloperMode.ExtraUI
 {
     public class UIModSlot(Texture2D tex, string modName) : UIImage(tex)
     {

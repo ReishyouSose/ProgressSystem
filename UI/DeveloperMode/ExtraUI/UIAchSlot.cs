@@ -3,7 +3,7 @@ using RUIModule;
 using Terraria.GameContent;
 using Terraria.UI.Chat;
 
-namespace ProgressSystem.UIEditor.ExtraUI
+namespace ProgressSystem.UI.DeveloperMode.ExtraUI
 {
     public class UIAchSlot : UIImage
     {
@@ -133,7 +133,7 @@ namespace ProgressSystem.UIEditor.ExtraUI
             ach.PostDraw?.Invoke(sb, hitbox);
             if (adsorption != null)
             {
-                sb.SimpleDraw(Tex, (adsorption.Value * 80) + ParentElement.HitBox(false).TopLeft(), null, Vector2.Zero, color: Color.White * 0.5f);
+                sb.SimpleDraw(Tex, adsorption.Value * 80 + ParentElement.HitBox(false).TopLeft(), null, Vector2.Zero, color: Color.White * 0.5f);
             }
             ChatManager.DrawColorCodedStringWithShadow(sb, FontAssets.MouseText.Value, pos.ToString(),
                 hitbox.TopLeft() + new Vector2(0, 55), Color.White, 0, Vector2.Zero, Vector2.One, -1, 1.5f);

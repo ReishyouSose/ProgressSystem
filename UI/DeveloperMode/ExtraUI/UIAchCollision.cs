@@ -2,7 +2,7 @@
 using RUIModule;
 using Terraria.GameContent;
 
-namespace ProgressSystem.UIEditor.ExtraUI;
+namespace ProgressSystem.UI.DeveloperMode.ExtraUI;
 
 public class UIAchCollision : BaseUIElement
 {

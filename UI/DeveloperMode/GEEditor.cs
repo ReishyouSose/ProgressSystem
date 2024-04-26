@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using ProgressSystem.Core.Requirements;
 using ProgressSystem.Core.Rewards;
-using ProgressSystem.UIEditor.ExtraUI;
+using ProgressSystem.UI.DeveloperMode.ExtraUI;
 using RUIModule;
 using System.Diagnostics;
 using System.IO;
@@ -11,7 +11,7 @@ using System.Text;
 using Terraria.GameContent;
 using Terraria.UI.Chat;
 
-namespace ProgressSystem.UIEditor
+namespace ProgressSystem.UI.DeveloperMode
 {
     public class GEEditor : ContainerElement
     {
@@ -55,7 +55,7 @@ namespace ProgressSystem.UIEditor
         /// 已添加的奖励视区
         /// </summary>
         private UIContainerPanel rewardView = null!;
-        private UIVnlPanel editPanel = null!;
+        private UIVnlPanel mainPanel = null!;
         private UIVnlPanel pagePanel = null!;
         private UIInputBox pageInputer = null!;
         private UIInputBox achNameInputer = null!;
@@ -70,32 +70,6 @@ namespace ProgressSystem.UIEditor
         /// Reward组合可选数文本
         /// </summary>
         private UIText rwsCountText = null!;
-        private void UpdateRqsCountText()
-        {
-            if (EditingCombineRequire != null)
-            {
-                rqsCountText.ChangeText(EditingCombineRequire.Count.ToString(), false);
-            }
-            else if (EditingAch != null)
-            {
-                rqsCountText.ChangeText(EditingAch.RequirementCountNeeded.ToString(), false);
-            }
-            else
-            {
-                rqsCountText.ChangeText("未选", false);
-            }
-        }
-        private void UpdateRwsCountText()
-        {
-            if (EditingCombineReward != null)
-            {
-                rwsCountText.ChangeText(EditingCombineReward.Count.ToString(), false);
-            }
-            else
-            {
-                rwsCountText.ChangeText("未选", false);
-            }
-        }
 
         private UIDropDownList<UIText> pageList = null!;
         /// <summary>
@@ -174,7 +148,7 @@ namespace ProgressSystem.UIEditor
             RemoveAll();
 
             editingMod = ProgressSystem.Instance;
-
+            editingPanel = 0;
             RegisterEditPagePanel();
             RegisterEditAchPanel();
             RegisterNewPagePanel();
@@ -432,13 +406,14 @@ namespace ProgressSystem.UIEditor
             submit.HoverToGold();
             submit.Events.OnLeftDown += evt =>
             {
-                if (EditingAch == null)
-                    return;
-                ref bool needSubmit = ref EditingAch.NeedSubmit;
-                needSubmit = !needSubmit;
-                submit.ChangeText($"需要手动提交    {(needSubmit ? "是" : "否")}");
-                EditingAch.ShouldSaveStaticData = true;
-                ChangeSaveState(false);
+                if (EditingAch != null)
+                {
+                    ref bool needSubmit = ref EditingAch.NeedSubmit;
+                    needSubmit = !needSubmit;
+                    submit.ChangeText($"需要手动提交    {(needSubmit ? "是" : "否")}");
+                    EditingAch.ShouldSaveStaticData = true;
+                    ChangeSaveState(false);
+                }
             };
             submitBg.Register(submit);
 
@@ -460,7 +435,10 @@ namespace ProgressSystem.UIEditor
             preIncrease.Events.OnLeftDown += evt =>
             {
                 if (EditingAch == null)
+                {
+                    Main.NewText("请先选择一个成就栏位");
                     return;
+                }
                 ref int? need = ref EditingAch.PredecessorCountNeeded;
                 if (need == null)
                     return;
@@ -479,7 +457,10 @@ namespace ProgressSystem.UIEditor
             preCount.Events.OnLeftDown += evt =>
             {
                 if (EditingAch == null)
+                {
+                    Main.NewText("请先选择一个成就栏位");
                     return;
+                }
                 ref int? need = ref EditingAch.PredecessorCountNeeded;
                 string text;
                 if (need.HasValue)
@@ -505,7 +486,10 @@ namespace ProgressSystem.UIEditor
             preDecrease.Events.OnLeftDown += evt =>
             {
                 if (EditingAch == null)
+                {
+                    Main.NewText("请先选择一个成就栏位");
                     return;
+                }
                 ref int? need = ref EditingAch.PredecessorCountNeeded;
                 if (need == null)
                     return;
@@ -568,6 +552,10 @@ namespace ProgressSystem.UIEditor
                     CheckRequirements(EditingAch.Requirements, 0);
                     ChangeSaveState(false);
                 }
+                else
+                {
+                    Main.NewText("请先选择一个需求层级/成就栏位");
+                }
             };
             cdsNeedCountBg.Register(increase);
             left += 40;
@@ -600,6 +588,10 @@ namespace ProgressSystem.UIEditor
                     CheckRequirements(EditingAch.Requirements, 0);
                     ChangeSaveState(false);
                 }
+                else
+                {
+                    Main.NewText("请先选择一个需求层级/成就栏位");
+                }
             };
             cdsNeedCountBg.Register(decrease);
 
@@ -617,7 +609,7 @@ namespace ProgressSystem.UIEditor
                 var editingRequires = EditingRequires;
                 if (editingRequires == null)
                 {
-                    Main.NewText("请先选择一个需求层级");
+                    Main.NewText("请先选择一个需求层级/成就栏位");
                     return;
                 }
                 CombineRequirement require = new(1)
@@ -671,6 +663,7 @@ namespace ProgressSystem.UIEditor
 
             constructList.expandView.autoPos[0] = true;
             constructList.expandView.Vscroll.canDrag = false;
+
             string end = "Requirement";
             int len = end.Length;
 
@@ -787,6 +780,10 @@ namespace ProgressSystem.UIEditor
                     CheckRewards(EditingAch!.Rewards, 0);
                     ChangeSaveState(false);
                 }
+                else
+                {
+                    Main.NewText("请先选择一个奖励层级");
+                }
             };
             rwsSelectCountBg.Register(increase);
             left += 40;
@@ -810,6 +807,10 @@ namespace ProgressSystem.UIEditor
                     combine.ShouldSaveStaticData = true;
                     CheckRewards(EditingAch!.Rewards, 0);
                     ChangeSaveState(false);
+                }
+                else
+                {
+                    Main.NewText("请先选择一个奖励层级");
                 }
             };
             rwsSelectCountBg.Register(decrease);
@@ -866,11 +867,11 @@ namespace ProgressSystem.UIEditor
         }
         private void RegisterEditPagePanel()
         {
-            editPanel = new(1000, 800);
-            editPanel.SetCenter(0, 0, 0.55f, 0.5f);
-            editPanel.Info.SetMargin(10);
-            editPanel.canDrag = true;
-            Register(editPanel);
+            mainPanel = new(1000, 800);
+            mainPanel.SetCenter(0, 0, 0.55f, 0.5f);
+            mainPanel.Info.SetMargin(10);
+            mainPanel.canDrag = true;
+            Register(mainPanel);
 
             UIItemSlot itemSlot = new();
             itemSlot.Events.OnLeftDown += evt =>
@@ -897,13 +898,13 @@ namespace ProgressSystem.UIEditor
                 ChatManager.DrawColorCodedStringWithShadow(sb, FontAssets.MouseText.Value, text.ToString(),
                     itemSlot.HitBox().BottomLeft() + Vector2.UnitY * 5, Color.White, 0, Vector2.Zero, Vector2.One);
             };
-            editPanel.Register(itemSlot);
+            mainPanel.Register(itemSlot);
 
             UIVnlPanel groupFilter = new(0, 0);
             groupFilter.SetPos(0, 150);
             groupFilter.SetSize(100, -150, 0, 1);
             groupFilter.Info.SetMargin(10);
-            editPanel.Register(groupFilter);
+            mainPanel.Register(groupFilter);
 
             UIContainerPanel groupView = new();
             groupView.SetSize(0, 0, 1, 1);
@@ -919,10 +920,10 @@ namespace ProgressSystem.UIEditor
             eventPanel.Info.SetMargin(10);
             eventPanel.SetPos(110, 40);
             eventPanel.SetSize(-110, -40, 1, 1, false);
-            editPanel.Register(eventPanel);
+            mainPanel.Register(eventPanel);
             int left = 110;
 
-            pageList = new(editPanel, eventPanel, x =>
+            pageList = new(mainPanel, eventPanel, x =>
             {
                 UIText text = new(x.text);
                 text.SetPos(10, 5);
@@ -991,9 +992,9 @@ namespace ProgressSystem.UIEditor
             {
                 pageInputer.ClearText();
                 pagePanel.Info.IsVisible = true;
-                editPanel.LockInteract(false);
+                mainPanel.LockInteract(false);
             };
-            editPanel.Register(newProgress);
+            mainPanel.Register(newProgress);
             left += newProgress.Width + 10;
 
             UIText deleteProgress = new("删除进度表");
@@ -1013,7 +1014,7 @@ namespace ProgressSystem.UIEditor
                     ClearTemp();
                 }
             };
-            editPanel.Register(deleteProgress);
+            mainPanel.Register(deleteProgress);
             left += deleteProgress.Width + 10;
 
             UIText checkPos = new("位置检查");
@@ -1043,7 +1044,7 @@ namespace ProgressSystem.UIEditor
                 }
                 AchPos = pos;
             };
-            editPanel.Register(checkPos);
+            mainPanel.Register(checkPos);
             left += checkPos.Width + 10;
 
             saveTip = new("已保存", Color.Green);
@@ -1054,13 +1055,13 @@ namespace ProgressSystem.UIEditor
                 SaveProgress();
                 ChangeSaveState(true);
             };
-            editPanel.Register(saveTip);
+            mainPanel.Register(saveTip);
             left += saveTip.Width + 10;
 
             UIVnlPanel savePathInputBg = new(0, 0);
             savePathInputBg.SetPos(left, 0);
             savePathInputBg.SetSize(-left, 30, 1);
-            editPanel.Register(savePathInputBg);
+            mainPanel.Register(savePathInputBg);
 
             savePathInputer = new("输入保存路径");
             savePathInputer.SetSize(-40, 0, 1, 1);
@@ -1231,7 +1232,7 @@ namespace ProgressSystem.UIEditor
                 {
                     EditingPageName = pageInputer.Text;
                     //datas[EditMod][EditPage] = [];
-                    editPanel.LockInteract(true);
+                    mainPanel.LockInteract(true);
                     pagePanel.Info.IsVisible = false;
                     UIText pageName = new(EditingPageName);
                     pageName.SetSize(pageName.TextSize);
@@ -1255,7 +1256,7 @@ namespace ProgressSystem.UIEditor
             cancel.Events.OnMouseOut += evt => cancel.color = Color.White;
             cancel.Events.OnLeftDown += evt =>
             {
-                editPanel.LockInteract(true);
+                mainPanel.LockInteract(true);
                 pagePanel.Info.IsVisible = false;
             };
             pagePanel.Register(cancel);
@@ -1493,7 +1494,7 @@ namespace ProgressSystem.UIEditor
                     if (text.Any())
                     {
                         bind.SetValue(text);
-                        legal.ChangeText(bind.IsMet ? ("合法值：" + bind.GetValue()) : "不合法");
+                        legal.ChangeText(bind.IsMet ? "合法值：" + bind.GetValue() : "不合法");
                     }
                     else
                         legal.ChangeText(bind.Important ? "可以为空" : "不可为空");
@@ -1563,7 +1564,7 @@ namespace ProgressSystem.UIEditor
                     if (text.Any())
                     {
                         bind.SetValue(text);
-                        legal.ChangeText(bind.IsMet ? ("合法值：" + bind.GetValue()) : "不合法");
+                        legal.ChangeText(bind.IsMet ? "合法值：" + bind.GetValue() : "不合法");
                     }
                     else
                         legal.ChangeText(bind.Important ? "可以为空" : "不可为空");
@@ -1825,5 +1826,8 @@ namespace ProgressSystem.UIEditor
             if (index == 0)
                 rewardView.Calculation();
         }
+        private void UpdateRqsCountText() => rqsCountText.ChangeText(EditingCombineRequire?.Count.ToString() ??
+            EditingAch?.RequirementCountNeeded.ToString() ?? "未选", false);
+        private void UpdateRwsCountText() => rwsCountText.ChangeText(EditingCombineReward?.Count.ToString() ?? "未选", false);
     }
 }

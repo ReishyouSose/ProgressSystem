@@ -194,6 +194,7 @@ namespace ProgressSystem.Core
             {
                 Type = parameter.ParameterType;
                 DisplayName = parameter.Name;
+                Important = parameter.IsOptional;
                 if (parameter.HasDefaultValue)
                 {
                     SetValue(parameter.DefaultValue);

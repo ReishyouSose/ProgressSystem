@@ -1,5 +1,5 @@
 ﻿using ProgressSystem.Common.Systems;
-using ProgressSystem.UIEditor;
+using ProgressSystem.UI.DeveloperMode;
 using Terraria.GameInput;
 
 namespace ProgressSystem.Common.Players
