@@ -3487,6 +3487,19 @@ public static partial class TigerExtensions
         }
         return -1;
     }
+    public static int FindIndexOf<T>(this IEnumerable<T> enumerable, T item)
+    {
+        int i = 0;
+        foreach (T c in enumerable)
+        {
+            if (object.Equals(c, item))
+            {
+                return i;
+            }
+            i += 1;
+        }
+        return -1;
+    }
     #endregion
     #region 数组和列表相关
     #region 打乱数组/列表
@@ -4223,7 +4236,7 @@ public static partial class TigerExtensions
     /// <summary>
     /// <br/>保证设置值
     /// <br/>若 <paramref name="index"/> &lt; 0 则在末尾插入
-    /// <br/>若 <paramref name="index"/> 过大, 则将 <paramref name="list"/> 的长度扩充到 <paramref name="index"/> + 1 在设置
+    /// <br/>若 <paramref name="index"/> 过大, 则将 <paramref name="list"/> 的长度扩充到 <paramref name="index"/> + 1 再设置
     /// </summary>
     public static void SetFS<T>(this IList<T?> list, int index, T? value)
     {

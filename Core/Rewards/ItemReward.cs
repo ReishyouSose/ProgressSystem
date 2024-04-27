@@ -4,11 +4,6 @@ namespace ProgressSystem.Core.Rewards;
 
 public class ItemReward(Item item) : Reward
 {
-    public override bool Received
-    {
-        get => leftStack <= 0;
-        protected set => leftStack = value ? 0 : Item.stack;
-    }
     protected Item _item = item;
     public Item Item
     {
@@ -29,12 +24,14 @@ public class ItemReward(Item item) : Reward
 
     protected ItemReward() : this(new(0, 1)) { }
     public ItemReward(int itemType, int stack = 1) : this(new(itemType, stack)) { }
-
-    protected override bool Receive()
+    
+    protected override bool AutoAssignReceived => false;
+    protected override void Receive()
     {
         if (leftStack <= 0)
         {
-            return true;
+            State = StateEnum.Received;
+            return;
         }
         Item item = Item.Clone();
         item.stack = leftStack;
@@ -44,15 +41,17 @@ public class ItemReward(Item item) : Reward
         // leftStack = item.stack;
         Main.LocalPlayer.QuickSpawnItem(null, item, item.stack);
         leftStack = 0;
-        return leftStack <= 0;
+        State = StateEnum.Received;
     }
 
     public override void SaveDataInPlayer(TagCompound tag)
     {
-        tag.SetWithDefault("leftStack", leftStack, Item.stack);
+        base.SaveDataInPlayer(tag);
+        tag.SetWithDefault("LeftStack", leftStack, Item.stack);
     }
     public override void LoadDataInPlayer(TagCompound tag)
     {
-        tag.GetWithDefault("leftStack", out leftStack, Item.stack);
+        base.LoadDataInPlayer(tag);
+        tag.GetWithDefault("LeftStack", out leftStack, Item.stack);
     }
 }

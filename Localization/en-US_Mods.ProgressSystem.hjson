@@ -140,5 +140,22 @@ Configs: {
 			Label: Developer Mode
 			Tooltip: ""
 		}
+
+		AutoReceive: {
+			Label: Auto Receive
+			Tooltip: Auto receive rewards when an achievement is completed
+		}
+
+		AutoSelectReward: {
+			Label: Auto Select Reward
+			Tooltip: How to auto select reward when receive a selectable reward
+		}
+	}
+
+	AutoSelectRewardEnum: {
+		Tooltip: ""
+		NotSelect.Label: Don't auto select
+		First.Label: Select the fronter
+		Random.Label: Random select
 	}
 }

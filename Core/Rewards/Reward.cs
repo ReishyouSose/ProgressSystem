@@ -21,62 +21,157 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
         return false;
     }
 
-    #region 获取奖励
-    public virtual bool Received { get; protected set; }
+    #region 状态
+    public enum StateEnum
+    {
+        Disabled = -1,
+        Locked = 0,
+        Unlocked = 1,
+        Started = 2,
+        Received = 3,
+        Closed = 4
+    }
+    public StateEnum State { get; protected set; }
 
-    public delegate void OnTotallyReceivedDelegate();
-    public delegate void OnTotallyReceivedStaticDelegate(Reward reward);
-    public event OnTotallyReceivedDelegate? OnTotallyReceived;
-    public static event OnTotallyReceivedStaticDelegate? OnTotallyReceivedStatic;
+    #region 解锁
+    public Action<Reward>? OnUnlockStatic;
+    public Action? OnUnlock;
+    public void TryUnlock()
+    {
+        if (State == StateEnum.Locked && Achievement.State.IsCompleted())
+        {
+            UnlockSafe();
+        }
+    }
+    public virtual void UnlockSafe()
+    {
+        if (State != StateEnum.Locked)
+        {
+            return;
+        }
+        State = StateEnum.Unlocked;
+        OnUnlockStatic?.Invoke(this);
+        OnUnlock?.Invoke();
+    }
+    #endregion
+
+    #region 领取
+    /// <summary>
+    /// <br/>在 <see cref="ReceiveSafe"/> 中是否在调用 <see cref="Receive"/> 后直接改变 <see cref="State"/>
+    /// <br/>若重写为 false 则需要在 <see cref="Receive"/> 中自己设置
+    /// <br/><see cref="State"/> 为 <see cref="StateEnum.Started"/> 或 <see cref="StateEnum.Received"/>
+    /// <br/>(一点都没有领取可以不设置)
+    /// </summary>
+    protected virtual bool AutoAssignReceived => true;
+    
+    public static event Action<Reward>? OnStartReceivedStatic;
+    public event Action? OnStartReceived;
+    public static event Action<Reward>? OnTotallyReceivedStatic;
+    public event Action? OnTotallyReceived;
     /// <summary>
     /// 尝试领取奖励 (当成就完成时)
     /// </summary>
-    /// <returns>是否已领取</returns>
-    public bool TryReceive()
+    public void TryReceive()
     {
         if (Achievement.State.IsCompleted())
         {
             ReceiveSafe();
         }
-        return Received;
     }
     /// <summary>
     /// 获取奖励
     /// 不会重复领取
     /// </summary>
-    /// <returns>是否全部获取</returns>
-    public bool ReceiveSafe()
+    public void ReceiveSafe()
     {
-        if (Received)
+        bool unlock = State == StateEnum.Unlocked;
+        bool start = State == StateEnum.Started;
+        if (!unlock && !start)
         {
-            return true;
+            return;
         }
-        if (Received = Receive())
+        Receive();
+        if (AutoAssignReceived)
         {
-            OnTotallyReceived?.Invoke();
+            State = StateEnum.Received;
+        }
+        if (unlock && State is StateEnum.Started or StateEnum.Received)
+        {
+            OnStartReceivedStatic?.Invoke(this);
+            OnStartReceived?.Invoke();
+        }
+        if (State == StateEnum.Received)
+        {
             OnTotallyReceivedStatic?.Invoke(this);
+            OnTotallyReceived?.Invoke();
         }
-        return Received;
     }
-
     /// <summary>
     /// 获取奖励
     /// </summary>
-    /// <returns>是否全部获取</returns>
-    protected abstract bool Receive();
+    protected abstract void Receive();
+    #endregion
+
+    #region 关闭
+    public static event Action<Reward>? OnCloseStatic;
+    public event Action? OnClose;
+    public void CloseSafe()
+    {
+        if (State is StateEnum.Disabled or StateEnum.Closed)
+        {
+            return;
+        }
+
+        Close();
+        OnCloseStatic?.Invoke(this);
+        OnClose?.Invoke();
+    }
+    protected virtual void Close()
+    {
+        State = StateEnum.Closed;
+    }
+    #endregion
+
+    #region 禁用
+    public static Action<Reward>? OnDisableStatic;
+    public Action? OnDisable;
+    public void DisableSafe()
+    {
+        if (State == StateEnum.Disabled)
+        {
+            return;
+        }
+        Disable();
+        OnDisableStatic?.Invoke(this);
+        OnDisable?.Invoke();
+    }
+    protected virtual void Disable()
+    {
+        State = StateEnum.Disabled;
+    }
+    #endregion
+    
+    /// <summary>
+    /// 是否已完全领取奖励
+    /// </summary>
+    [Obsolete("使用State", true)]
+    public virtual bool Received { get; protected set; }
+    /// <summary>
+    /// 是否开始领取奖励, 默认与<see cref="Received"/>相同
+    /// </summary>
+    [Obsolete("使用State", true)]
+    public virtual bool StartReceived { get => Received; protected set => Received = value; }
+
     #endregion
 
     #region 数据存取
     public virtual void SaveDataInPlayer(TagCompound tag)
     {
-        tag.SetWithDefault("Received", Received);
+        tag.SetWithDefault("State", State.ToString(), StateEnum.Locked.ToString());
     }
     public virtual void LoadDataInPlayer(TagCompound tag)
     {
-        if (tag.GetWithDefault("Received", out bool received))
-        {
-            Received = received;
-        }
+        State = Enum.TryParse(tag.GetWithDefault("State", StateEnum.Locked.ToString()), out StateEnum state) ? state : StateEnum.Locked;
     }
     public virtual void SaveDataInWorld(TagCompound tag) { }
     public virtual void LoadDataInWorld(TagCompound tag) { }
@@ -139,10 +234,13 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
     }
     public virtual void Reset()
     {
-        Received = false;
+        State = StateEnum.Locked;
     }
-    public virtual void Start() { }
+    public virtual void Start() {
+        TryUnlock();
+    }
     #endregion
+
     public virtual void Initialize(Achievement achievement)
     {
         Achievement = achievement;

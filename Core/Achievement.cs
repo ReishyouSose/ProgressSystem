@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework.Graphics;
+using ProgressSystem.Common.Configs;
 using ProgressSystem.Core.Interfaces;
 using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.Requirements;
@@ -401,11 +402,6 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     /// 奖励
     /// </summary>
     public RewardList Rewards { get; protected init; }
-    
-    public delegate void OnReceiveAllRewardStaticDelegate(Achievement achievement, bool allReceived);
-    public delegate void OnReceiveAllRewardDelegate(bool allReceived);
-    public event OnReceiveAllRewardDelegate? OnReceiveAllReward;
-    public event OnReceiveAllRewardStaticDelegate? OnReceiveAllRewardStatic;
 
     /// <summary>
     /// 是否全部领取
@@ -413,27 +409,27 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     public bool AllRewardsReceived { get; protected set; }
     protected void UpdateAllRewardsReceived()
     {
-        AllRewardsReceived = Rewards.All(r => r.Received);
+        AllRewardsReceived = Rewards.All(r => r.State >= Reward.StateEnum.Received || r.State == Reward.StateEnum.Disabled);
     }
 
     public void TryReceiveAllReward()
     {
-        if (State.IsCompleted())
+        if (!AllRewardsReceived && State.IsCompleted())
         {
-            AllRewardsReceived = ReceiveAllReward();
+            ReceiveAllRewardSafe();
+            UpdateAllRewardsReceived();
         }
     }
     /// <summary>
     /// 一键获得所有奖励
     /// </summary>
     /// <returns>是否全部获取</returns>
-    protected bool ReceiveAllReward()
+    protected void ReceiveAllRewardSafe()
     {
-        bool result = true;
-        Rewards.ForeachDo(r => result &= r.ReceiveSafe());
-        OnReceiveAllRewardStatic?.Invoke(this, result);
-        OnReceiveAllReward?.Invoke(result);
-        return result;
+        foreach (var reward in Rewards)
+        {
+            reward.ReceiveSafe();
+        }
     }
 
     public Achievement SetRewards(IEnumerable<Reward> rewards)
@@ -466,8 +462,25 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
         };
         // 在完成时更新进度
         OnCompleteStatic += a => a.UpdateProgress();
-        // 在奖励完全领取后检查是否全部领取
-        Reward.OnTotallyReceivedStatic += r => r.Achievement.UpdateAllRewardsReceived();
+
+        // 在完成时处理奖励
+        OnCompleteStatic += a =>
+        {
+            foreach (var reward in a.Rewards)
+            {
+                reward.TryUnlock();
+            }
+            if (ClientConfig.Instance.AutoReceive)
+            {
+                a.TryReceiveAllReward();
+            }
+        };
+        
+        // 在奖励有变化时检查是否全部领取
+        static void UpdateRewardAchievementAllRewardsReceived(Reward r) => r.Achievement.UpdateAllRewardsReceived();
+        Reward.OnTotallyReceivedStatic += UpdateRewardAchievementAllRewardsReceived;
+        Reward.OnCloseStatic += UpdateRewardAchievementAllRewardsReceived;
+        Reward.OnDisableStatic += UpdateRewardAchievementAllRewardsReceived;
     }
 
     /// <summary>
@@ -539,6 +552,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     public virtual void Reset()
     {
         State = StateEnum.Locked;
+        AllRewardsReceived = false;
         OnResetStatic?.Invoke(this);
         OnReset?.Invoke();
     }

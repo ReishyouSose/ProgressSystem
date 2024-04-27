@@ -1,4 +1,4 @@
-﻿using ProgressSystem.Configs;
+﻿using ProgressSystem.Common.Configs;
 using ProgressSystem.Core.Interfaces;
 using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.Requirements.ItemRequirements;
@@ -10,8 +10,6 @@ using System.IO;
 using System.Reflection;
 
 namespace ProgressSystem.Core;
-
-// DOING...
 
 /// <summary>
 /// 储存并管理所有的成就
@@ -321,6 +319,16 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgr
     public override void Unload()
     {
         AfterPostSetup = false;
+    }
+    #endregion
+
+    #region 杂项
+    public static void TryReceiveAllRewards()
+    {
+        foreach (var page in Pages.Values)
+        {
+            page.TryReceiveAllRewards();
+        }
     }
     #endregion
 }
