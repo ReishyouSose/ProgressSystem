@@ -47,6 +47,7 @@ public class TalkToNPCRequirement : Requirement
         };
     }
     protected NPC? dummyNPC;
+    protected override object?[] DisplayNameArgs => [NPCType > 0 ? SampleNPC(NPCType).TypeName : ConditionDescription?.Value ?? "?"];
 }
 
 public class TalkToAnyNPCRequirement : TalkToNPCRequirement

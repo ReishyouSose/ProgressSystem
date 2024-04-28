@@ -4,13 +4,30 @@ namespace ProgressSystem.Core.Requirements.PlayerRequirements;
 
 public class ReachModBiomeRequirement : Requirement
 {
-    public string ModBiomeFullName;
-    public ReachModBiomeRequirement(string modBiomeFullName) : base(ListenTypeEnum.OnAchievementUnlocked)
+    protected string _modBiomeFullName = string.Empty;
+    public string ModBiomeFullName
     {
-        ModBiomeFullName = modBiomeFullName;
+        get => _modBiomeFullName;
+        set {
+            _modBiomeFullName = value;
+            _modBiome = ModContent.TryFind<ModBiome>(_modBiomeFullName, out var biome) ? biome : null;
+        }
     }
-    public ReachModBiomeRequirement() : this(string.Empty) { }
-    public static ReachModBiomeRequirement Create<T>() where T : ModBiome => new(ModContent.GetInstance<T>().FullName);
+    protected ModBiome? _modBiome;
+    public ModBiome? ModBiome
+    {
+        get => _modBiome;
+        set
+        {
+            _modBiome = value;
+            _modBiomeFullName = value?.FullName ?? string.Empty;
+        }
+    }
+
+    public ReachModBiomeRequirement(ModBiome modBiome) : this() => ModBiome = modBiome;
+    public ReachModBiomeRequirement(string modBiomeFullName) : this() => ModBiomeFullName = modBiomeFullName;
+    public ReachModBiomeRequirement() : base(ListenTypeEnum.OnAchievementUnlocked) { }
+    public static ReachModBiomeRequirement Create<T>() where T : ModBiome => new(ModContent.GetInstance<T>());
     protected override void BeginListen()
     {
         base.BeginListen();
@@ -33,6 +50,8 @@ public class ReachModBiomeRequirement : Requirement
         }
     }
 
+    protected override object?[] DisplayNameArgs => [ModBiome?.DisplayName.Value ?? ModBiomeFullName];
+
     public override void SaveStaticData(TagCompound tag)
     {
         base.SaveStaticData(tag);
@@ -46,7 +65,10 @@ public class ReachModBiomeRequirement : Requirement
         base.LoadStaticData(tag);
         if (ShouldSaveStaticData)
         {
-            tag.GetWithDefault("ModBiomeFullName", out ModBiomeFullName, string.Empty);
+            if (tag.TryGet<string>("ModBiomeFullName", out var fullName))
+            {
+                ModBiomeFullName = fullName;
+            }
         }
     }
 }

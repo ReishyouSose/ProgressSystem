@@ -31,6 +31,8 @@ public class ReachZoneRequirement : Requirement
             CompleteSafe();
         }
     }
+    // TODO
+    protected override object?[] DisplayNameArgs => ["Zone " + ZoneId];
 
     public override void SaveStaticData(TagCompound tag)
     {

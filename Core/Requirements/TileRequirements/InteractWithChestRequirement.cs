@@ -18,6 +18,7 @@ public class InteractWithChestRequirement : Requirement
         ConditionDescription = conditionDescription;
     }
     protected InteractWithChestRequirement() : base() { }
+    protected override object?[] DisplayNameArgs => [ConditionDescription?.Value ?? "?"];
 }
 
 public class InteractWithAnyChestRequirement : InteractWithChestRequirement
