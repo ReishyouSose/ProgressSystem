@@ -749,14 +749,14 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
             tag.SetWithDefault("TooltipKey", Tooltip.LocalizedTextValue?.Key);
             tag.SetWithDefault("Tooltip", Tooltip.StringValue);
             tag.SetWithDefault("Texture", Texture.AssetPath);
-            */
-            tag.SetWithDefaultN("Position", Position);
             tag.SetWithDefaultN("UseRequirementTextureIndex", UseRequirementTextureIndex);
             tag.SetWithDefaultN("UseRequirementTextureRollTime", UseRequirementTextureRollTime);
+            tag.SetWithDefault("Repeatable", Repeatable);
+            */
+            tag.SetWithDefaultN("Position", Position);
             tag.SetWithDefault("RequirementCountNeeded", RequirementCountNeeded);
             tag.SetWithDefaultN("PredecessorCountNeeded", PredecessorCountNeeded);
             tag.SetWithDefault("NeedSubmit", NeedSubmit);
-            tag.SetWithDefault("Repeatable", Repeatable);
         });
         this.SaveStaticDataListTemplate(Rewards, "Rewards", tag);
     }
@@ -793,14 +793,14 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
             {
                 Texture = texture;
             }
-            */
-            Position = tag.GetWithDefaultN<Vector2>("Position");
             UseRequirementTextureIndex = tag.GetWithDefaultN<int>("UseRequirementTextureIndex");
             UseRequirementTextureRollTime = tag.GetWithDefaultN<int>("UseRequirementTextureRollTime");
+            Repeatable = tag.GetWithDefault<bool>("Repeatable");
+            */
+            Position = tag.GetWithDefaultN<Vector2>("Position");
             RequirementCountNeeded = tag.GetWithDefault<int>("RequirementCountNeeded");
             PredecessorCountNeeded = tag.GetWithDefaultN<int>("PredecessorCountNeeded");
             tag.GetWithDefault("NeedSubmit", out NeedSubmit);
-            Repeatable = tag.GetWithDefault<bool>("Repeatable");
         });
         this.LoadStaticDataListTemplate(Rewards.GetS, Rewards!.SetFS, "Rewards", tag);
     }
