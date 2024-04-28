@@ -63,7 +63,7 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
     /// <br/>(一点都没有领取可以不设置)
     /// </summary>
     protected virtual bool AutoAssignReceived => true;
-    
+
     public static event Action<Reward>? OnStartReceivedStatic;
     public event Action? OnStartReceived;
     public static event Action<Reward>? OnTotallyReceivedStatic;
@@ -150,17 +150,9 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
         State = StateEnum.Disabled;
     }
     #endregion
-    
-    /// <summary>
-    /// 是否已完全领取奖励
-    /// </summary>
-    [Obsolete("使用State", true)]
-    public virtual bool Received { get; protected set; }
-    /// <summary>
-    /// 是否开始领取奖励, 默认与<see cref="Received"/>相同
-    /// </summary>
-    [Obsolete("使用State", true)]
-    public virtual bool StartReceived { get => Received; protected set => Received = value; }
+
+    public bool IsReceiving() => State == StateEnum.Started;
+    public bool IsReceived() => State == StateEnum.Received;
 
     #endregion
 
@@ -236,7 +228,8 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
     {
         State = StateEnum.Locked;
     }
-    public virtual void Start() {
+    public virtual void Start()
+    {
         TryUnlock();
     }
     #endregion

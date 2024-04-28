@@ -14,8 +14,10 @@ namespace ProgressSystem.UI.PlayerMode.ExtraUI
         {
             this.rewards = rewards;
             this.reward = reward;
-            selected = new(TextureAssets.MagicPixel.Value, new(16), Color.Green);
+            //color = reward.Recieve ? Color.Green : Color.Ye
+            selected = new(TextureAssets.MagicPixel.Value, new(16), reward.IsReceived() ? Color.Green : Color.Yellow);
             selected.SetCenter(20, -3, 0, 0.5f);
+            selected.Info.IsHidden = !(reward.IsReceived() || reward.IsReceiving());
             Register(selected);
             string tooltip = reward is CombineReward combine ? $"选择下列中的 {combine.Count} 项" :
                 (reward.DisplayName.Value ?? reward.GetType().Name)
