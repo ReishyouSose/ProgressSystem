@@ -2,5 +2,5 @@
 
 public class EmptyReward : Reward
 {
-    protected override bool Receive() => true;
+    protected override void Receive() { }
 }

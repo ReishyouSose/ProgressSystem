@@ -1,9 +1,9 @@
 ﻿using ProgressSystem.Common.Systems;
 using ProgressSystem.Core.NetUpdate;
-using ProgressSystem.Configs;
 using ProgressSystem.UI.DeveloperMode;
 using ProgressSystem.UI.PlayerMode;
 using Terraria.GameInput;
+using ProgressSystem.Common.Configs;
 
 namespace ProgressSystem.Common.Players
 {

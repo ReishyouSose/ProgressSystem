@@ -47,19 +47,11 @@ public class CombineRequirement : Requirement
     public override void SaveDataInPlayer(TagCompound tag)
     {
         base.SaveDataInPlayer(tag);
-        if (ShouldSaveStaticData)
-        {
-            tag.SetWithDefault("Count", Count);
-        }
         tag.SaveListData("Requirements", Requirements, (r, t) => r.SaveDataInPlayer(t));
     }
     public override void LoadDataInPlayer(TagCompound tag)
     {
         base.LoadDataInPlayer(tag);
-        if (ShouldSaveStaticData)
-        {
-            Count = tag.GetWithDefault<int>("Count");
-        }
         tag.LoadListData("Requirements", Requirements, (r, t) => r.LoadDataInPlayer(t));
     }
     public override void SaveDataInWorld(TagCompound tag)
@@ -75,11 +67,19 @@ public class CombineRequirement : Requirement
     public override void SaveStaticData(TagCompound tag)
     {
         base.SaveStaticData(tag);
+        if (ShouldSaveStaticData)
+        {
+            tag.SetWithDefault("Count", Count);
+        }
         this.SaveStaticDataListTemplate(Requirements, "Requirements", tag);
     }
     public override void LoadStaticData(TagCompound tag)
     {
         base.LoadStaticData(tag);
+        if (ShouldSaveStaticData)
+        {
+            Count = tag.GetWithDefault<int>("Count");
+        }
         this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFS, "Requirements", tag);
     }
     #endregion

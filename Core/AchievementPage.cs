@@ -506,4 +506,14 @@ public class AchievementPage : ICollection<Achievement>, IWithStaticData, INetUp
     public IEnumerator<Achievement> GetEnumerator() => Achievements.Values.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => Achievements.Values.GetEnumerator();
     #endregion
+
+    #region 杂项
+    public void TryReceiveAllRewards()
+    {
+        foreach (var achievement in Achievements.Values)
+        {
+            achievement.TryReceiveAllReward();
+        }
+    }
+    #endregion
 }

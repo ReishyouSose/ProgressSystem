@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using Terraria.ModLoader.Config;
 
-namespace ProgressSystem.Configs;
+namespace ProgressSystem.Common.Configs;
 
 public class ServerConfig : ModConfig
 {

@@ -1,5 +1,5 @@
 ﻿using Humanizer;
-using ProgressSystem.Configs;
+using ProgressSystem.Common.Configs;
 using System.IO;
 
 namespace ProgressSystem.Core.NetUpdate;

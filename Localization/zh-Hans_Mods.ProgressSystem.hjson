@@ -24,16 +24,16 @@ Requirements: {
 	EmptyRequirement.DisplayName: 空条件
 	CraftItemInWorldRequirement.DisplayName: 在世界中制造{0}
 	CombineRequirement.DisplayName: 组合条件
-	// ConsumeItemRequirement.DisplayName: Mods.ProgressSystem.Requirements.ConsumeItemRequirement.DisplayName
-	// OpenBackpackRequirement.DisplayName: Mods.ProgressSystem.Requirements.OpenBackpackRequirement.DisplayName
-	// OpenBestiaryRequirement.DisplayName: Mods.ProgressSystem.Requirements.OpenBestiaryRequirement.DisplayName
-	// KillAnyNPCRequirement.DisplayName: Mods.ProgressSystem.Requirements.KillAnyNPCRequirement.DisplayName
-	// TalkToAnyNPCRequirement.DisplayName: Mods.ProgressSystem.Requirements.TalkToAnyNPCRequirement.DisplayName
-	// TalkToNPCRequirement.DisplayName: Mods.ProgressSystem.Requirements.TalkToNPCRequirement.DisplayName
-	// ReachModBiomeRequirement.DisplayName: Mods.ProgressSystem.Requirements.ReachModBiomeRequirement.DisplayName
-	// ReachZoneRequirement.DisplayName: Mods.ProgressSystem.Requirements.ReachZoneRequirement.DisplayName
-	// InteractWithAnyChestRequirement.DisplayName: Mods.ProgressSystem.Requirements.InteractWithAnyChestRequirement.DisplayName
-	// InteractWithChestRequirement.DisplayName: Mods.ProgressSystem.Requirements.InteractWithChestRequirement.DisplayName
+	ConsumeItemRequirement.DisplayName: 消耗掉 {0}
+	OpenBackpackRequirement.DisplayName: 打开背包
+	OpenBestiaryRequirement.DisplayName: 打开图鉴
+	KillAnyNPCRequirement.DisplayName: 击杀任意生物
+	TalkToAnyNPCRequirement.DisplayName: 与任意生物谈话
+	TalkToNPCRequirement.DisplayName: 与{0}谈话
+	ReachModBiomeRequirement.DisplayName: 到达{0}
+	ReachZoneRequirement.DisplayName: 到达{0}
+	InteractWithAnyChestRequirement.DisplayName: 打开箱子
+	InteractWithChestRequirement.DisplayName: 打开{0}
 }
 
 Achievements: {
@@ -99,8 +99,8 @@ Achievements: {
 Rewards: {
 	EmptyReward.DisplayName: 空条件
 	ItemReward.DisplayName: 获得 {0}
-	// CombineReward.DisplayName: Mods.ProgressSystem.Rewards.CombineReward.DisplayName
-	// PlayerStatReward.DisplayName: Mods.ProgressSystem.Rewards.PlayerStatReward.DisplayName
+	CombineReward.DisplayName: 选择型奖励
+	PlayerStatReward.DisplayName: 玩家状态
 }
 
 Messages: {
@@ -137,8 +137,25 @@ Configs: {
 		}
 
 		DeveloperMode: {
-			// Label: Developer Mode
-			// Tooltip: ""
+			Label: 开发者模式
+			Tooltip: ""
 		}
+
+		AutoReceive: {
+			Label: 自动领取
+			Tooltip: 在成就完成时自动领取奖励
+		}
+
+		AutoSelectReward: {
+			Label: 自动选择
+			Tooltip: 当有选择型奖励时的自动选择方式
+		}
+	}
+
+	AutoSelectRewardEnum: {
+		Tooltip: ""
+		NotSelect.Label: 不自动选择
+		First.Label: 选择靠前的
+		Random.Label: 随机选择
 	}
 }

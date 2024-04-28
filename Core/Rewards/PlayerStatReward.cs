@@ -30,17 +30,18 @@ public partial class PlayerStatReward : Reward
     public int crit;
     public override void Start()
     {
-        if (Received)
+        if (State == StateEnum.Received)
         {
             Receive();
         }
     }
-    protected override bool Receive()
+    protected override bool AutoAssignReceived => false;
+    protected override void Receive()
     {
         var psPlayer = PSPlayer.Instance;
         if (psPlayer == null || !psPlayer.Player.active)
         {
-            return false;
+            return;
         }
         psPlayer.maxLife += maxLife;
         psPlayer.maxMana += maxMana;
@@ -50,7 +51,8 @@ public partial class PlayerStatReward : Reward
         psPlayer.damage += damage;
         psPlayer.endurance += endurance;
         psPlayer.crit += crit;
-        return true;
+        State = StateEnum.Received;
+        return;
     }
     public override bool ReportDetails(out string details)
     {
