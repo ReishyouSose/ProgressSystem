@@ -141,9 +141,17 @@ namespace ProgressSystem.UI.PlayerMode
             detailsPanel.SetCenter(0, 0, 0.5f, 0.5f);
             detailsPanel.Info.SetMargin(10);
             detailsPanel.Info.IsVisible = false;
-            detailsPanel.Info.IsSensitive = true;
-            detailsPanel.Events.OnMouseOver += evt => bg.LockInteract(false);
-            detailsPanel.Events.OnMouseOut += evt => bg.LockInteract(true);
+            detailsPanel.Events.OnUpdate += evt =>
+            {
+                if (evt.ContainsPoint(Main.MouseScreen) && !bg.Info.IsLocked)
+                {
+                    bg.LockInteract(false);
+                }
+                else if (bg.Info.IsLocked)
+                {
+                    bg.LockInteract(true);
+                }
+            };
             Register(detailsPanel);
 
             UIVnlPanel descriptionBg = new(0, 0);
@@ -239,7 +247,7 @@ namespace ProgressSystem.UI.PlayerMode
 
             rewardView = new();
             rewardView.SetPos(0, 30);
-            rewardView.SetSize(-5, -40, 1, 1);
+            rewardView.SetSize(-10, -40, 1, 1);
             rewardView.autoPos[0] = true;
             rewardBg.Register(rewardView);
 
@@ -290,7 +298,12 @@ namespace ProgressSystem.UI.PlayerMode
             foreach (Achievement ach in page.Achievements.Values)
             {
                 UIAchSlot slot = new(ach);
-                slot.Events.OnLeftDown += evt => ChangeFocus(slot.ach);
+                slot.Events.OnLeftDown += evt =>
+                {
+                    ChangeFocus(slot.ach);
+                    slot.isFocus = true;
+                };
+                slot.Events.UnLeftDown += evt => slot.isFocus = false;
                 achView.AddElement(slot);
                 slotByFullName.Add(ach.FullName, slot);
             }
@@ -330,7 +343,6 @@ namespace ProgressSystem.UI.PlayerMode
                 CheckRequirements();
                 CheckRewards();
                 detailsPanel.Info.IsVisible = true;
-                achPanel.LockInteract(false);
             }
         }
         private void CheckRequirements(RequirementList? requires = null, int index = 0)
@@ -361,6 +373,8 @@ namespace ProgressSystem.UI.PlayerMode
         }
         private void CheckRewards(RewardList? rewards = null, int index = 0)
         {
+            if (index == 0)
+                rewardView.ClearAllElements();
             rewards ??= focusAch.Rewards;
             if (rewards.Any())
             {
