@@ -9,6 +9,7 @@ namespace ProgressSystem.UI.PlayerMode.ExtraUI
         private readonly Texture2DGetter Icon;
         public Vector2 pos;
         public HashSet<UIRequireLine> preLine;
+        public bool isFocus;
         public IReadOnlySet<UIAchSlot> PreAch => preLine.Select(x => x.start).ToHashSet();
         public UIAchSlot(Achievement ach) : base(AssetLoader.Slot)
         {
@@ -31,6 +32,13 @@ namespace ProgressSystem.UI.PlayerMode.ExtraUI
                 }
             }
             ach.PostDraw?.Invoke(sb, hitbox);
+            Color? frameColor = null;
+            if (isFocus)
+                frameColor = Color.DeepSkyBlue;
+            if (Info.IsMouseHover)
+                frameColor = Color.Gold;
+            if (frameColor.HasValue)
+                RUIHelper.DrawRec(sb, hitbox, 2f, frameColor.Value);
         }
     }
 }
