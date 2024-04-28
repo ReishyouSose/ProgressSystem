@@ -541,7 +541,7 @@ namespace ProgressSystem.UI.DeveloperMode
                     combine.Count += 1;
                     UpdateRqsCountText();
                     combine.ShouldSaveStaticData = true;
-                    CheckRequirements(EditingAch!.Requirements, 0);
+                    CheckRequirements();
                     ChangeSaveState(false);
                 }
                 else if (EditingAch != null)
@@ -549,7 +549,7 @@ namespace ProgressSystem.UI.DeveloperMode
                     EditingAch.RequirementCountNeeded += 1;
                     UpdateRqsCountText();
                     EditingAch.ShouldSaveStaticData = true;
-                    CheckRequirements(EditingAch.Requirements, 0);
+                    CheckRequirements();
                     ChangeSaveState(false);
                 }
                 else
@@ -577,7 +577,7 @@ namespace ProgressSystem.UI.DeveloperMode
                     combine.Count -= 1;
                     UpdateRqsCountText();
                     combine.ShouldSaveStaticData = true;
-                    CheckRequirements(EditingAch!.Requirements, 0);
+                    CheckRequirements();
                     ChangeSaveState(false);
                 }
                 else if (EditingAch != null)
@@ -585,7 +585,7 @@ namespace ProgressSystem.UI.DeveloperMode
                     EditingAch.RequirementCountNeeded -= 1;
                     UpdateRqsCountText();
                     EditingAch.ShouldSaveStaticData = true;
-                    CheckRequirements(EditingAch.Requirements, 0);
+                    CheckRequirements();
                     ChangeSaveState(false);
                 }
                 else
@@ -619,7 +619,7 @@ namespace ProgressSystem.UI.DeveloperMode
                 editingRequires.Add(require);
                 EditingCombineRequire = require;
                 UpdateRqsCountText();
-                CheckRequirements(EditingAch!.Requirements, 0);
+                CheckRequirements();
                 ChangeSaveState(false);
             };
             addCombineBg.Register(addCombine);
@@ -777,7 +777,7 @@ namespace ProgressSystem.UI.DeveloperMode
                     combine.Count += 1;
                     UpdateRwsCountText();
                     combine.ShouldSaveStaticData = true;
-                    CheckRewards(EditingAch!.Rewards, 0);
+                    CheckRewards();
                     ChangeSaveState(false);
                 }
                 else
@@ -805,7 +805,7 @@ namespace ProgressSystem.UI.DeveloperMode
                     combine.Count -= 1;
                     UpdateRwsCountText();
                     combine.ShouldSaveStaticData = true;
-                    CheckRewards(EditingAch!.Rewards, 0);
+                    CheckRewards();
                     ChangeSaveState(false);
                 }
                 else
@@ -838,7 +838,7 @@ namespace ProgressSystem.UI.DeveloperMode
                 };
                 editingRewards.Add(combine);
                 EditingCombineReward = combine;
-                CheckRewards(EditingAch!.Rewards, 0);
+                CheckRewards();
                 ChangeSaveState(false);
             };
             addCombineBg.Register(addCombine);
@@ -1525,7 +1525,7 @@ namespace ProgressSystem.UI.DeveloperMode
                 {
                     require!.ShouldSaveStaticData = true;
                     editingRequires.Add(require);
-                    CheckRequirements(EditingAch!.Requirements, 0);
+                    CheckRequirements();
                     ChangeSaveState(false);
                 }
             };
@@ -1594,7 +1594,7 @@ namespace ProgressSystem.UI.DeveloperMode
                 {
                     reward!.ShouldSaveStaticData = true;
                     EditingRewards.Add(reward);
-                    CheckRewards(EditingAch.Rewards, 0);
+                    CheckRewards();
                     ChangeSaveState(false);
                 }
             };
@@ -1720,16 +1720,17 @@ namespace ProgressSystem.UI.DeveloperMode
                 submit.ChangeText($"需要手动提交  {(ach.NeedSubmit ? "是" : "否")}");
                 achNameInputer.Text = ach.Name;
                 achNameInputer.OnInputText?.Invoke(ach.Name);
-                CheckRequirements(ach.Requirements, 0);
-                CheckRewards(ach.Rewards, 0);
+                CheckRequirements();
+                CheckRewards();
                 EditingCombineRequire = null;
                 EditingCombineReward = null;
             }
         }
-        private void CheckRequirements(RequirementList requires, int index)
+        private void CheckRequirements(RequirementList? requires = null, int index = 0)
         {
             if (index == 0)
                 requireView.ClearAllElements();
+            requires ??= EditingAch!.Requirements;
             if (requires.Any())
             {
                 foreach (Requirement require in requires)
@@ -1747,7 +1748,7 @@ namespace ProgressSystem.UI.DeveloperMode
                         {
                             EditingCombineRequire = null;
                         }
-                        CheckRequirements(EditingAch.Requirements, 0);
+                        CheckRequirements();
                     };
                     requireView.AddElement(text);
                     if (require is CombineRequirement combine)
@@ -1776,10 +1777,11 @@ namespace ProgressSystem.UI.DeveloperMode
             if (index == 0)
                 requireView.Calculation();
         }
-        private void CheckRewards(RewardList rewards, int index)
+        private void CheckRewards(RewardList? rewards = null, int index = 0)
         {
             if (index == 0)
                 rewardView.ClearAllElements();
+            rewards ??= EditingAch!.Rewards;
             if (rewards.Any())
             {
                 foreach (Reward reward in rewards)
@@ -1797,7 +1799,7 @@ namespace ProgressSystem.UI.DeveloperMode
                         {
                             EditingCombineReward = null;
                         }
-                        CheckRewards(EditingAch.Rewards, 0);
+                        CheckRewards();
                     };
                     rewardView.AddElement(text);
                     if (reward is CombineReward combine)

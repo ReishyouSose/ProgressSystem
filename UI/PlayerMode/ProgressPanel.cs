@@ -17,7 +17,7 @@ namespace ProgressSystem.UI.PlayerMode
         private UIContainerPanel requireView;
         private UIContainerPanel rewardView;
         private UIText submit;
-        private UIText recieve;
+        private UIText receive;
         private UIVnlPanel achPanel;
         private UIVnlPanel detailsPanel;
         public override void OnInitialization()
@@ -141,6 +141,7 @@ namespace ProgressSystem.UI.PlayerMode
             detailsPanel.SetCenter(0, 0, 0.5f, 0.5f);
             detailsPanel.Info.SetMargin(10);
             detailsPanel.Info.IsVisible = false;
+            detailsPanel.Info.IsSensitive = true;
             detailsPanel.Events.OnMouseOver += evt => bg.LockInteract(false);
             detailsPanel.Events.OnMouseOut += evt => bg.LockInteract(true);
             Register(detailsPanel);
@@ -166,16 +167,18 @@ namespace ProgressSystem.UI.PlayerMode
             descriptionView.SetVerticalScrollbar(dV);
             descriptionBg.Register(dV);
 
-            UIVnlPanel submitBg = new(0, 0);
-            submitBg.SetPos(0, -30, 0, 1);
-            submitBg.SetSize(-5, 30, 0.33f);
-            detailsPanel.Register(submitBg);
-
             submit = new("提交");
             submit.SetSize(submit.TextSize);
             submit.SetCenter(0, 5, 0.5f, 0.5f);
-            submit.HoverToGold();
-            submit.Events.OnLeftDown += evt => focusAch.Submit();
+
+            UIVnlPanel submitBg = new(0, 0);
+            submitBg.SetPos(0, -30, 0, 1);
+            submitBg.SetSize(-5, 30, 0.33f);
+            submitBg.Info.IsSensitive = true;
+            submitBg.Events.OnMouseOver += evt => submit.color = Color.Gold;
+            submitBg.Events.OnMouseOut += evt => submit.color = Color.White;
+            submitBg.Events.OnLeftDown += evt => focusAch.Submit();
+            detailsPanel.Register(submitBg);
             submitBg.Register(submit);
 
             UIVnlPanel requireBg = new(0, 0);
@@ -205,17 +208,23 @@ namespace ProgressSystem.UI.PlayerMode
             requireView.SetHorizontalScrollbar(requireH);
             requireBg.Register(requireH);
 
-            UIVnlPanel recieveBg = new(0, 0);
-            recieveBg.SetPos(5, -30, 0.33f, 1);
-            recieveBg.SetSize(-2, 30, 0.33f);
-            detailsPanel.Register(recieveBg);
+            receive = new("领取");
+            receive.SetSize(receive.TextSize);
+            receive.SetCenter(0, 5, 0.5f, 0.5f);
 
-            recieve = new("领取");
-            recieve.SetSize(recieve.TextSize);
-            recieve.SetCenter(0, 5, 0.5f, 0.5f);
-            recieve.HoverToGold();
-            recieve.Events.OnLeftDown += evt => focusAch.TryReceiveAllReward();
-            recieveBg.Register(recieve);
+            UIVnlPanel receiveBg = new(0, 0);
+            receiveBg.SetPos(5, -30, 0.33f, 1);
+            receiveBg.SetSize(-2, 30, 0.33f);
+            receiveBg.Info.IsSensitive = true;
+            receiveBg.Events.OnMouseOver += evt => receive.color = Color.Gold;
+            receiveBg.Events.OnMouseOut += evt => receive.color = Color.White;
+            receiveBg.Events.OnLeftDown += evt =>
+            {
+                focusAch.TryReceiveAllReward();
+                CheckRewards();
+            };
+            detailsPanel.Register(receiveBg);
+            receiveBg.Register(receive);
 
             UIVnlPanel rewardBg = new(0, 0);
             rewardBg.SetPos(5, 0, 0.67f, 0);
@@ -244,20 +253,22 @@ namespace ProgressSystem.UI.PlayerMode
             rewardView.SetHorizontalScrollbar(rewardH);
             rewardBg.Register(rewardH);
 
-            UIVnlPanel closeBg = new(0, 0);
-            closeBg.SetPos(5, -30, 0.67f, 1);
-            closeBg.SetSize(-5, 30, 0.33f);
-            detailsPanel.Register(closeBg);
-
             UIText close = new("关闭");
             close.SetSize(close.TextSize);
             close.SetCenter(0, 5, 0.5f, 0.5f);
-            close.HoverToGold();
-            close.Events.OnLeftDown += evt =>
+
+            UIVnlPanel closeBg = new(0, 0);
+            closeBg.SetPos(5, -30, 0.67f, 1);
+            closeBg.SetSize(-5, 30, 0.33f);
+            closeBg.Info.IsSensitive = true;
+            closeBg.Events.OnMouseOver += evt => close.color = Color.Gold;
+            closeBg.Events.OnMouseOut += evt => close.color = Color.White;
+            closeBg.Events.OnLeftDown += evt =>
             {
                 detailsPanel.Info.IsVisible = false;
                 bg.LockInteract(true);
             };
+            detailsPanel.Register(closeBg);
             closeBg.Register(close);
         }
         private void ClearTemp()
@@ -316,14 +327,15 @@ namespace ProgressSystem.UI.PlayerMode
                 desc.SetSize(desc.TextSize);
                 descriptionView.AddElement(desc);
 
-                CheckRequirements(ach.Requirements, 0);
-                CheckRewards(ach.Rewards, 0);
+                CheckRequirements();
+                CheckRewards();
                 detailsPanel.Info.IsVisible = true;
                 achPanel.LockInteract(false);
             }
         }
-        private void CheckRequirements(RequirementList requires, int index)
+        private void CheckRequirements(RequirementList? requires = null, int index = 0)
         {
+            requires ??= focusAch.Requirements;
             if (requires.Any())
             {
                 foreach (Requirement require in requires)
@@ -347,8 +359,9 @@ namespace ProgressSystem.UI.PlayerMode
             if (index == 0)
                 requireView.Calculation();
         }
-        private void CheckRewards(RewardList rewards, int index, CombineReward? combineR = null)
+        private void CheckRewards(RewardList? rewards = null, int index = 0)
         {
+            rewards ??= focusAch.Rewards;
             if (rewards.Any())
             {
                 foreach (Reward reward in rewards)
@@ -356,21 +369,18 @@ namespace ProgressSystem.UI.PlayerMode
                     UIRewardText text = new(reward, rewards);
                     text.SetPos(index * 30, 0);
                     rewardView.AddElement(text);
-                    if (combineR != null)
+                    if (reward is CombineReward combine)
                     {
-                        text.selected.color = combineR.Contains(index) ? Color.Green : Color.Red;
+                        CheckRewards(combine.Rewards, index + 1);
+                    }
+                    else
+                    {
                         text.text.HoverToGold();
                         text.text.Events.OnLeftDown += evt =>
                         {
-                            bool? result = combineR.TrySelect(text.reward);
-                            if (result == null)
-                                return;
-                            text.selected.color = result.Value ? Color.Green : Color.Red;
+                            text.reward.TryReceive();
+                            CheckRewards();
                         };
-                    }
-                    if (reward is CombineReward combine)
-                    {
-                        CheckRewards(combine.Rewards, index + 1, combine);
                     }
                 }
             }

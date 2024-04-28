@@ -1,14 +1,11 @@
-﻿using ProgressSystem.Core.Requirements;
-using ProgressSystem.Core.Rewards;
-using ProgressSystem.TheUtils;
-using System.Collections;
+﻿using System.Collections;
 
 namespace ProgressSystem.Core.Rewards;
 
 public class RewardList : IList<Reward>, IReadOnlyList<Reward>
 {
     private readonly List<Reward> data;
-    
+
     public event Action<Reward>? OnAdd;
     public event Action<Reward>? OnRemove;
     public void AddOnAddAndDo(Action<Reward> onAdd)
@@ -19,7 +16,7 @@ public class RewardList : IList<Reward>, IReadOnlyList<Reward>
             onAdd(reward);
         }
     }
-    
+
     public RewardList(Achievement achievement, IEnumerable<Reward>? rewards = null, Action<Reward>? onAdd = null, Action<Reward>? onRemove = null)
         : this(rewards, onAdd + (a => a.Initialize(achievement)), onRemove) { }
     public RewardList(IEnumerable<Reward>? rewards = null, Action<Reward>? onAdd = null, Action<Reward>? onRemove = null)
@@ -77,7 +74,7 @@ public class RewardList : IList<Reward>, IReadOnlyList<Reward>
 
     public bool Remove(Reward item)
     {
-        if(data.Remove(item))
+        if (data.Remove(item))
         {
             OnRemove?.Invoke(item);
             return true;
