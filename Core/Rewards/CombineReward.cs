@@ -129,7 +129,7 @@ public class CombineReward : Reward
         }
         if (startReceiveds.Count > 0)
         {
-            State = StateEnum.Started;
+            State = StateEnum.Receiving;
         }
     }
 
