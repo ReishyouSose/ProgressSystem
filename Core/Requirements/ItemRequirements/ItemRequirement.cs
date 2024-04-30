@@ -102,21 +102,20 @@ public abstract class ItemRequirement : Requirement
     public override void SaveDataInPlayer(TagCompound tag)
     {
         base.SaveDataInPlayer(tag);
-        if (Completed)
+        if (State != StateEnum.Completed)
         {
-            return;
+            tag.SetWithDefault("CountNow", CountNow);
         }
-        tag.SetWithDefault("CountNow", CountNow);
     }
     public override void LoadDataInPlayer(TagCompound tag)
     {
         base.LoadDataInPlayer(tag);
-        if (Completed)
+        if (State == StateEnum.Completed)
         {
-            CountNow = Count;
+            countNow = Count;
             return;
         }
-        CountNow = tag.GetWithDefault<int>("CountNow");
+        countNow = tag.GetWithDefault<int>("CountNow");
     }
     public override void SaveStaticData(TagCompound tag)
     {

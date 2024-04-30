@@ -220,7 +220,6 @@ public class AchievementPage : ICollection<Achievement>, IWithStaticData, INetUp
 
     public void PostInitialize()
     {
-        Achievements.Values.ForeachDo(a => a.PostInitialize());
         SetDefaultPositionForAchievements();
     }
     public void SetDefaultPositionForAchievements()

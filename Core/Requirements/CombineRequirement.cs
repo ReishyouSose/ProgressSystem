@@ -116,15 +116,15 @@ public class CombineRequirement : Requirement
 
     protected void ElementComplete()
     {
-        if (Count == 0)
+        if (Count == 0 || Count >= Requirements.Count(r => r.State != StateEnum.Disabled))
         {
-            if (Requirements.All(r => r.Completed))
+            if (Requirements.All(r => r.State is StateEnum.Completed or StateEnum.Disabled))
             {
                 CompleteSafe();
             }
             return;
         }
-        if (Requirements.Sum(r => r.Completed.ToInt()) >= Count)
+        if (Requirements.Sum(r => (r.State == StateEnum.Completed).ToInt()) >= Count)
         {
             CompleteSafe();
         }

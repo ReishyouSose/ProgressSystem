@@ -5,26 +5,29 @@ public interface IAchievementNode
     IEnumerable<IAchievementNode> NodeChildren => [];
     void Start() { }
     void Reset() { }
-    public void StartTree() => IAchievementNodeHelper.StartTree(this);
-    public void ResetTree() => IAchievementNodeHelper.ResetTree(this);
-}
-
-public static class IAchievementNodeHelper
-{
-    public static void StartTree(IAchievementNode node)
+    void PostInitialize() { }
+    public void StartTree()
     {
-        node.Start();
-        foreach (var child in node.NodeChildren)
+        Start();
+        foreach (var child in NodeChildren)
         {
             child.StartTree();
         }
     }
-    public static void ResetTree(IAchievementNode node)
+    public void ResetTree()
     {
-        node.Reset();
-        foreach (var child in node.NodeChildren)
+        Reset();
+        foreach (var child in NodeChildren)
         {
             child.ResetTree();
+        }
+    }
+    public void PostInitializeTree()
+    {
+        PostInitialize();
+        foreach (var child in NodeChildren)
+        {
+            child.PostInitializeTree();
         }
     }
 }
