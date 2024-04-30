@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using ProgressSystem.Common.Configs;
 using ProgressSystem.Core.Requirements;
 using ProgressSystem.Core.Rewards;
 using ProgressSystem.UI.DeveloperMode.ExtraUI;
@@ -144,7 +145,13 @@ namespace ProgressSystem.UI.DeveloperMode
             base.OnInitialization();
             if (Main.gameMenu)
                 return;
-            Info.IsVisible = true;
+            Events.OnUpdate += evt =>
+            {
+                if (Main.playerInventory || !ClientConfig.Instance.DeveloperMode)
+                {
+                    Info.IsVisible = false;
+                }
+            };
             RemoveAll();
 
             editingMod = ProgressSystem.Instance;

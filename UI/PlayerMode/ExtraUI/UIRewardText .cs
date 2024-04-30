@@ -28,8 +28,7 @@ namespace ProgressSystem.UI.PlayerMode.ExtraUI
             selected.SetCenter(20, -3, 0, 0.5f);
             // selected.Info.IsHidden = !(reward.IsReceived() || reward.IsReceiving());
             Register(selected);
-            string tooltip = reward is CombineReward combine ? $"选择下列中的 {combine.Count} 项" :
-                (reward.DisplayName.Value ?? reward.GetType().Name)
+            string tooltip = (reward.DisplayName.Value ?? reward.GetType().Name)
             + (reward.ReportDetails(out string details) ? details : string.Empty);
             index = rewards.IndexOf(reward);
             text = new(index + 1 + ". " + tooltip);

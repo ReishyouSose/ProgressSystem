@@ -1,10 +1,11 @@
-﻿using ProgressSystem.Core.Interfaces;
+﻿using Humanizer;
+using ProgressSystem.Core.Interfaces;
 using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.StaticData;
 
 namespace ProgressSystem.Core.Requirements;
 
-public class CombineRequirement : Requirement
+public class CombineRequirement : Requirement, IAchievementNode
 {
     public RequirementList Requirements;
     private int count;
@@ -17,9 +18,14 @@ public class CombineRequirement : Requirement
         get => count;
         set => count = Math.Max(value, 0);
     }
+    protected bool isAll;
     public CombineRequirement() : base()
     {
-        Requirements = new(null, r => r.OnComplete += ElementComplete, r => r.OnComplete -= ElementComplete);
+        Requirements = new(null, r => r.OnComplete += TryComplete, r => r.OnComplete -= TryComplete);
+        var displayNameAllOf = GetModLocalization($"Requirements.{GetType().Name}.DisplayNameAllOf");
+        var displayNameAnyOf = GetModLocalization($"Requirements.{GetType().Name}.DisplayNameAnyOf");
+        var displayName = GetModLocalization($"Requirements.{GetType().Name}.DisplayName");
+        DisplayName = new(() => isAll ? displayNameAllOf.Value : Count == 1 ? displayNameAnyOf.Value : displayName.Value.FormatWith(Count));
     }
 
     public CombineRequirement(int count) : this()
@@ -35,13 +41,27 @@ public class CombineRequirement : Requirement
             Requirements.AddRange(requirements);
         }
     }
+    [SpecializeAutoConstruct(Disabled = true)]
+    public CombineRequirement(params Requirement[]? requirements) : this(0, requirements) { }
     public override void Initialize(Achievement achievement)
     {
         base.Initialize(achievement);
         Requirements.AddOnAddAndDo(r => r.Initialize(achievement));
     }
 
-    public IEnumerable<IAchievementNode> NodeChildren => Requirements;
+    public override void PostInitialize()
+    {
+        base.PostInitialize();
+        UpdateIsAll();
+        OnStart += TryComplete;
+        OnComplete += () => Requirements.ForeachDo(r => r.CloseSafe());
+    }
+    public void UpdateIsAll()
+    {
+        isAll = Count == 0 || Count >= Requirements.Count(r => r.State != StateEnum.Disabled);
+    }
+
+    IEnumerable<IAchievementNode> IAchievementNode.NodeChildren => Requirements;
 
     #region 数据存取
     public override void SaveDataInPlayer(TagCompound tag)
@@ -113,10 +133,9 @@ public class CombineRequirement : Requirement
     #endregion
 
     #region 完成状况
-
-    protected void ElementComplete()
+    protected void TryComplete()
     {
-        if (Count == 0 || Count >= Requirements.Count(r => r.State != StateEnum.Disabled))
+        if (isAll)
         {
             if (Requirements.All(r => r.State is StateEnum.Completed or StateEnum.Disabled))
             {

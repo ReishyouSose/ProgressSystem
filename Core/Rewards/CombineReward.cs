@@ -5,21 +5,26 @@ using ProgressSystem.Core.StaticData;
 
 namespace ProgressSystem.Core.Rewards;
 
-public class CombineReward : Reward
+public class CombineReward : Reward, IAchievementNode
 {
     #region 数据
     public readonly RewardList Rewards;
-    private int count = 1;
+    private int _count = 1;
     /// <summary>
     /// 可选择的奖励数, 默认 1
     /// </summary>
-    public int Count { get => count; set => count = value.WithMin(1); }
+    public int Count { get => _count; set => _count = value.WithMin(1); }
     #endregion
 
     #region 初始化
+    protected override object?[] DisplayNameArgs => [Count];
     public CombineReward() : base()
     {
-        Rewards = new(null, r => r.OnStartReceived += () => ElementStartReceive(r));
+        Rewards = new(null, r =>
+        {
+            r.OnStartReceived += () => ElementStartReceive(r);
+            r.OnTotallyReceived += ElementTotallyReceived;
+        });
     }
     public CombineReward(int count) : this()
     {
@@ -33,10 +38,22 @@ public class CombineReward : Reward
             Rewards.AddRange(rewards);
         }
     }
+    [SpecializeAutoConstruct(Disabled = true)]
+    public CombineReward(params Reward[]? rewards) : this(1, rewards) { }
     public override void Initialize(Achievement achievement)
     {
         base.Initialize(achievement);
         Rewards.AddOnAddAndDo(r => r.Initialize(achievement));
+    }
+    public override void PostInitialize()
+    {
+        base.PostInitialize();
+        OnUnlock += () => Rewards.ForeachDo(r => r.TryUnlock());
+    }
+    public override void Reset()
+    {
+        base.Reset();
+        startReceiveds.Clear();
     }
     #endregion
 
@@ -72,7 +89,7 @@ public class CombineReward : Reward
     [Obsolete("不缓存选择")]
     public bool Contains(int index) => selected.Contains(index);
     #endregion
-    
+
     protected override void Close()
     {
         base.Close();
@@ -86,8 +103,15 @@ public class CombineReward : Reward
 
     #region 领取
     protected HashSet<int> startReceiveds = [];
+    protected override bool AutoAssignReceived => false;
+    protected bool suppressReceiveAll;
     protected override void Receive()
     {
+        if (suppressReceiveAll)
+        {
+            goto AfterReceiveAll;
+        }
+
         int count = Count;
 
         // 继续领取没领完的奖励
@@ -96,6 +120,7 @@ public class CombineReward : Reward
             Rewards[index].ReceiveSafe();
         }
 
+        // 尝试开始领取 index 下标的奖励, 返回是否已满
         bool Check(int index)
         {
             return startReceiveds.Count >= count
@@ -106,6 +131,7 @@ public class CombineReward : Reward
         }
 
         // 尝试自动领取
+        suppressUpdateState = true;
         switch (ClientConfig.Instance.AutoSelectReward)
         {
         case ClientConfig.AutoSelectRewardEnum.First:
@@ -117,11 +143,24 @@ public class CombineReward : Reward
             Range(count).ForeachDoB(Check);
             break;
         }
+        suppressUpdateState = false;
 
+    AfterReceiveAll:
         // 更新状态
+        UpdateState();
+    }
+
+    protected bool suppressUpdateState;
+    protected void UpdateState()
+    {
+        if (suppressUpdateState)
+        {
+            return;
+        }
+        int count = Count;
         if (startReceiveds.All(i => Rewards[i].State == StateEnum.Received)
              && (startReceiveds.Count >= count
-            ||!Range(count).Any(i => !startReceiveds.Contains(i)
+            || !Range(count).Any(i => !startReceiveds.Contains(i)
             && Rewards[i].State is StateEnum.Locked or StateEnum.Unlocked)))
         {
             State = StateEnum.Received;
@@ -133,7 +172,7 @@ public class CombineReward : Reward
         }
     }
 
-    public void ElementStartReceive(Reward reward)
+    protected void ElementStartReceive(Reward reward)
     {
         var index = Rewards.FindIndexOf(reward);
         if (index == -1)
@@ -151,10 +190,19 @@ public class CombineReward : Reward
                 }
             }
         }
+        suppressReceiveAll = true;
+        ReceiveSafe();
+        suppressReceiveAll = false;
+    }
+    protected void ElementTotallyReceived()
+    {
+        suppressReceiveAll = true;
+        ReceiveSafe();
+        suppressReceiveAll = false;
     }
     #endregion
 
-    public IEnumerable<IAchievementNode> NodeChildren => Rewards;
+    IEnumerable<IAchievementNode> IAchievementNode.NodeChildren => Rewards;
 
     #region 数据存取
     public override void SaveDataInPlayer(TagCompound tag)

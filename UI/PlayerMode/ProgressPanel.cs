@@ -25,7 +25,13 @@ namespace ProgressSystem.UI.PlayerMode
             base.OnInitialization();
             if (Main.gameMenu)
                 return;
-            Info.IsVisible = true;
+            Events.OnUpdate += evt =>
+            {
+                if (Main.playerInventory)
+                {
+                    Info.IsVisible = false;
+                }
+            };
             RemoveAll();
 
             achPanel = new(1000, 800);
@@ -78,7 +84,22 @@ namespace ProgressSystem.UI.PlayerMode
             pageList.expandView.autoPos[0] = true;
             left += pageList.showArea.Width + 10;
 
-            foreach (Mod mod in ModLoader.Mods)
+            // 挪到上面来以避免 LoadPage 有概率爆 NullReference 的 bug
+            achView = new();
+            achView.SetSize(-20, -20, 1, 1);
+            eventPanel.Register(achView);
+
+            VerticalScrollbar ev = new(80);
+            ev.Info.Left.Pixel += 10;
+            achView.SetVerticalScrollbar(ev);
+            eventPanel.Register(ev);
+
+            HorizontalScrollbar eh = new(80) { useScrollWheel = false };
+            eh.Info.Top.Pixel += 10;
+            achView.SetHorizontalScrollbar(eh);
+            eventPanel.Register(eh);
+
+            foreach (Mod mod in AchievementManager.PagesByMod.Keys)
             {
                 if (mod.Side != ModSide.Both || mod.Assets == null || !mod.HasAsset("icon"))
                     continue;
@@ -120,23 +141,11 @@ namespace ProgressSystem.UI.PlayerMode
                 groupView.AddElement(modSlot);
             }
             groupView.InnerUIE[0].Events.LeftDown(null);
-
-            achView = new();
-            achView.SetSize(-20, -20, 1, 1);
-            eventPanel.Register(achView);
-
-            VerticalScrollbar ev = new(80);
-            ev.Info.Left.Pixel += 10;
-            achView.SetVerticalScrollbar(ev);
-            eventPanel.Register(ev);
-
-            HorizontalScrollbar eh = new(80) { useScrollWheel = false };
-            eh.Info.Top.Pixel += 10;
-            achView.SetHorizontalScrollbar(eh);
-            eventPanel.Register(eh);
         }
+        private Action<bool> SetFocusNeedSubmit = null!;
         private void RegisterFocus(UIVnlPanel bg)
         {
+            #region 任务详情面板
             detailsPanel = new(800, 600) { canDrag = true };
             detailsPanel.SetCenter(0, 0, 0.5f, 0.5f);
             detailsPanel.Info.SetMargin(10);
@@ -153,7 +162,9 @@ namespace ProgressSystem.UI.PlayerMode
                 }
             };
             Register(detailsPanel);
+            #endregion
 
+            #region 描述
             UIVnlPanel descriptionBg = new(0, 0);
             descriptionBg.Info.SetMargin(10);
             descriptionBg.SetSize(-5, -40, 0.33f, 1);
@@ -174,7 +185,9 @@ namespace ProgressSystem.UI.PlayerMode
             dV.Info.Left.Pixel += 10;
             descriptionView.SetVerticalScrollbar(dV);
             descriptionBg.Register(dV);
+            #endregion
 
+            #region 提交按钮
             submit = new("提交");
             submit.SetSize(submit.TextSize);
             submit.SetCenter(0, 5, 0.5f, 0.5f);
@@ -185,10 +198,12 @@ namespace ProgressSystem.UI.PlayerMode
             submitBg.Info.IsSensitive = true;
             submitBg.Events.OnMouseOver += evt => submit.color = Color.Gold;
             submitBg.Events.OnMouseOut += evt => submit.color = Color.White;
-            submitBg.Events.OnLeftDown += evt => focusAch.Submit();
+            submitBg.Events.OnLeftDown += evt => focusAch?.Submit();
             detailsPanel.Register(submitBg);
             submitBg.Register(submit);
+            #endregion
 
+            #region 需求
             UIVnlPanel requireBg = new(0, 0);
             requireBg.SetPos(5, 0, 0.33f, 0);
             requireBg.SetSize(-2, -40, 0.33f, 1);
@@ -215,7 +230,9 @@ namespace ProgressSystem.UI.PlayerMode
             requireH.Info.Top.Pixel += 10;
             requireView.SetHorizontalScrollbar(requireH);
             requireBg.Register(requireH);
+            #endregion
 
+            #region 领取按钮
             receive = new("领取");
             receive.SetSize(receive.TextSize);
             receive.SetCenter(0, 5, 0.5f, 0.5f);
@@ -228,12 +245,14 @@ namespace ProgressSystem.UI.PlayerMode
             receiveBg.Events.OnMouseOut += evt => receive.color = Color.White;
             receiveBg.Events.OnLeftDown += evt =>
             {
-                focusAch.TryReceiveAllReward();
-                CheckRewards();
+                focusAch?.TryReceiveAllReward();
+                // CheckRewards();
             };
             detailsPanel.Register(receiveBg);
             receiveBg.Register(receive);
+            #endregion
 
+            #region 奖励
             UIVnlPanel rewardBg = new(0, 0);
             rewardBg.SetPos(5, 0, 0.67f, 0);
             rewardBg.SetSize(-5, -40, 0.33f, 1);
@@ -260,7 +279,9 @@ namespace ProgressSystem.UI.PlayerMode
             rewardH.Info.Top.Pixel += 10;
             rewardView.SetHorizontalScrollbar(rewardH);
             rewardBg.Register(rewardH);
+            #endregion
 
+            #region 关闭按钮
             UIText close = new("关闭");
             close.SetSize(close.TextSize);
             close.SetCenter(0, 5, 0.5f, 0.5f);
@@ -278,6 +299,33 @@ namespace ProgressSystem.UI.PlayerMode
             };
             detailsPanel.Register(closeBg);
             closeBg.Register(close);
+            #endregion
+
+            #region 调整三个按钮或者两个按钮
+            SetFocusNeedSubmit = needSubmit =>
+            {
+                if (needSubmit)
+                {
+                    submitBg.Info.IsVisible = true;
+
+                    receiveBg.SetPos(5, -30, 0.33f, 1);
+                    receiveBg.SetSize(-2, 30, 0.33f);
+
+                    closeBg.SetPos(5, -30, 0.67f, 1);
+                    closeBg.SetSize(-5, 30, 0.33f);
+                }
+                else
+                {
+                    submitBg.Info.IsVisible = false;
+
+                    receiveBg.SetPos(0, -30, 0, 1);
+                    receiveBg.SetSize(-5, 30, 0.5f);
+
+                    closeBg.SetPos(5, -30, 0.5f, 1);
+                    closeBg.SetSize(-5, 30, 0.5f);
+                }
+            };
+            #endregion
         }
         private void ClearTemp()
         {
@@ -332,6 +380,7 @@ namespace ProgressSystem.UI.PlayerMode
             focusAch = ach;
             if (ach != null)
             {
+                SetFocusNeedSubmit(ach.NeedSubmit);
                 UIText name = new(ach.DisplayName.Value ?? ach.Name);
                 name.SetSize(name.TextSize);
                 descriptionView.AddElement(name);
@@ -388,15 +437,17 @@ namespace ProgressSystem.UI.PlayerMode
                     {
                         CheckRewards(combine.Rewards, index + 1);
                     }
-                    else
+                    text.text.Events.OnMouseHover += evt =>
                     {
-                        text.text.HoverToGold();
-                        text.text.Events.OnLeftDown += evt =>
-                        {
-                            text.reward.TryReceive();
-                            // CheckRewards();
-                        };
-                    }
+                        text.text.color = reward.State is Reward.StateEnum.Unlocked or Reward.StateEnum.Receiving ? Color.Gold : Color.White;
+                    };
+                    text.text.Events.OnMouseOut += evt => text.text.color = Color.White;
+                    text.text.Events.OnLeftDown += evt =>
+                    {
+                        text.reward.TryReceive();
+                        // CheckRewards();
+                    };
+
                 }
             }
             else

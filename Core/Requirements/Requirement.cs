@@ -53,7 +53,7 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
     #endregion
 
     #region 重置与开始
-    
+
     public static event Action<Requirement>? OnResetStatic;
     public event Action? OnReset;
     public virtual void Reset()
@@ -246,25 +246,15 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
     #region 关闭
     public static event Action<Requirement>? OnCloseStatic;
     public event Action? OnClose;
-    public virtual bool CloseCondition()
-    {
-        return State != StateEnum.Completed && Achievement.State == Achievement.StateEnum.Completed;
-    }
+    public virtual bool CloseCondition() => true;
     protected virtual void CloseHook()
     {
-        OnStart += TryClose;
-        Achievement.OnComplete += TryClose;
+        OnStart += ToDo(DoIf, Achievement.State == Achievement.StateEnum.Completed, CloseSafe);
     }
-    public void TryClose()
-    {
-        if (CloseCondition())
-        {
-            CloseSafe();
-        }
-    }
+    public virtual bool EndListenOnClose => true;
     public void CloseSafe()
     {
-        if (State is StateEnum.Closed or StateEnum.Disabled)
+        if (State is not StateEnum.Idle)
         {
             return;
         }
@@ -331,6 +321,10 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
     {
         OnReset += EndListenSafe;
         OnComplete += EndListenSafe;
+        if (EndListenOnClose)
+        {
+            OnClose += EndListenSafe;
+        }
     }
     public virtual void TryBeginListen()
     {
@@ -371,7 +365,7 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
 
     public override string ToString()
     {
-        return $"{GetType().Name}: {nameof(State)}: {State}";
+        return $"{GetType().Name}: {nameof(State)}: {State}, {nameof(Listening)}: {Listening}";
     }
 
     /// <summary>
@@ -392,13 +386,22 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
         {
             DisplayName |= mod.GetLocalization($"Requirements.{GetType().Name}.DisplayName").WithFormatArgs(DisplayNameArgs);
         }
-        if (DisplayName.IsNone)
+        if (Tooltip.IsNone)
         {
             Tooltip = mod.GetLocalization($"Requirements.{GetType().Name}.Tooltip").WithFormatArgs(TooltipArgs);
         }
-        Texture |= $"{mod.Name}/Assets/Textures/Requirements/{GetType().Name}";
-        Texture |= $"{mod.Name}/Assets/Textures/Requirements/Default";
-        Texture |= $"{mod.Name}/Assets/Textures/Default";
+        if (Texture.IsNone)
+        {
+            Texture = $"{mod.Name}/Assets/Textures/Requirements/{GetType().Name}";
+        }
+        if (Texture.IsNone)
+        {
+            Texture = $"{mod.Name}/Assets/Textures/Requirements/Default";
+        }
+        if (Texture.IsNone)
+        {
+            Texture = $"{mod.Name}/Assets/Textures/Default";
+        }
     }
 
     public virtual void Unload() { }

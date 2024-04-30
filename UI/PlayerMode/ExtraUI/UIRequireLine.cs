@@ -20,7 +20,7 @@ namespace ProgressSystem.UI.PlayerMode.ExtraUI
         }
         public override void DrawSelf(SpriteBatch sb)
         {
-            if (end.ach.PreDrawLine?.Invoke(sb, start.HitBox(), end.HitBox(), start.ach) != false)
+            if (end.ach.PreDrawLine?.Invoke(sb, start.HitBox(), end.HitBox(), start.ach) != false && start.ach.Visible && end.ach.Visible)
             {
                 Vector2 startPos = start.Center();
                 Vector2 endPos = end.Center();

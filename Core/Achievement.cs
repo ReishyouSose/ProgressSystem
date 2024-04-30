@@ -530,9 +530,13 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
         // 在完成时更新进度
         OnCompleteStatic += a => a.UpdateProgress();
 
-        // 在完成时处理奖励
+        // 在完成时处理条件和奖励
         OnCompleteStatic += a =>
         {
+            foreach (var requirement in a.Requirements)
+            {
+                requirement.CloseSafe();
+            }
             foreach (var reward in a.Rewards)
             {
                 reward.TryUnlock();

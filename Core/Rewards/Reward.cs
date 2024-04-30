@@ -1,4 +1,5 @@
-﻿using ProgressSystem.Core.Interfaces;
+﻿using ProgressSystem.Common.Configs;
+using ProgressSystem.Core.Interfaces;
 using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.StaticData;
 using System.IO;
@@ -34,7 +35,7 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
     public StateEnum State { get; protected set; }
 
     #region 解锁
-    public Action<Reward>? OnUnlockStatic;
+    public static Action<Reward>? OnUnlockStatic;
     public Action? OnUnlock;
     public void TryUnlock()
     {
@@ -85,8 +86,8 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
     public void ReceiveSafe()
     {
         bool unlock = State == StateEnum.Unlocked;
-        bool start = State == StateEnum.Receiving;
-        if (!unlock && !start)
+        bool receiving = State == StateEnum.Receiving;
+        if (!unlock && !receiving)
         {
             return;
         }
@@ -107,7 +108,8 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
         }
     }
     /// <summary>
-    /// 获取奖励
+    /// <br/>获取奖励
+    /// <br/>若可能不能直接领完需重写 <see cref="AutoAssignReceived"/> 为 false
     /// </summary>
     protected abstract void Receive();
     #endregion
@@ -202,7 +204,10 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
         {
             Tooltip = tooltip;
         }
-        Texture = tag.GetWithDefault<string>("Texture");
+        if (tag.TryGet<string>("Texture", out var textureString))
+        {
+            Texture = textureString;
+        }
     }
     #endregion
 
@@ -224,16 +229,28 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
             Reset();
         }
     }
+    public static Action<Reward>? OnResetStatic;
+    public Action? OnReset;
     public virtual void Reset()
     {
         State = StateEnum.Locked;
+        OnResetStatic?.Invoke(this);
+        OnReset?.Invoke();
     }
+    public static Action<Reward>? OnStartStatic;
+    public Action? OnStart;
     public virtual void Start()
     {
-        TryUnlock();
+        OnStartStatic?.Invoke(this);
+        OnStart?.Invoke();
     }
     #endregion
 
+    public virtual void PostInitialize()
+    {
+        OnStart += TryUnlock;
+        Achievement.OnComplete += TryUnlock;
+    }
     public virtual void Initialize(Achievement achievement)
     {
         Achievement = achievement;

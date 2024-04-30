@@ -24,19 +24,50 @@ namespace ProgressSystem.Common.Players
             NetHandler.SyncAchievementDataOnEnterWorld();
         }
 
+        private static bool editorInitialized;
+        private static bool progressPanelInitialized;
         public override void ProcessTriggers(TriggersSet triggersSet)
         {
-            if (KeyBinds.Check.JustPressed)
+            if (KeyBinds.Check.JustPressed && !Main.gameMenu)
             {
-                if (ClientConfig.Instance.DeveloperMode)
+                static void OpenEditor()
                 {
-                    GEEditor.Ins.OnInitialization();
-                    ProgressPanel.Ins.Info.IsVisible = false;
+                    Main.playerInventory = false;
+                    if (!editorInitialized)
+                    {
+                        editorInitialized = true;
+                        GEEditor.Ins.OnInitialization();
+                    }
+                    GEEditor.Ins.Info.IsVisible = true;
+                }
+                static void OpenPanel()
+                {
+                    Main.playerInventory = false;
+                    if (!progressPanelInitialized)
+                    {
+                        progressPanelInitialized = true;
+                        ProgressPanel.Ins.OnInitialization();
+                    }
+                    ProgressPanel.Ins.Info.IsVisible = true;
+                }
+                static void CloseEditor() => GEEditor.Ins.Info.IsVisible = false;
+                static void ClosePanel() => ProgressPanel.Ins.Info.IsVisible = false;
+                if (ProgressPanel.Ins.Info.IsVisible)
+                {
+                    ClosePanel();
+                    if (ClientConfig.Instance.DeveloperMode)
+                    {
+                        OpenEditor();
+                    }
+                }
+                else if (GEEditor.Ins.Info.IsVisible)
+                {
+                    CloseEditor();
+                    OpenPanel();
                 }
                 else
                 {
-                    ProgressPanel.Ins.OnInitialization();
-                    GEEditor.Ins.Info.IsVisible = false;
+                    OpenPanel();
                 }
             }
         }

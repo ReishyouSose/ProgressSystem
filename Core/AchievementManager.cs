@@ -1,6 +1,7 @@
 ﻿using ProgressSystem.Common.Configs;
 using ProgressSystem.Core.Interfaces;
 using ProgressSystem.Core.NetUpdate;
+using ProgressSystem.Core.Requirements;
 using ProgressSystem.Core.Requirements.ItemRequirements;
 using ProgressSystem.Core.Requirements.MiscRequirements;
 using ProgressSystem.Core.Requirements.NPCRequirements;
@@ -53,6 +54,29 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgr
         page.Add(new Achievement(page, ModInstance, "Wood In World",
             requirements: [new CraftItemInWorldRequirement(ItemID.Wood, 9999)])
         { UseRollingRequirementTexture = true });
+        page.Add(new Achievement(page, ModInstance, "Combine Test",
+            requirements: [new PickItemRequirement(ItemID.Zenith), new CombineRequirement(
+                    new PickItemRequirement(ItemID.DirtBlock, 10),
+                    new CombineRequirement(2,
+                        new PickItemRequirement(ItemID.GoldCoin),
+                        new PickItemRequirement(ItemID.SilverCoin),
+                        new EmptyRequirement()
+                    )
+                )],
+            rewards: [new EmptyReward(), new CombineReward(2,
+                    new ItemReward(ItemID.Apple),
+                    new ItemReward(ItemID.Banana),
+                    new CombineReward(3,
+                        new ItemReward(ItemID.Cactus),
+                        new ItemReward(ItemID.DesertTorch),
+                        new ItemReward(ItemID.Eggnog),
+                        new ItemReward(ItemID.Gel),
+                        new ItemReward(ItemID.Hay)
+                    )
+                )])
+        {
+            Repeatable = true
+        });
     }
     #endregion
 
