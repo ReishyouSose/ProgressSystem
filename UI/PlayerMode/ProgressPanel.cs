@@ -393,10 +393,10 @@ namespace ProgressSystem.UI.PlayerMode
                 detailsPanel.Info.IsVisible = true;
             }
         }
-        private void CheckRequirements(RequirementList? requires = null, int index = 0)
+        private void CheckRequirements(IList<Requirement>? requires = null, int index = 0)
         {
             requires ??= focusAch!.Requirements;
-            if (requires.Any())
+            if (requires.Count != 0)
             {
                 foreach (Requirement require in requires)
                 {
@@ -419,17 +419,18 @@ namespace ProgressSystem.UI.PlayerMode
             if (index == 0)
                 requireView.Calculation();
         }
-        private void CheckRewards(RewardList? rewards = null, int index = 0)
+        private void CheckRewards(IList<Reward>? rewards = null, int index = 0)
         {
             if (index == 0)
                 rewardView.ClearAllElements();
             rewards ??= focusAch!.Rewards;
-            //rewards = rewards.Where(r => r.State != Reward.StateEnum.Disabled).ToList();
-            if (rewards.Any())
+            if (rewards.Count != 0)
             {
                 foreach (Reward reward in rewards)
                 {
-                    UIRewardText text = new(reward, rewards);
+                    if (reward.IsDisabled())
+                        continue;
+                    UIRewardText text = new(reward);
                     text.SetPos(index * 30, 0);
                     rewardView.AddElement(text);
                     if (reward is CombineReward combine)

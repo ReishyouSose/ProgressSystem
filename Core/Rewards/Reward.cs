@@ -1,5 +1,4 @@
-﻿using ProgressSystem.Common.Configs;
-using ProgressSystem.Core.Interfaces;
+﻿using ProgressSystem.Core.Interfaces;
 using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.StaticData;
 using System.IO;
@@ -155,6 +154,7 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
 
     public bool IsReceiving() => State == StateEnum.Receiving;
     public bool IsReceived() => State == StateEnum.Received;
+    public bool IsDisabled() => State == StateEnum.Disabled;
 
     #endregion
 

@@ -5,14 +5,12 @@ namespace ProgressSystem.UI.PlayerMode.ExtraUI
 {
     public class UIRewardText : BaseUIElement
     {
-        public readonly IList<Reward> rewards;
         public readonly Reward reward;
         public readonly UIImage selected;
         public readonly UIText text;
         public readonly int index;
-        public UIRewardText(Reward reward, IList<Reward> rewards)
+        public UIRewardText(Reward reward)
         {
-            this.rewards = rewards;
             this.reward = reward;
             //color = reward.Recieve ? Color.Green : Color.Ye
             selected = new(TextureAssets.MagicPixel.Value, new(16));
@@ -30,8 +28,7 @@ namespace ProgressSystem.UI.PlayerMode.ExtraUI
             Register(selected);
             string tooltip = (reward.DisplayName.Value ?? reward.GetType().Name)
             + (reward.ReportDetails(out string details) ? details : string.Empty);
-            index = rewards.IndexOf(reward);
-            text = new(index + 1 + ". " + tooltip);
+            text = new(tooltip);
             text.SetPos(30, 0);
             text.SetSize(text.TextSize);
 

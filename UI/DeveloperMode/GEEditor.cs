@@ -1143,7 +1143,7 @@ namespace ProgressSystem.UI.DeveloperMode
                 collision = null;
                 tempSelect.Clear();
                 interacted.Clear();
-                if (!LeftAlt || preSetting == null || !frameSelect.Any())
+                if (!LeftAlt || preSetting == null || frameSelect.Count == 0)
                 {
                     return;
                 }
@@ -1236,19 +1236,18 @@ namespace ProgressSystem.UI.DeveloperMode
             {
                 if (report.color == Color.Green)
                 {
-                    EditingPageName = pageInputer.Text;
-                    //datas[EditMod][EditPage] = [];
+                    string name = pageInputer.Text;
                     mainPanel.LockInteract(true);
                     pagePanel.Info.IsVisible = false;
-                    UIText pageName = new(EditingPageName);
+                    UIText pageName = new(name);
                     pageName.SetSize(pageName.TextSize);
                     pageName.Events.OnMouseOver += evt => pageName.color = Color.Gold;
                     pageName.Events.OnMouseOut += evt => pageName.color = Color.White;
                     pageName.Events.OnLeftDown += evt => LoadPage(pageName.text);
                     pageList.AddElement(pageName);
                     pageList.ChangeShowElement(pageName);
-                    var page = AchievementPage.Create(editingMod, EditingPageName);
-                    page.ShouldSaveStaticData = true;
+                    EditingPage = AchievementPage.Create(editingMod, name);
+                    EditingPage.ShouldSaveStaticData = true;
                     ClearTemp();
                     SaveProgress();
                 }
@@ -1314,7 +1313,7 @@ namespace ProgressSystem.UI.DeveloperMode
                 else
                     ge.selected = frameSelect.Add(ge);
             }
-            else if (frameSelect.Any())
+            else if (frameSelect.Count != 0)
             {
                 draggingSelected = true;
                 Point mouse = (Main.MouseScreen - achView.ChildrenElements[0].HitBox(false).TopLeft()).ToPoint();
@@ -1736,7 +1735,7 @@ namespace ProgressSystem.UI.DeveloperMode
             if (index == 0)
                 requireView.ClearAllElements();
             requires ??= EditingAch!.Requirements;
-            if (requires.Any())
+            if (requires.Count != 0)
             {
                 foreach (Requirement require in requires)
                 {
@@ -1787,7 +1786,7 @@ namespace ProgressSystem.UI.DeveloperMode
             if (index == 0)
                 rewardView.ClearAllElements();
             rewards ??= EditingAch!.Rewards;
-            if (rewards.Any())
+            if (rewards.Count != 0)
             {
                 foreach (Reward reward in rewards)
                 {
