@@ -8,6 +8,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Assets\Textures\UI\IsClosed.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RUIModule\RUIModule.csproj" />
