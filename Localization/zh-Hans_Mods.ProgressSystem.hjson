@@ -89,6 +89,13 @@ Requirements: {
 	}
 }
 
+Pages: {
+	ProgressSystem: {
+		TestPage.DisplayName: 测试页
+		// 114514.DisplayName: "114514"
+	}
+}
+
 Achievements: {
 	ProgressSystem: {
 		TestPage: {

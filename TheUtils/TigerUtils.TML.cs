@@ -119,6 +119,8 @@ public static partial class TigerUtils
         }
     }
 
+    public static bool IsTMLInDeveloperMode => TMLReflection.ModCompile.GetDeveloperMode_Func.Value();
+
     #region 同步相关
     public static void WriteIntWithNegativeAsN1(BitWriter bitWriter, BinaryWriter binaryWriter, int value)
     {
@@ -177,19 +179,21 @@ public static partial class TigerUtils
         public static class Types
         {
             private static Dictionary<string, Type>? allTypes;
-            public static Dictionary<string, Type> AllTypes => allTypes ?? GetRight(InitTypes, allTypes)!;
-            private static void InitTypes()
+            public static Dictionary<string, Type> AllTypes => allTypes ?? InitTypes();
+            private static Dictionary<string, Type> InitTypes()
             {
                 allTypes = [];
-                Assembly.GetTypes().ForeachDo(t =>
+                foreach (var type in typeof(Terraria.Main).Assembly.GetTypes())
                 {
-                    if (t.FullName != null)
+                    if (type.FullName != null)
                     {
-                        allTypes.Add(t.FullName, t);
+                        allTypes.Add(type.FullName, type);
                     }
-                });
+                }
+                return allTypes;
             }
-            public static Type UIModConfig => AllTypes["UIModConfig"];
+            public static Type UIModConfig => AllTypes["Terraria.ModLoader.Config.UI.UIModConfig"];
+            public static Type ModCompile => AllTypes["Terraria.ModLoader.Core.ModCompile"];
         }
         public static class Item
         {
@@ -236,6 +240,14 @@ public static partial class TigerUtils
             public static readonly ValueDG<Type> Type = new(() => typeof(Terraria.ModLoader.Config.ConfigManager));
             public static readonly ValueDG<MethodInfo> Save = new(() => Type.Value.GetMethod("Save", bfns)!);
             public static readonly ValueDG<Action<Terraria.ModLoader.Config.ModConfig>> Save_Func = new(Save.Value.CreateDelegate<Action<Terraria.ModLoader.Config.ModConfig>>);
+        }
+        public static class ModCompile
+        {
+            public static readonly ValueDG<Type> Type = new(() => Types.ModCompile);
+            public static readonly ValueDG<PropertyInfo> DeveloperMode = new(() => Type.Value.GetProperty("DeveloperMode", bfps)!);
+            public static readonly ValueDG<Func<bool>> GetDeveloperMode_Func = new(() => DeveloperMode.Value.GetMethod!.CreateDelegate<Func<bool>>(null));
+            public static readonly ValueDG<MethodInfo> FindModSources = new(() => Type.Value.GetMethod("FindModSources", bfns)!);
+            public static readonly ValueDG<Func<string[]>> FindModSources_Func = new(() => FindModSources.Value.CreateDelegate<Func<string[]>>(null));
         }
     }
     public static T TMLInstance<T>() where T : class => ContentInstance<T>.Instance;

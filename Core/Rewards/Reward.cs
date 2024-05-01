@@ -179,15 +179,18 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
         }
         tag["SaveStatic"] = true;
         tag["Type"] = GetType().FullName;
+        /*
         tag.SetWithDefault("DisplayNameKey", DisplayName.LocalizedTextValue?.Key);
         tag.SetWithDefault("DisplayName", DisplayName.StringValue);
         tag.SetWithDefault("TooltipKey", Tooltip.LocalizedTextValue?.Key);
         tag.SetWithDefault("Tooltip", Tooltip.StringValue);
         tag.SetWithDefault("Texture", Texture.AssetPath);
+        */
     }
     public virtual void LoadStaticData(TagCompound tag)
     {
         ShouldSaveStaticData = tag.GetWithDefault<bool>("SaveStatic");
+        /*
         if (tag.TryGet("DisplayNameKey", out string displayNameKey))
         {
             DisplayName = Language.GetText(displayNameKey);
@@ -208,6 +211,7 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
         {
             Texture = textureString;
         }
+        */
     }
     #endregion
 
@@ -268,9 +272,18 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
         {
             Tooltip = mod.GetLocalization($"Rewards.{GetType().Name}.Tooltip").WithFormatArgs(TooltipArgs);
         }
-        Texture |= $"{mod.Name}/Assets/Textures/Rewards/{GetType().Name}";
-        Texture |= $"{mod.Name}/Assets/Textures/Rewards/Default";
-        Texture |= $"{mod.Name}/Assets/Textures/Default";
+        if (Texture.IsNone)
+        {
+            Texture = $"{mod.Name}/Assets/Textures/Rewards/{GetType().Name}";
+        }
+        if (Texture.IsNone)
+        {
+            Texture = $"{mod.Name}/Assets/Textures/Rewards/Default";
+        }
+        if (Texture.IsNone)
+        {
+            Texture = $"{mod.Name}/Assets/Textures/Default";
+        }
     }
     public virtual IEnumerable<ConstructInfoTable<Reward>> GetConstructInfoTables()
     {

@@ -388,4 +388,3 @@ public class AchievementPlayerManager : ModPlayer
     }
     private TagCompound? loadedData;
 }
-
