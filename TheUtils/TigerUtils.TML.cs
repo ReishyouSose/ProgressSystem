@@ -20,6 +20,10 @@ public static partial class TigerUtils
 {
     public static Mod ModInstance => ProgressSystem.Instance;
     public const string ModName = nameof(ProgressSystem);
+    public static LocalizedText GetModLocalization(string suffix, Func<string>? makeDefaultValue = null)
+        => Language.GetOrRegister(string.Join('.', $"Mods.{ModName}", suffix), makeDefaultValue);
+    public static string GetModLocalizedText(string suffix, Func<string>? makeDefaultValue = null)
+        => GetModLocalization(suffix, makeDefaultValue).Value;
     public static Item NewItem<T>(int stack = 1, int prefix = 0) where T : ModItem => new(ModContent.ItemType<T>(), stack, prefix);
     public static T NewModItem<T>(int stack = 1, int prefix = 0) where T : ModItem => (T)new Item(ModContent.ItemType<T>(), stack, prefix).ModItem;
     public static T NewGlobalItem<T>(int type, int stack = 1, int prefix = 0) where T : GlobalItem => new Item(type, stack, prefix).GetGlobalItem<T>();

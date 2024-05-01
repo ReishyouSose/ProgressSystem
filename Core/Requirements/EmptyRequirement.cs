@@ -4,11 +4,11 @@ public class EmptyRequirement : Requirement
 {
     public EmptyRequirement() : base() {
         Texture = Texture2DGetter.Default;
-        Completed = true;
+        State = StateEnum.Completed;
     }
     public override void Reset()
     {
         base.Reset();
-        Completed = true;
+        State = StateEnum.Completed;
     }
 }

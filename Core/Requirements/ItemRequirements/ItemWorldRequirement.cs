@@ -14,18 +14,22 @@ public abstract class ItemWorldRequirement : ItemRequirement
 
     public override void SaveDataInWorld(TagCompound tag)
     {
-        tag.SetWithDefault("Completed", Completed);
-        if (!Completed)
+        base.SaveDataInWorld(tag);
+        if (State != StateEnum.Completed)
         {
             tag.SetWithDefault("CountNow", CountNow);
         }
     }
     public override void LoadDataInWorld(TagCompound tag)
     {
-        Completed = tag.GetWithDefault<bool>("Completed");
-        if (!Completed)
+        base.LoadDataInWorld(tag);
+        if (State != StateEnum.Completed)
         {
-            CountNow = tag.GetWithDefault<int>("CountNow");
+            countNow = tag.GetWithDefault<int>("CountNow");
+        }
+        else
+        {
+            countNow = Count;
         }
         if (Main.netMode == NetmodeID.Server)
         {
@@ -37,7 +41,7 @@ public abstract class ItemWorldRequirement : ItemRequirement
     public override void WriteMessageFromServer(BinaryWriter writer, BitWriter bitWriter)
     {
         base.WriteMessageFromServer(writer, bitWriter);
-        bool completed = Completed;
+        bool completed = CountNow >= Count;
         bitWriter.WriteBit(completed);
         if (!completed)
         {
@@ -49,7 +53,7 @@ public abstract class ItemWorldRequirement : ItemRequirement
         base.ReceiveMessageFromServer(reader, bitReader);
         if (bitReader.ReadBit())
         {
-            Completed = true;
+            CountNow = Count;
         }
         else
         {

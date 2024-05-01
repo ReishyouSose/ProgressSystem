@@ -124,6 +124,73 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     /// </summary>
     public Vector2? Position;
 
+    #region Visible
+    protected bool _visible = true;
+    public bool Visible
+    {
+        get => _visible;
+        set
+        {
+            if (_visible == value)
+            {
+                return;
+            }
+            _visible = value;
+            OnVisibleChangedStatic?.Invoke(this);
+            OnVisibleChanged?.Invoke();
+        }
+    }
+    public static event Action<Achievement>? OnVisibleChangedStatic;
+    /// <summary>
+    /// 在此成就的可见性改变时被调用
+    /// 通过 <see cref="Visible"/> 获得改变后的可见性
+    /// </summary>
+    public event Action? OnVisibleChanged;
+
+    public enum VisibleTypeEnum
+    {
+        Customed = -1,
+        WhenEnabled,
+        WhenUnlocked,
+        WhenCompleted,
+        Always
+    }
+    public VisibleTypeEnum VisibleType { get; private init; }
+
+    protected virtual void UpdateVisible()
+    {
+        switch (VisibleType)
+        {
+        case VisibleTypeEnum.WhenEnabled:
+            Visible = State != StateEnum.Disabled;
+            break;
+        case VisibleTypeEnum.WhenUnlocked:
+            Visible = State >= StateEnum.Unlocked;
+            break;
+        case VisibleTypeEnum.WhenCompleted:
+            Visible = State >= StateEnum.Completed;
+            break;
+        case VisibleTypeEnum.Always:
+            Visible = true;
+            break;
+        }
+    }
+    protected virtual void UpdateVisibleHook()
+    {
+        OnStart += UpdateVisible;
+        OnDisable += UpdateVisible;
+        switch (VisibleType)
+        {
+        case VisibleTypeEnum.WhenUnlocked:
+            OnUnlock += UpdateVisible;
+            break;
+        case VisibleTypeEnum.WhenCompleted:
+            OnComplete += UpdateVisible;
+            break;
+        }
+    }
+    #endregion
+
     #region 以条件的图片作为成就的图片
 
     #region 以特定的条件的图片作为成就的图片
@@ -382,7 +449,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     }
     protected bool InSubmitting;
     #endregion
-    
+
     public Achievement SetRequirements(IEnumerable<Requirement> requirements)
     {
         Requirements.Clear();
@@ -463,9 +530,13 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
         // 在完成时更新进度
         OnCompleteStatic += a => a.UpdateProgress();
 
-        // 在完成时处理奖励
+        // 在完成时处理条件和奖励
         OnCompleteStatic += a =>
         {
+            foreach (var requirement in a.Requirements)
+            {
+                requirement.CloseSafe();
+            }
             foreach (var reward in a.Rewards)
             {
                 reward.TryUnlock();
@@ -475,7 +546,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
                 a.TryReceiveAllReward();
             }
         };
-        
+
         // 在奖励有变化时检查是否全部领取
         static void UpdateRewardAchievementAllRewardsReceived(Reward r) => r.Achievement.UpdateAllRewardsReceived();
         Reward.OnTotallyReceivedStatic += UpdateRewardAchievementAllRewardsReceived;
@@ -536,6 +607,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
         _ = Tooltip;
         _ = Description;
         _ = Texture;
+        UpdateVisibleHook();
     }
 
     public virtual IEnumerable<ConstructInfoTable<Achievement>> GetConstructInfoTables()
@@ -626,9 +698,9 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     public bool DefaultCompleteCondition()
     {
         return (!NeedSubmit || InSubmitting) &&
-            (RequirementCountNeeded == 0 || RequirementCountNeeded >= Requirements.Count ?
-            Requirements.All(r => r.Completed) :
-            Requirements.Sum(r => r.Completed.ToInt()) >= RequirementCountNeeded);
+            (RequirementCountNeeded == 0 || RequirementCountNeeded >= Requirements.Count(r => r.State != Requirement.StateEnum.Disabled) ?
+            Requirements.All(r => r.State is Requirement.StateEnum.Completed or Requirement.StateEnum.Disabled) :
+            Requirements.Sum(r => (r.State == Requirement.StateEnum.Completed).ToInt()) >= RequirementCountNeeded);
     }
 
     public static event Action<Achievement>? OnCompleteStatic;
@@ -704,9 +776,13 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     #endregion
 
     #region 禁用
+    public static event Action<Achievement>? OnDisableStatic;
+    public event Action? OnDisable;
     public void Disable()
     {
         State = StateEnum.Disabled;
+        OnDisableStatic?.Invoke(this);
+        OnDisable?.Invoke();
     }
     #endregion
 
@@ -749,14 +825,14 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
             tag.SetWithDefault("TooltipKey", Tooltip.LocalizedTextValue?.Key);
             tag.SetWithDefault("Tooltip", Tooltip.StringValue);
             tag.SetWithDefault("Texture", Texture.AssetPath);
-            */
-            tag.SetWithDefaultN("Position", Position);
             tag.SetWithDefaultN("UseRequirementTextureIndex", UseRequirementTextureIndex);
             tag.SetWithDefaultN("UseRequirementTextureRollTime", UseRequirementTextureRollTime);
+            tag.SetWithDefault("Repeatable", Repeatable);
+            */
+            tag.SetWithDefaultN("Position", Position);
             tag.SetWithDefault("RequirementCountNeeded", RequirementCountNeeded);
             tag.SetWithDefaultN("PredecessorCountNeeded", PredecessorCountNeeded);
             tag.SetWithDefault("NeedSubmit", NeedSubmit);
-            tag.SetWithDefault("Repeatable", Repeatable);
         });
         this.SaveStaticDataListTemplate(Rewards, "Rewards", tag);
     }
@@ -793,14 +869,14 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
             {
                 Texture = texture;
             }
-            */
-            Position = tag.GetWithDefaultN<Vector2>("Position");
             UseRequirementTextureIndex = tag.GetWithDefaultN<int>("UseRequirementTextureIndex");
             UseRequirementTextureRollTime = tag.GetWithDefaultN<int>("UseRequirementTextureRollTime");
+            Repeatable = tag.GetWithDefault<bool>("Repeatable");
+            */
+            Position = tag.GetWithDefaultN<Vector2>("Position");
             RequirementCountNeeded = tag.GetWithDefault<int>("RequirementCountNeeded");
             PredecessorCountNeeded = tag.GetWithDefaultN<int>("PredecessorCountNeeded");
             tag.GetWithDefault("NeedSubmit", out NeedSubmit);
-            Repeatable = tag.GetWithDefault<bool>("Repeatable");
         });
         this.LoadStaticDataListTemplate(Rewards.GetS, Rewards!.SetFS, "Rewards", tag);
     }

@@ -21,19 +21,72 @@ Requirements: {
 		Tooltip: ""
 	}
 
-	EmptyRequirement.DisplayName: Empty Requirement
-	CraftItemInWorldRequirement.DisplayName: Craft {0} In World
-	CombineRequirement.DisplayName: Combined Requirement
-	ConsumeItemRequirement.DisplayName: Mods.ProgressSystem.Requirements.ConsumeItemRequirement.DisplayName
-	OpenBackpackRequirement.DisplayName: Mods.ProgressSystem.Requirements.OpenBackpackRequirement.DisplayName
-	OpenBestiaryRequirement.DisplayName: Mods.ProgressSystem.Requirements.OpenBestiaryRequirement.DisplayName
-	KillAnyNPCRequirement.DisplayName: Mods.ProgressSystem.Requirements.KillAnyNPCRequirement.DisplayName
-	TalkToAnyNPCRequirement.DisplayName: Mods.ProgressSystem.Requirements.TalkToAnyNPCRequirement.DisplayName
-	TalkToNPCRequirement.DisplayName: Mods.ProgressSystem.Requirements.TalkToNPCRequirement.DisplayName
-	ReachModBiomeRequirement.DisplayName: Mods.ProgressSystem.Requirements.ReachModBiomeRequirement.DisplayName
-	ReachZoneRequirement.DisplayName: Mods.ProgressSystem.Requirements.ReachZoneRequirement.DisplayName
-	InteractWithAnyChestRequirement.DisplayName: Mods.ProgressSystem.Requirements.InteractWithAnyChestRequirement.DisplayName
-	InteractWithChestRequirement.DisplayName: Mods.ProgressSystem.Requirements.InteractWithChestRequirement.DisplayName
+	EmptyRequirement: {
+		DisplayName: Empty Requirement
+		Tooltip: Mods.ProgressSystem.Requirements.EmptyRequirement.Tooltip
+	}
+
+	CraftItemInWorldRequirement: {
+		DisplayName: Craft {0} In World
+		Tooltip: Mods.ProgressSystem.Requirements.CraftItemInWorldRequirement.Tooltip
+	}
+
+	CombineRequirement: {
+		DisplayName: Complete {0} of these
+		DisplayNameAllOf: Complete all of these
+		DisplayNameAnyOf: Complete any of these
+		Tooltip: Mods.ProgressSystem.Requirements.CombineRequirement.Tooltip
+	}
+
+	ConsumeItemRequirement: {
+		DisplayName: Mods.ProgressSystem.Requirements.ConsumeItemRequirement.DisplayName
+		Tooltip: Mods.ProgressSystem.Requirements.ConsumeItemRequirement.Tooltip
+	}
+
+	OpenBackpackRequirement: {
+		DisplayName: Mods.ProgressSystem.Requirements.OpenBackpackRequirement.DisplayName
+		Tooltip: Mods.ProgressSystem.Requirements.OpenBackpackRequirement.Tooltip
+	}
+
+	OpenBestiaryRequirement: {
+		DisplayName: Mods.ProgressSystem.Requirements.OpenBestiaryRequirement.DisplayName
+		Tooltip: Mods.ProgressSystem.Requirements.OpenBestiaryRequirement.Tooltip
+	}
+
+	KillAnyNPCRequirement: {
+		DisplayName: Mods.ProgressSystem.Requirements.KillAnyNPCRequirement.DisplayName
+		Tooltip: Mods.ProgressSystem.Requirements.KillAnyNPCRequirement.Tooltip
+	}
+
+	TalkToAnyNPCRequirement: {
+		DisplayName: Mods.ProgressSystem.Requirements.TalkToAnyNPCRequirement.DisplayName
+		Tooltip: Mods.ProgressSystem.Requirements.TalkToAnyNPCRequirement.Tooltip
+	}
+
+	TalkToNPCRequirement: {
+		DisplayName: Mods.ProgressSystem.Requirements.TalkToNPCRequirement.DisplayName
+		Tooltip: Mods.ProgressSystem.Requirements.TalkToNPCRequirement.Tooltip
+	}
+
+	ReachModBiomeRequirement: {
+		DisplayName: Mods.ProgressSystem.Requirements.ReachModBiomeRequirement.DisplayName
+		Tooltip: Mods.ProgressSystem.Requirements.ReachModBiomeRequirement.Tooltip
+	}
+
+	ReachZoneRequirement: {
+		DisplayName: Mods.ProgressSystem.Requirements.ReachZoneRequirement.DisplayName
+		Tooltip: Mods.ProgressSystem.Requirements.ReachZoneRequirement.Tooltip
+	}
+
+	InteractWithAnyChestRequirement: {
+		DisplayName: Mods.ProgressSystem.Requirements.InteractWithAnyChestRequirement.DisplayName
+		Tooltip: Mods.ProgressSystem.Requirements.InteractWithAnyChestRequirement.Tooltip
+	}
+
+	InteractWithChestRequirement: {
+		DisplayName: Mods.ProgressSystem.Requirements.InteractWithChestRequirement.DisplayName
+		Tooltip: Mods.ProgressSystem.Requirements.InteractWithChestRequirement.Tooltip
+	}
 }
 
 Achievements: {
@@ -92,6 +145,12 @@ Achievements: {
 				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Wood In World.Tooltip
 				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Wood In World.Description
 			}
+
+			"Combine Test": {
+				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Combine Test.DisplayName
+				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Combine Test.Tooltip
+				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Combine Test.Description
+			}
 		}
 	}
 }
@@ -99,8 +158,8 @@ Achievements: {
 Rewards: {
 	EmptyReward.DisplayName: Empty Reward
 	ItemReward.DisplayName: Receive {0}
-	CombineReward.DisplayName: Mods.ProgressSystem.Rewards.CombineReward.DisplayName
-	PlayerStatReward.DisplayName: Mods.ProgressSystem.Rewards.PlayerStatReward.DisplayName
+	CombineReward.DisplayName: Receive {0} of these
+	PlayerStatReward.DisplayName: Player Stat
 }
 
 Messages: {

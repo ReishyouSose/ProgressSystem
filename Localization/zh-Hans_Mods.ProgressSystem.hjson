@@ -21,19 +21,72 @@ Requirements: {
 		Tooltip: ""
 	}
 
-	EmptyRequirement.DisplayName: 空条件
-	CraftItemInWorldRequirement.DisplayName: 在世界中制造{0}
-	CombineRequirement.DisplayName: 组合条件
-	ConsumeItemRequirement.DisplayName: 消耗掉 {0}
-	OpenBackpackRequirement.DisplayName: 打开背包
-	OpenBestiaryRequirement.DisplayName: 打开图鉴
-	KillAnyNPCRequirement.DisplayName: 击杀任意生物
-	TalkToAnyNPCRequirement.DisplayName: 与任意生物谈话
-	TalkToNPCRequirement.DisplayName: 与{0}谈话
-	ReachModBiomeRequirement.DisplayName: 到达{0}
-	ReachZoneRequirement.DisplayName: 到达{0}
-	InteractWithAnyChestRequirement.DisplayName: 打开箱子
-	InteractWithChestRequirement.DisplayName: 打开{0}
+	EmptyRequirement: {
+		DisplayName: 空条件
+		// Tooltip: Mods.ProgressSystem.Requirements.EmptyRequirement.Tooltip
+	}
+
+	CraftItemInWorldRequirement: {
+		DisplayName: 在世界中制造{0}
+		// Tooltip: Mods.ProgressSystem.Requirements.CraftItemInWorldRequirement.Tooltip
+	}
+
+	CombineRequirement: {
+		DisplayName: 完成其中 {0} 项
+		DisplayNameAllOf: 完成其中所有项
+		DisplayNameAnyOf: 完成其中任意项
+		// Tooltip: Mods.ProgressSystem.Requirements.CombineRequirement.Tooltip
+	}
+
+	ConsumeItemRequirement: {
+		DisplayName: 消耗掉 {0}
+		// Tooltip: Mods.ProgressSystem.Requirements.ConsumeItemRequirement.Tooltip
+	}
+
+	OpenBackpackRequirement: {
+		DisplayName: 打开背包
+		// Tooltip: Mods.ProgressSystem.Requirements.OpenBackpackRequirement.Tooltip
+	}
+
+	OpenBestiaryRequirement: {
+		DisplayName: 打开图鉴
+		// Tooltip: Mods.ProgressSystem.Requirements.OpenBestiaryRequirement.Tooltip
+	}
+
+	KillAnyNPCRequirement: {
+		DisplayName: 击杀任意生物
+		// Tooltip: Mods.ProgressSystem.Requirements.KillAnyNPCRequirement.Tooltip
+	}
+
+	TalkToAnyNPCRequirement: {
+		DisplayName: 与任意生物谈话
+		// Tooltip: Mods.ProgressSystem.Requirements.TalkToAnyNPCRequirement.Tooltip
+	}
+
+	TalkToNPCRequirement: {
+		DisplayName: 与{0}谈话
+		// Tooltip: Mods.ProgressSystem.Requirements.TalkToNPCRequirement.Tooltip
+	}
+
+	ReachModBiomeRequirement: {
+		DisplayName: 到达{0}
+		// Tooltip: Mods.ProgressSystem.Requirements.ReachModBiomeRequirement.Tooltip
+	}
+
+	ReachZoneRequirement: {
+		DisplayName: 到达{0}
+		// Tooltip: Mods.ProgressSystem.Requirements.ReachZoneRequirement.Tooltip
+	}
+
+	InteractWithAnyChestRequirement: {
+		DisplayName: 打开箱子
+		// Tooltip: Mods.ProgressSystem.Requirements.InteractWithAnyChestRequirement.Tooltip
+	}
+
+	InteractWithChestRequirement: {
+		DisplayName: 打开{0}
+		// Tooltip: Mods.ProgressSystem.Requirements.InteractWithChestRequirement.Tooltip
+	}
 }
 
 Achievements: {
@@ -92,14 +145,20 @@ Achievements: {
 				Tooltip: 多人一起完成目标!
 				Description: ""
 			}
+
+			"Combine Test": {
+				// DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Combine Test.DisplayName
+				// Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Combine Test.Tooltip
+				// Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Combine Test.Description
+			}
 		}
 	}
 }
 
 Rewards: {
-	EmptyReward.DisplayName: 空条件
+	EmptyReward.DisplayName: 空奖励
 	ItemReward.DisplayName: 获得 {0}
-	CombineReward.DisplayName: 选择型奖励
+	CombineReward.DisplayName: 选择其中 {0} 项
 	PlayerStatReward.DisplayName: 玩家状态
 }
 

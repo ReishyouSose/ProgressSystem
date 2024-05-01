@@ -20,18 +20,22 @@ namespace ProgressSystem.UI.PlayerMode.ExtraUI
         }
         public override void DrawSelf(SpriteBatch sb)
         {
-            Vector2 startPos = start.Center();
-            Vector2 endPos = end.Center();
-            Vector2 target = endPos - startPos;
-            float len = target.Length();
-            target = target.SafeNormalize(Vector2.Zero);
-            float rot = target.ToRotation();
-            for (int i = 0; i < len; i++)
+            if (end.ach.PreDrawLine?.Invoke(sb, start.HitBox(), end.HitBox(), start.ach) != false && start.ach.Visible && end.ach.Visible)
             {
-                Color color = LerpColor(R, G, i / len);
-                sb.Draw(TextureAssets.MagicPixel.Value, startPos + target * i,
-                    new Rectangle(0, 0, 2, 2), color, rot, Vector2.One, 2f, 0, 0);
+                Vector2 startPos = start.Center();
+                Vector2 endPos = end.Center();
+                Vector2 target = endPos - startPos;
+                float len = target.Length();
+                target = target.SafeNormalize(Vector2.Zero);
+                float rot = target.ToRotation();
+                for (int i = 0; i < len; i++)
+                {
+                    Color color = LerpColor(R, G, i / len);
+                    sb.Draw(TextureAssets.MagicPixel.Value, startPos + target * i,
+                        new Rectangle(0, 0, 2, 2), color, rot, Vector2.One, 2f, 0, 0);
+                }
             }
+            end.ach.PostDrawLine?.Invoke(sb, start.HitBox(), end.HitBox(), start.ach);
         }
         public static Color LerpColor(Color color1, Color color2, float t)
         {

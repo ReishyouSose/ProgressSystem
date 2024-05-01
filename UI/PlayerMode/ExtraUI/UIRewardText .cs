@@ -5,22 +5,30 @@ namespace ProgressSystem.UI.PlayerMode.ExtraUI
 {
     public class UIRewardText : BaseUIElement
     {
-        public readonly RewardList rewards;
+        public readonly IList<Reward> rewards;
         public readonly Reward reward;
         public readonly UIImage selected;
         public readonly UIText text;
         public readonly int index;
-        public UIRewardText(Reward reward, RewardList rewards)
+        public UIRewardText(Reward reward, IList<Reward> rewards)
         {
             this.rewards = rewards;
             this.reward = reward;
             //color = reward.Recieve ? Color.Green : Color.Ye
-            selected = new(TextureAssets.MagicPixel.Value, new(16), reward.IsReceived() ? Color.Green : Color.Yellow);
+            selected = new(TextureAssets.MagicPixel.Value, new(16));
+            selected.Events.OnUpdate += evt => selected.color = reward.State switch
+            {
+                Reward.StateEnum.Locked => Color.DimGray,
+                Reward.StateEnum.Unlocked => Color.White,
+                Reward.StateEnum.Receiving => Color.Yellow,
+                Reward.StateEnum.Received => Color.Green,
+                Reward.StateEnum.Closed => Color.Gray,
+                _ => Color.Black
+            };
             selected.SetCenter(20, -3, 0, 0.5f);
-            selected.Info.IsHidden = !(reward.IsReceived() || reward.IsReceiving());
+            // selected.Info.IsHidden = !(reward.IsReceived() || reward.IsReceiving());
             Register(selected);
-            string tooltip = reward is CombineReward combine ? $"选择下列中的 {combine.Count} 项" :
-                (reward.DisplayName.Value ?? reward.GetType().Name)
+            string tooltip = (reward.DisplayName.Value ?? reward.GetType().Name)
             + (reward.ReportDetails(out string details) ? details : string.Empty);
             index = rewards.IndexOf(reward);
             text = new(index + 1 + ". " + tooltip);

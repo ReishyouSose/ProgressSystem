@@ -6,7 +6,6 @@ namespace ProgressSystem.UI.PlayerMode.ExtraUI
     public class UIAchSlot : UIImage
     {
         public Achievement ach;
-        private readonly Texture2DGetter Icon;
         public Vector2 pos;
         public HashSet<UIRequireLine> preLine;
         public bool isFocus;
@@ -14,7 +13,6 @@ namespace ProgressSystem.UI.PlayerMode.ExtraUI
         public UIAchSlot(Achievement ach) : base(AssetLoader.Slot)
         {
             this.ach = ach;
-            Icon = ach.Texture;
             preLine = [];
             SetPos(ach.Position!.Value * 80);
         }
@@ -22,9 +20,9 @@ namespace ProgressSystem.UI.PlayerMode.ExtraUI
         {
             base.DrawSelf(sb);
             Rectangle hitbox = HitBox();
-            if (ach.PreDraw?.Invoke(sb, hitbox) != false)
+            if (ach.PreDraw?.Invoke(sb, hitbox) != false && ach.Visible)
             {
-                var icon = Icon.Value;
+                var icon = ach.Texture.Value;
                 var frame = ach.SourceRect;
                 if (icon != null)
                 {

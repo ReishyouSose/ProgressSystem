@@ -35,13 +35,19 @@ public class ItemReward(Item item) : Reward
         }
         Item item = Item.Clone();
         item.stack = leftStack;
-        // TODO: Entity Source
-        // TODO: 直接给玩家背包塞东西
-        // Main.LocalPlayer.TryStackToInventory(item, null, false);
-        // leftStack = item.stack;
-        Main.LocalPlayer.QuickSpawnItem(null, item, item.stack);
-        leftStack = 0;
-        State = StateEnum.Received;
+        item.newAndShiny = true;
+        item.Center = Main.LocalPlayer.MountedCenter;
+        item = Main.LocalPlayer.GetItem(Main.myPlayer, item, new GetItemSettings(CanGoIntoVoidVault: true));
+        leftStack = item.stack;
+        if (leftStack <= 0)
+        {
+            leftStack = 0;
+            State = StateEnum.Received;
+        }
+        else if (leftStack < Item.stack)
+        {
+            State = StateEnum.Receiving;
+        }
     }
 
     public override void SaveDataInPlayer(TagCompound tag)

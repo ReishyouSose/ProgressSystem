@@ -1,6 +1,7 @@
 ﻿using ProgressSystem.Common.Configs;
 using ProgressSystem.Core.Interfaces;
 using ProgressSystem.Core.NetUpdate;
+using ProgressSystem.Core.Requirements;
 using ProgressSystem.Core.Requirements.ItemRequirements;
 using ProgressSystem.Core.Requirements.MiscRequirements;
 using ProgressSystem.Core.Requirements.NPCRequirements;
@@ -53,6 +54,29 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgr
         page.Add(new Achievement(page, ModInstance, "Wood In World",
             requirements: [new CraftItemInWorldRequirement(ItemID.Wood, 9999)])
         { UseRollingRequirementTexture = true });
+        page.Add(new Achievement(page, ModInstance, "Combine Test",
+            requirements: [new PickItemRequirement(ItemID.Zenith), new CombineRequirement(
+                    new PickItemRequirement(ItemID.DirtBlock, 10),
+                    new CombineRequirement(2,
+                        new PickItemRequirement(ItemID.GoldCoin),
+                        new PickItemRequirement(ItemID.SilverCoin),
+                        new EmptyRequirement()
+                    )
+                )],
+            rewards: [new EmptyReward(), new CombineReward(2,
+                    new ItemReward(ItemID.Apple),
+                    new ItemReward(ItemID.Banana),
+                    new CombineReward(3,
+                        new ItemReward(ItemID.Cactus),
+                        new ItemReward(ItemID.DesertTorch),
+                        new ItemReward(ItemID.Eggnog),
+                        new ItemReward(ItemID.Gel),
+                        new ItemReward(ItemID.Hay)
+                    )
+                )])
+        {
+            Repeatable = true
+        });
     }
     #endregion
 
@@ -244,33 +268,35 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgr
         {
             action();
         }
-        OnPostInitializeOnce += action;
+        OnPostInitialize += action;
     }
 
-    public static event Action? OnPostInitializeOnce;
+    public static event Action? OnPostInitialize;
 
-    /// <summary>
-    /// 在 PostSetup之后调用
-    /// </summary>
-    public static void PostInitialize()
+    public void PostInitialize()
     {
         LoadStaticDataFromAllLoadedMod();
 
-        Pages.Values.ForeachDo(p => p.PostInitialize());
-        OnPostInitializeOnce?.Invoke();
-        OnPostInitializeOnce = null;
+    }
+    /// <summary>
+    /// 在 PostSetup之后调用
+    /// </summary>
+    protected static void PostInitializeTree()
+    {
+        ((IAchievementNode)Instance).PostInitializeTree();
+        OnPostInitialize?.Invoke();
         AfterPostSetup = true;
     }
     /// <summary>
     /// 在 <see cref="ModPlayer.OnEnterWorld"/> 中调用
     /// 此时玩家的和世界的数据都已加载完毕
     /// </summary>
-    public static void StartTree() => IAchievementNodeHelper.StartTree(Instance);
+    public static void StartTree() => ((IAchievementNode)Instance).StartTree();
     /// <summary>
     /// 重置所有的成就数据,
     /// 一般在世界卸载时使用
     /// </summary>
-    public static void ResetTree() => IAchievementNodeHelper.ResetTree(Instance);
+    public static void ResetTree() => ((IAchievementNode)Instance).ResetTree();
     public IEnumerable<IAchievementNode> NodeChildren => Pages.Values;
     /// <summary>
     /// 在游戏中调用, 重置所有成就的进度
@@ -314,7 +340,7 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgr
     private static void OnItemLoaderFinishSetup(Action orig)
     {
         orig();
-        PostInitialize();
+        PostInitializeTree();
     }
     public override void Unload()
     {

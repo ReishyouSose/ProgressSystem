@@ -22,28 +22,6 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
     protected virtual object?[] TooltipArgs => [];
 
     #region 构造函数与初始化
-    static Requirement()
-    {
-        // 在成就页解锁时尝试开始监听
-        AchievementPage.OnUnlockStatic += p =>
-            p.Achievements.Values.ForeachDo(a =>
-                a.Requirements.ForeachDo(r =>
-                    r.TryBeginListen()));
-        // 在成就解锁时尝试开始监听
-        Achievement.OnUnlockStatic += a =>
-            a.Requirements.ForeachDo(r =>
-                r.TryBeginListen());
-        // 在开始时尝试开始监听写在了 Start() 中
-
-        // 在成就完成时结束监听
-        Achievement.OnCompleteStatic += a =>
-        {
-            foreach (Requirement requirement in a.Requirements)
-            {
-                requirement.EndListenSafe();
-            }
-        };
-    }
     public Requirement(ListenTypeEnum listenType = ListenTypeEnum.None, MultiplayerTypeEnum multiplayerType = MultiplayerTypeEnum.LocalPlayer) : this()
     {
         ListenType = listenType;
@@ -61,6 +39,12 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
         Achievement = achievement;
         AchievementManager.DoAfterPostSetup(InitializeByDefinedMod);
     }
+    public virtual void PostInitialize()
+    {
+        BeginListenHook();
+        EndListenHook();
+        CloseHook();
+    }
     public virtual IEnumerable<ConstructInfoTable<Requirement>> GetConstructInfoTables()
     {
         ConstructInfoTable<Achievement>.TryAutoCreate<Requirement>(GetType(), null, out var constructors);
@@ -69,18 +53,22 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
     #endregion
 
     #region 重置与开始
-    /// <summary>
-    /// 重置
-    /// </summary>
+
+    public static event Action<Requirement>? OnResetStatic;
+    public event Action? OnReset;
     public virtual void Reset()
     {
-        EndListenSafe();
-        Completed = false;
+        State = StateEnum.Idle;
+        OnResetStatic?.Invoke(this);
+        OnReset?.Invoke();
     }
 
+    public static event Action<Requirement>? OnStartStatic;
+    public event Action? OnStart;
     public virtual void Start()
     {
-        TryBeginListen();
+        OnStartStatic?.Invoke(this);
+        OnStart?.Invoke();
     }
     #endregion
 
@@ -114,28 +102,34 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
     {
         if (MultiplayerType == MultiplayerTypeEnum.LocalPlayer)
         {
-            tag.SetWithDefault("Completed", Completed);
+            tag.SetWithDefault("State", State.ToString(), StateEnum.Idle.ToString());
         }
     }
     public virtual void LoadDataInPlayer(TagCompound tag)
     {
         if (MultiplayerType == MultiplayerTypeEnum.LocalPlayer)
         {
-            Completed = tag.GetWithDefault<bool>("Completed");
+            if (Enum.TryParse<StateEnum>(tag.GetWithDefault("State", StateEnum.Idle.ToString()), out var state))
+            {
+                State = state;
+            }
         }
     }
     public virtual void SaveDataInWorld(TagCompound tag)
     {
         if (MultiplayerType is MultiplayerTypeEnum.AnyPlayer or MultiplayerTypeEnum.World)
         {
-            tag.SetWithDefault("Completed", Completed);
+            tag.SetWithDefault("State", State.ToString(), StateEnum.Idle.ToString());
         }
     }
     public virtual void LoadDataInWorld(TagCompound tag)
     {
         if (MultiplayerType is MultiplayerTypeEnum.AnyPlayer or MultiplayerTypeEnum.World)
         {
-            Completed = tag.GetWithDefault<bool>("Completed");
+            if (Enum.TryParse<StateEnum>(tag.GetWithDefault("State", StateEnum.Idle.ToString()), out var state))
+            {
+                State = state;
+            }
         }
     }
     public bool ShouldSaveStaticData { get; set; }
@@ -196,12 +190,12 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
     public float Progress { get; protected set; }
     public float ProgressWeight { get; set; } = 1f;
     public virtual IEnumerable<IProgressable> ProgressChildren() => [];
-    public virtual float GetProgress() => Completed.ToInt();
+    public virtual float GetProgress() => (State >= StateEnum.Completed).ToInt();
     public virtual void UpdateProgress()
     {
-        if (Completed)
+        if (State >= StateEnum.Completed)
         {
-            if (Progress < 1)
+            if (1 > Progress)
             {
                 Progress = 1;
                 Achievement.UpdateProgress();
@@ -215,6 +209,63 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
             Achievement.UpdateProgress();
         }
     }
+    #endregion
+
+    #region 状态
+    public enum StateEnum
+    {
+        Disabled = -1,
+        Idle,
+        Completed,
+        Closed
+    }
+    public StateEnum State;
+
+    #region 完成
+    [Obsolete("使用 State 代替", false)]
+    public bool Completed => State == StateEnum.Completed;
+    public static event Action<Requirement>? OnCompleteStatic;
+    public event Action? OnComplete;
+    /// <summary>
+    /// 一般通过在监听时调用 CompleteSafe 以完成条件
+    /// </summary>
+    public void CompleteSafe()
+    {
+        if (State is StateEnum.Completed or StateEnum.Disabled)
+        {
+            return;
+        }
+        State = StateEnum.Completed;
+        Complete();
+        OnCompleteStatic?.Invoke(this);
+        OnComplete?.Invoke();
+    }
+    protected virtual void Complete() { }
+    #endregion
+
+    #region 关闭
+    public static event Action<Requirement>? OnCloseStatic;
+    public event Action? OnClose;
+    public virtual bool CloseCondition() => true;
+    protected virtual void CloseHook()
+    {
+        OnStart += ToDo(DoIf, Achievement.State == Achievement.StateEnum.Completed, CloseSafe);
+    }
+    public virtual bool EndListenOnClose => true;
+    public void CloseSafe()
+    {
+        if (State is not StateEnum.Idle)
+        {
+            return;
+        }
+        State = StateEnum.Closed;
+        Close();
+        OnCloseStatic?.Invoke(this);
+        OnClose?.Invoke();
+    }
+    protected virtual void Close() { }
+    #endregion
+
     #endregion
 
     #region 监听
@@ -242,33 +293,60 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
     /// </summary>
     public ListenTypeEnum ListenType;
     public bool Listening { get; protected set; }
+
+    public virtual bool BeginListenCondition()
+    {
+        return ListenType switch
+        {
+            ListenTypeEnum.OnAchievementUnlocked => Achievement.State.IsUnlocked(),
+            ListenTypeEnum.OnPageUnlocked => Achievement.Page.State >= AchievementPage.StateEnum.Unlocked,
+            ListenTypeEnum.OnStart => true,
+            _ => false,
+        };
+    }
+    protected virtual void BeginListenHook()
+    {
+        OnStart += TryBeginListen;
+        switch (ListenType)
+        {
+        case ListenTypeEnum.OnAchievementUnlocked:
+            Achievement.OnUnlock += TryBeginListen;
+            break;
+        case ListenTypeEnum.OnPageUnlocked:
+            Achievement.Page.OnUnlock += TryBeginListen;
+            break;
+        }
+    }
+    protected virtual void EndListenHook()
+    {
+        OnReset += EndListenSafe;
+        OnComplete += EndListenSafe;
+        if (EndListenOnClose)
+        {
+            OnClose += EndListenSafe;
+        }
+    }
     public virtual void TryBeginListen()
     {
-        if (Listening || Completed)
+        if (BeginListenCondition())
         {
-            return;
+            BeginListenSafe();
         }
-        if (ListenType == ListenTypeEnum.None)
-        {
-            return;
-        }
-        if (ListenType == ListenTypeEnum.OnAchievementUnlocked && !Achievement.State.IsUnlocked())
-        {
-            return;
-        }
-        if (ListenType == ListenTypeEnum.OnPageUnlocked && Achievement.Page.State == AchievementPage.StateEnum.Locked)
-        {
-            return;
-        }
-        BeginListenSafe();
     }
+    public static event Action<Requirement>? OnBeginListenStatic;
+    public event Action? OnBeginListen;
+    public static event Action<Requirement>? OnEndListenStatic;
+    public event Action? OnEndListen;
     public void BeginListenSafe()
     {
         if (Listening)
         {
             return;
         }
+        Listening = true;
         BeginListen();
+        OnBeginListenStatic?.Invoke(this);
+        OnBeginListen?.Invoke();
     }
     public void EndListenSafe()
     {
@@ -276,46 +354,18 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
         {
             return;
         }
-        EndListen();
-    }
-    protected virtual void BeginListen()
-    {
-        Listening = true;
-    }
-    protected virtual void EndListen()
-    {
         Listening = false;
+        EndListen();
+        OnEndListenStatic?.Invoke(this);
+        OnEndListen?.Invoke();
     }
-    #endregion
-
-    #region 完成状况
-    public bool Completed { get; protected set; }
-    public event Action? OnComplete;
-    public static event Action<Requirement>? OnCompleteStatic;
-    protected void DoOnComplete()
-    {
-        OnComplete?.Invoke();
-        OnCompleteStatic?.Invoke(this);
-    }
-    public void CompleteSafe()
-    {
-        if (Completed)
-        {
-            return;
-        }
-        Complete();
-    }
-    protected virtual void Complete()
-    {
-        Completed = true;
-        EndListenSafe();
-        DoOnComplete();
-    }
+    protected virtual void BeginListen() { }
+    protected virtual void EndListen() { }
     #endregion
 
     public override string ToString()
     {
-        return $"{GetType().Name}: {nameof(Completed)}: {Completed}, {nameof(Listening)}: {Listening}";
+        return $"{GetType().Name}: {nameof(State)}: {State}, {nameof(Listening)}: {Listening}";
     }
 
     /// <summary>
@@ -336,13 +386,22 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
         {
             DisplayName |= mod.GetLocalization($"Requirements.{GetType().Name}.DisplayName").WithFormatArgs(DisplayNameArgs);
         }
-        if (DisplayName.IsNone)
+        if (Tooltip.IsNone)
         {
             Tooltip = mod.GetLocalization($"Requirements.{GetType().Name}.Tooltip").WithFormatArgs(TooltipArgs);
         }
-        Texture |= $"{mod.Name}/Assets/Textures/Requirements/{GetType().Name}";
-        Texture |= $"{mod.Name}/Assets/Textures/Requirements/Default";
-        Texture |= $"{mod.Name}/Assets/Textures/Default";
+        if (Texture.IsNone)
+        {
+            Texture = $"{mod.Name}/Assets/Textures/Requirements/{GetType().Name}";
+        }
+        if (Texture.IsNone)
+        {
+            Texture = $"{mod.Name}/Assets/Textures/Requirements/Default";
+        }
+        if (Texture.IsNone)
+        {
+            Texture = $"{mod.Name}/Assets/Textures/Default";
+        }
     }
 
     public virtual void Unload() { }

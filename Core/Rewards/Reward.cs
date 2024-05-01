@@ -1,4 +1,5 @@
-﻿using ProgressSystem.Core.Interfaces;
+﻿using ProgressSystem.Common.Configs;
+using ProgressSystem.Core.Interfaces;
 using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.Core.StaticData;
 using System.IO;
@@ -27,14 +28,14 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
         Disabled = -1,
         Locked = 0,
         Unlocked = 1,
-        Started = 2,
+        Receiving = 2,
         Received = 3,
         Closed = 4
     }
     public StateEnum State { get; protected set; }
 
     #region 解锁
-    public Action<Reward>? OnUnlockStatic;
+    public static Action<Reward>? OnUnlockStatic;
     public Action? OnUnlock;
     public void TryUnlock()
     {
@@ -59,7 +60,7 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
     /// <summary>
     /// <br/>在 <see cref="ReceiveSafe"/> 中是否在调用 <see cref="Receive"/> 后直接改变 <see cref="State"/>
     /// <br/>若重写为 false 则需要在 <see cref="Receive"/> 中自己设置
-    /// <br/><see cref="State"/> 为 <see cref="StateEnum.Started"/> 或 <see cref="StateEnum.Received"/>
+    /// <br/><see cref="State"/> 为 <see cref="StateEnum.Receiving"/> 或 <see cref="StateEnum.Received"/>
     /// <br/>(一点都没有领取可以不设置)
     /// </summary>
     protected virtual bool AutoAssignReceived => true;
@@ -85,8 +86,8 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
     public void ReceiveSafe()
     {
         bool unlock = State == StateEnum.Unlocked;
-        bool start = State == StateEnum.Started;
-        if (!unlock && !start)
+        bool receiving = State == StateEnum.Receiving;
+        if (!unlock && !receiving)
         {
             return;
         }
@@ -95,7 +96,7 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
         {
             State = StateEnum.Received;
         }
-        if (unlock && State is StateEnum.Started or StateEnum.Received)
+        if (unlock && State is StateEnum.Receiving or StateEnum.Received)
         {
             OnStartReceivedStatic?.Invoke(this);
             OnStartReceived?.Invoke();
@@ -107,7 +108,8 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
         }
     }
     /// <summary>
-    /// 获取奖励
+    /// <br/>获取奖励
+    /// <br/>若可能不能直接领完需重写 <see cref="AutoAssignReceived"/> 为 false
     /// </summary>
     protected abstract void Receive();
     #endregion
@@ -151,7 +153,7 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
     }
     #endregion
 
-    public bool IsReceiving() => State == StateEnum.Started;
+    public bool IsReceiving() => State == StateEnum.Receiving;
     public bool IsReceived() => State == StateEnum.Received;
 
     #endregion
@@ -202,7 +204,10 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
         {
             Tooltip = tooltip;
         }
-        Texture = tag.GetWithDefault<string>("Texture");
+        if (tag.TryGet<string>("Texture", out var textureString))
+        {
+            Texture = textureString;
+        }
     }
     #endregion
 
@@ -224,16 +229,28 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
             Reset();
         }
     }
+    public static Action<Reward>? OnResetStatic;
+    public Action? OnReset;
     public virtual void Reset()
     {
         State = StateEnum.Locked;
+        OnResetStatic?.Invoke(this);
+        OnReset?.Invoke();
     }
+    public static Action<Reward>? OnStartStatic;
+    public Action? OnStart;
     public virtual void Start()
     {
-        TryUnlock();
+        OnStartStatic?.Invoke(this);
+        OnStart?.Invoke();
     }
     #endregion
 
+    public virtual void PostInitialize()
+    {
+        OnStart += TryUnlock;
+        Achievement.OnComplete += TryUnlock;
+    }
     public virtual void Initialize(Achievement achievement)
     {
         Achievement = achievement;
