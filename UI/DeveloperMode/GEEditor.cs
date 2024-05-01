@@ -309,7 +309,7 @@ namespace ProgressSystem.UI.DeveloperMode
             reward.ReDraw = sb => DrawFocusFrame(sb, reward, 2);
             editBg.Register(reward);
 
-            UIAdjust adjust = new(AssetLoader.VnlAdjust, new(20, 20));
+            UIAdjust adjust = new();
             editBg.Register(adjust);
 
             RegisterBaseInfoPanel(editPanels[0]);
@@ -508,8 +508,8 @@ namespace ProgressSystem.UI.DeveloperMode
             constructBg.SetPos(0, 80);
             panel.Register(constructBg);
 
-            UIContainerPanel constructView = new() { spaceY = 10 };
-            constructView.autoPos[0] = true;
+            UIContainerPanel constructView = new();
+            constructView.autoPos[0] = 10;
             constructView.SetPos(10, 10);
             constructView.SetSize(-40, -20, 1, 1);
             constructBg.Register(constructView);
@@ -632,8 +632,7 @@ namespace ProgressSystem.UI.DeveloperMode
 
             requireView = new();
             requireView.SetSize(-20, -10, 1, 1);
-            requireView.autoPos[0] = true;
-            requireView.spaceY = 10;
+            requireView.autoPos[0] = 10;
             requireView.Events.OnRightDown += evt => EditingCombineRequire = null;
             requirePanel.Register(requireView);
 
@@ -661,7 +660,7 @@ namespace ProgressSystem.UI.DeveloperMode
             constructList.expandArea.SetPos(0, 80);
             constructList.expandArea.SetSize(leftWidth, -80, 0, 1);
 
-            constructList.expandView.autoPos[0] = true;
+            constructList.expandView.autoPos[0] = 5;
             constructList.expandView.Vscroll.canDrag = false;
 
             string end = "Requirement";
@@ -700,8 +699,8 @@ namespace ProgressSystem.UI.DeveloperMode
             constructBg.SetSize(leftWidth, -80, 0, 1);
             panel.Register(constructBg);
 
-            UIContainerPanel constructView = new() { spaceY = 10 };
-            constructView.autoPos[0] = true;
+            UIContainerPanel constructView = new();
+            constructView.autoPos[0] = 10;
             constructView.SetPos(10, 10);
             constructView.SetSize(-40, -20, 1, 1);
             constructBg.Register(constructView);
@@ -726,7 +725,7 @@ namespace ProgressSystem.UI.DeveloperMode
             constructList.expandArea.SetPos(0, 80);
             constructList.expandArea.SetSize(leftWidth, -80, 0, 1);
 
-            constructList.expandView.autoPos[0] = true;
+            constructList.expandView.autoPos[0] = 5;
             constructList.expandView.Vscroll.canDrag = false;
 
             string end = "Reward";
@@ -851,7 +850,7 @@ namespace ProgressSystem.UI.DeveloperMode
 
             rewardView = new();
             rewardView.SetSize(-20, -10, 1, 1);
-            rewardView.autoPos[0] = true;
+            rewardView.autoPos[0] = 5;
             rewardView.Events.OnRightDown += evt => EditingCombineReward = null;
             rewardPanel.Register(rewardView);
 
@@ -878,17 +877,17 @@ namespace ProgressSystem.UI.DeveloperMode
             {
                 if (Main.mouseItem.type > ItemID.None)
                 {
-                    itemSlot.ContainedItem = Main.mouseItem.Clone();
+                    itemSlot.item = Main.mouseItem.Clone();
                 }
                 else
                 {
-                    itemSlot.ContainedItem.SetDefaults();
+                    itemSlot.item.SetDefaults();
                 }
             };
             itemSlot.ReDraw = sb =>
             {
                 itemSlot.DrawSelf(sb);
-                Item item = itemSlot.ContainedItem;
+                Item item = itemSlot.item;
                 StringBuilder text = new();
                 text.Append("物品ID：" + item.type);
                 text.AppendLine();
@@ -908,8 +907,7 @@ namespace ProgressSystem.UI.DeveloperMode
 
             UIContainerPanel groupView = new();
             groupView.SetSize(0, 0, 1, 1);
-            groupView.autoPos[0] = true;
-            groupView.spaceY = 10;
+            groupView.autoPos[0] = 10;
             groupFilter.Register(groupView);
 
             VerticalScrollbar gv = new(100, canDrag: false);
@@ -937,7 +935,7 @@ namespace ProgressSystem.UI.DeveloperMode
             pageList.expandArea.SetPos(110, 30);
             pageList.expandArea.SetSize(200, 100);
 
-            pageList.expandView.autoPos[0] = true;
+            pageList.expandView.autoPos[0] = 5;
             left += pageList.showArea.Width + 10;
 
             foreach (Mod mod in ModLoader.Mods)

@@ -46,8 +46,7 @@ namespace ProgressSystem.UI.PlayerMode
 
             UIContainerPanel groupView = new();
             groupView.SetSize(0, 0, 1, 1);
-            groupView.autoPos[0] = true;
-            groupView.spaceY = 10;
+            groupView.autoPos[0] = 10;
             groupFilter.Register(groupView);
 
             VerticalScrollbar gv = new(100, canDrag: false);
@@ -75,7 +74,7 @@ namespace ProgressSystem.UI.PlayerMode
             pageList.expandArea.SetPos(110, 30);
             pageList.expandArea.SetSize(200, 100);
 
-            pageList.expandView.autoPos[0] = true;
+            pageList.expandView.autoPos[0] = 5;
             left += pageList.showArea.Width + 10;
 
             foreach (Mod mod in ModLoader.Mods)
@@ -167,7 +166,7 @@ namespace ProgressSystem.UI.PlayerMode
             descriptionView = new();
             descriptionView.SetPos(0, 30);
             descriptionView.SetSize(-10, -30, 1, 1);
-            descriptionView.autoPos[0] = true;
+            descriptionView.autoPos[0] = 0;
             descriptionBg.Register(descriptionView);
 
             VerticalScrollbar dV = new(30);
@@ -203,7 +202,7 @@ namespace ProgressSystem.UI.PlayerMode
             requireView = new();
             requireView.SetPos(0, 30);
             requireView.SetSize(-10, -40, 1, 1);
-            requireView.autoPos[0] = true;
+            requireView.autoPos[0] = 5;
             requireBg.Register(requireView);
 
             VerticalScrollbar requireV = new(30);
@@ -248,7 +247,7 @@ namespace ProgressSystem.UI.PlayerMode
             rewardView = new();
             rewardView.SetPos(0, 30);
             rewardView.SetSize(-10, -40, 1, 1);
-            rewardView.autoPos[0] = true;
+            rewardView.autoPos[0] = 5;
             rewardBg.Register(rewardView);
 
             VerticalScrollbar rewardV = new(30);
