@@ -149,10 +149,26 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
 
     public enum VisibleTypeEnum
     {
+        /// <summary>
+        /// 自定义, 需要重写 <see cref="UpdateVisible"/> 和 <see cref="UpdateVisibleHook"/> 以定义何时可见
+        /// </summary>
         Customed = -1,
+        /// <summary>
+        /// 几乎总是可见, 除非处于 <see cref="StateEnum.Disabled"/> 状态
+        /// </summary>
         WhenEnabled,
+        /// <summary>
+        /// 在任意前置解锁后可见 (若没有前置则总是可见)
+        /// </summary>
+        WhenAnyPredecessorUnlocked,
+        /// <summary>
+        /// 在解锁后 (前置完成后) 可见
+        /// </summary>
         WhenUnlocked,
         WhenCompleted,
+        /// <summary>
+        /// 在任意时候可见, 即使在 <see cref="StateEnum.Disabled"/> 状态
+        /// </summary>
         Always
     }
     public VisibleTypeEnum VisibleType { get; private init; }
@@ -163,6 +179,9 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
         {
         case VisibleTypeEnum.WhenEnabled:
             Visible = State != StateEnum.Disabled;
+            break;
+        case VisibleTypeEnum.WhenAnyPredecessorUnlocked:
+            Visible = Predecessors.Count == 0 || Predecessors.Any(p => p.State >= StateEnum.Unlocked);
             break;
         case VisibleTypeEnum.WhenUnlocked:
             Visible = State >= StateEnum.Unlocked;
@@ -178,9 +197,20 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     protected virtual void UpdateVisibleHook()
     {
         OnStart += UpdateVisible;
-        OnDisable += UpdateVisible;
+
+        if (VisibleType != VisibleTypeEnum.Always)
+        {
+            OnDisable += UpdateVisible;
+        }
+
         switch (VisibleType)
         {
+        case VisibleTypeEnum.WhenAnyPredecessorUnlocked:
+            foreach (var predecessor in Predecessors)
+            {
+                predecessor.OnUnlock += UpdateVisible;
+            }
+            break;
         case VisibleTypeEnum.WhenUnlocked:
             OnUnlock += UpdateVisible;
             break;
@@ -433,7 +463,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
 
     #region 提交
     /// <summary>
-    /// 是否需要在 UI 中提交才算作达成
+    /// 是否需要在 UI 中提交才算做达成
     /// </summary>
     public bool NeedSubmit;
 
@@ -562,6 +592,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     /// <br/><see cref="PredecessorCountNeeded"/>: 需要多少个前置才能开始此成就
     /// <br/><see cref="RequirementCountNeeded"/>: 需要多少个条件才能完成此成就
     /// <br/><see cref="Repeatable"/>: 是否可重复完成
+    /// <br/><see cref="VisibleType"/>: 可见类型, 在什么时候可见
     /// <para/><see cref="TexturePath"/>: 图片的默认路径, 默认 [page.Mod.Name]/[page.Name]/[achievement.Name]
     /// <br/><see cref="Texture"/>: 图片, 默认从 [Mod]/Assets/Textures/Achievements/[TexturePath] 获取
     /// <br/><see cref="GetSourceRect"/>: 获取 SourceRect, 默认 null 代表全图
@@ -573,7 +604,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     /// <br/><see cref="UnlockCondition"/>: 自定义解锁条件
     /// <br/><see cref="CompleteCondition"/>: 自定义完成条件
     /// <br/><see cref="CloseCondition"/>: 自定义关闭条件
-    /// <br/><see cref="CloseCondition"/>: 自定义是否达到稳定状态
+    /// <br/><see cref="ReachedStableState"/>: 自定义是否达到稳定状态
     /// </summary>
     /// <param name="page">属于哪一页</param>
     /// <param name="mod">所属模组, 用于查找对应资源, 注意不是 <paramref name="page"/> 的模组, 而是添加此成就的模组</param>
@@ -829,11 +860,11 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
             tag.SetWithDefaultN("UseRequirementTextureRollTime", UseRequirementTextureRollTime);
             tag.SetWithDefault("Repeatable", Repeatable);
             */
-            tag.SetWithDefaultN("Position", Position);
             tag.SetWithDefault("RequirementCountNeeded", RequirementCountNeeded);
             tag.SetWithDefaultN("PredecessorCountNeeded", PredecessorCountNeeded);
             tag.SetWithDefault("NeedSubmit", NeedSubmit);
         });
+        tag.SetWithDefaultN("Position", Position);
         this.SaveStaticDataListTemplate(Rewards, "Rewards", tag);
     }
     public virtual void LoadStaticData(TagCompound tag)
@@ -873,11 +904,14 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
             UseRequirementTextureRollTime = tag.GetWithDefaultN<int>("UseRequirementTextureRollTime");
             Repeatable = tag.GetWithDefault<bool>("Repeatable");
             */
-            Position = tag.GetWithDefaultN<Vector2>("Position");
             RequirementCountNeeded = tag.GetWithDefault<int>("RequirementCountNeeded");
             PredecessorCountNeeded = tag.GetWithDefaultN<int>("PredecessorCountNeeded");
             tag.GetWithDefault("NeedSubmit", out NeedSubmit);
         });
+        if (tag.TryGet<Vector2>("Position", out var position))
+        {
+            Position = position;
+        }
         this.LoadStaticDataListTemplate(Rewards.GetS, Rewards!.SetFS, "Rewards", tag);
     }
     #endregion

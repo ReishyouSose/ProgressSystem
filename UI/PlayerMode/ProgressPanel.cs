@@ -120,13 +120,13 @@ namespace ProgressSystem.UI.PlayerMode
                     if (AchievementManager.PagesByMod.TryGetValue(selectedMod, out var modPages))
                     {
                         bool have = false;
-                        foreach (var (page, ges) in modPages)
+                        foreach (var (name, page) in modPages)
                         {
-                            UIText pageName = new(page);
+                            UIText pageName = new(page.DisplayName.Value ?? name);
                             pageName.SetSize(pageName.TextSize);
                             pageName.Events.OnMouseOver += evt => pageName.color = Color.Gold;
                             pageName.Events.OnMouseOut += evt => pageName.color = Color.White;
-                            pageName.Events.OnLeftDown += evt => LoadPage(pageName.text);
+                            pageName.Events.OnLeftDown += evt => LoadPage(name);
                             pageList.AddElement(pageName);
                             have = true;
                         }

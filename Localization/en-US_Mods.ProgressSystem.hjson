@@ -89,6 +89,13 @@ Requirements: {
 	}
 }
 
+Pages: {
+	ProgressSystem: {
+		TestPage.DisplayName: Test Page
+		114514.DisplayName: "114514"
+	}
+}
+
 Achievements: {
 	ProgressSystem: {
 		TestPage: {

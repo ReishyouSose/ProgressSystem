@@ -141,15 +141,18 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
         }
         tag["SaveStatic"] = true;
         tag["Type"] = GetType().FullName;
+        /*
         tag.SetWithDefault("DisplayNameKey", DisplayName.LocalizedTextValue?.Key);
         tag.SetWithDefault("DisplayName", DisplayName.StringValue);
         tag.SetWithDefault("TooltipKey", Tooltip.LocalizedTextValue?.Key);
         tag.SetWithDefault("Tooltip", Tooltip.StringValue);
         tag.SetWithDefault("Texture", Texture.AssetPath);
+        */
     }
     public virtual void LoadStaticData(TagCompound tag)
     {
         ShouldSaveStaticData = tag.GetWithDefault<bool>("SaveStatic");
+        /*
         if (tag.TryGet("DisplayNameKey", out string displayNameKey))
         {
             DisplayName = Language.GetText(displayNameKey);
@@ -166,7 +169,12 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
         {
             Tooltip = tooltip;
         }
-        Texture = tag.GetWithDefault<string>("Texture");
+        if (tag.TryGet<string>("Texture", out var texture))
+        {
+            Texture = texture;
+        }
+        */
+
     }
     #endregion
 
@@ -384,7 +392,7 @@ public abstract class Requirement : IWithStaticData, ILoadable, INetUpdate, IPro
         mod ??= definedMod[GetType()];
         if (DisplayName.IsNone)
         {
-            DisplayName |= mod.GetLocalization($"Requirements.{GetType().Name}.DisplayName").WithFormatArgs(DisplayNameArgs);
+            DisplayName = mod.GetLocalization($"Requirements.{GetType().Name}.DisplayName").WithFormatArgs(DisplayNameArgs);
         }
         if (Tooltip.IsNone)
         {

@@ -873,12 +873,15 @@ namespace ProgressSystem.UI.DeveloperMode
         }
         private void RegisterEditPagePanel()
         {
+            #region 主板
             mainPanel = new(1000, 800);
             mainPanel.SetCenter(0, 0, 0.55f, 0.5f);
             mainPanel.Info.SetMargin(10);
             mainPanel.canDrag = true;
             Register(mainPanel);
+            #endregion
 
+            #region ItemSlot
             UIItemSlot itemSlot = new();
             itemSlot.Events.OnLeftDown += evt =>
             {
@@ -905,7 +908,9 @@ namespace ProgressSystem.UI.DeveloperMode
                     itemSlot.HitBox().BottomLeft() + Vector2.UnitY * 5, Color.White, 0, Vector2.Zero, Vector2.One);
             };
             mainPanel.Register(itemSlot);
+            #endregion
 
+            #region Mod 列表
             UIVnlPanel groupFilter = new(0, 0);
             groupFilter.SetPos(0, 150);
             groupFilter.SetSize(100, -150, 0, 1);
@@ -920,14 +925,18 @@ namespace ProgressSystem.UI.DeveloperMode
             VerticalScrollbar gv = new(100, canDrag: false);
             groupView.SetVerticalScrollbar(gv);
             groupFilter.Register(gv);
+            #endregion
 
+            #region 事件版
             UIVnlPanel eventPanel = new(0, 0);
             eventPanel.Info.SetMargin(10);
             eventPanel.SetPos(110, 40);
             eventPanel.SetSize(-110, -40, 1, 1, false);
             mainPanel.Register(eventPanel);
             int left = 110;
-
+            #endregion
+            
+            #region 进度表列表
             pageList = new(mainPanel, eventPanel, x =>
             {
                 UIText text = new(x.text);
@@ -944,7 +953,9 @@ namespace ProgressSystem.UI.DeveloperMode
 
             pageList.expandView.autoPos[0] = 5;
             left += pageList.showArea.Width + 10;
+            #endregion
 
+            #region 注册所有的 Mod
             foreach (Mod mod in ModLoader.Mods)
             {
                 if (mod.Side != ModSide.Both || !mod.HasAsset("icon"))
@@ -967,13 +978,13 @@ namespace ProgressSystem.UI.DeveloperMode
                     if (AchievementManager.PagesByMod.TryGetValue(editingMod, out var modPages))
                     {
                         bool have = false;
-                        foreach (var (page, ges) in modPages)
+                        foreach (var (name, page) in modPages)
                         {
-                            UIText pageName = new(page);
+                            UIText pageName = new(page.DisplayName.Value ?? name);
                             pageName.SetSize(pageName.TextSize);
                             pageName.Events.OnMouseOver += evt => pageName.color = Color.Gold;
                             pageName.Events.OnMouseOut += evt => pageName.color = Color.White;
-                            pageName.Events.OnLeftDown += evt => LoadPage(pageName.text);
+                            pageName.Events.OnLeftDown += evt => LoadPage(name);
                             pageList.AddElement(pageName);
                             have = true;
                         }
@@ -987,7 +998,9 @@ namespace ProgressSystem.UI.DeveloperMode
                 groupView.AddElement(modSlot);
             }
             groupView.InnerUIE[0].Events.LeftDown(null);
+            #endregion
 
+            #region 新建进度表
             UIText newProgress = new("新建进度表");
             newProgress.SetPos(left, 5);
             newProgress.SetSize(newProgress.TextSize);
@@ -1001,7 +1014,9 @@ namespace ProgressSystem.UI.DeveloperMode
             };
             mainPanel.Register(newProgress);
             left += newProgress.Width + 10;
+            #endregion
 
+            #region 删除进度表
             UIText deleteProgress = new("删除进度表");
             deleteProgress.SetPos(left, 5);
             deleteProgress.SetSize(deleteProgress.TextSize);
@@ -1021,7 +1036,9 @@ namespace ProgressSystem.UI.DeveloperMode
             };
             mainPanel.Register(deleteProgress);
             left += deleteProgress.Width + 10;
+            #endregion
 
+            #region 位置检查
             UIText checkPos = new("位置检查");
             checkPos.SetPos(left, 5);
             checkPos.SetSize(checkPos.TextSize);
@@ -1051,7 +1068,9 @@ namespace ProgressSystem.UI.DeveloperMode
             };
             mainPanel.Register(checkPos);
             left += checkPos.Width + 10;
+            #endregion
 
+            #region 保存提示
             saveTip = new("已保存", Color.Green);
             saveTip.SetSize(saveTip.TextSize);
             saveTip.SetPos(left, 5);
@@ -1062,7 +1081,9 @@ namespace ProgressSystem.UI.DeveloperMode
             };
             mainPanel.Register(saveTip);
             left += saveTip.Width + 10;
+            #endregion
 
+            #region 保存路径
             UIVnlPanel savePathInputBg = new(0, 0);
             savePathInputBg.SetPos(left, 0);
             savePathInputBg.SetSize(-left, 30, 1);
@@ -1072,6 +1093,7 @@ namespace ProgressSystem.UI.DeveloperMode
             savePathInputer.SetSize(-40, 0, 1, 1);
             savePathInputBg.Register(savePathInputer);
 
+            #region 打开资源管理器按钮
             UIAdjust selectSavePath = new(AssetLoader.VnlAdjust)
             {
                 hoverText = "打开资源管理器选择复制路径"
@@ -1081,16 +1103,22 @@ namespace ProgressSystem.UI.DeveloperMode
             {
                 Main.QueueMainThreadAction(() =>
                 {
-                    Process.Start("explorer.exe", "/select");
+                    var p = Process.Start("explorer.exe", "/select");
                 });
             };
             savePathInputBg.Register(selectSavePath);
+            #endregion
 
+            #region 清除路径按钮
             UIClose clearSavePath = new();
             clearSavePath.SetCenter(-10, 0, 1, 0.5f);
             clearSavePath.Events.OnLeftDown += evt => savePathInputer.ClearText();
             savePathInputBg.Register(clearSavePath);
+            #endregion
 
+            #endregion
+
+            #region 成就界面
             achView = new();
             achView.SetSize(-20, -20, 1, 1);
             achView.Events.OnLeftDown += evt =>
@@ -1156,11 +1184,14 @@ namespace ProgressSystem.UI.DeveloperMode
                     }
                     Achievement orig = preSetting.ach;
                     Achievement pre = ge.ach;
+                    /*
+                    // 可以互为前置
                     if (pre.Predecessors.Contains(orig))
                     {
                         Main.NewText("不可互为前置");
                         continue;
                     }
+                    */
                     if (preSetting.PreAch.Contains(ge))
                     {
                         RemoveRequireLine(orig, pre);
@@ -1199,7 +1230,9 @@ namespace ProgressSystem.UI.DeveloperMode
                 vline.SetPos(80 * i, 0);
                 achView.AddElement(vline);
             }
+            #endregion
         }
+
         private void RegisterNewPagePanel()
         {
             pagePanel = new(300, 200, opacity: 1);

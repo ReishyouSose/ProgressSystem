@@ -30,13 +30,16 @@ public class AchievementPage : ICollection<Achievement>, IWithStaticData, INetUp
     /// </summary>
     public IReadOnlyDictionary<string, Achievement> Achievements => achievements;
     private readonly Dictionary<string, Achievement> achievements = [];
-
+    
     /// <summary>
-    /// UI 面板上是否可编辑
-    /// 用于 modder 编辑页内成就位置
-    /// 发布时请确保此值为假
+    /// 显示的名字, 默认通过对应 Mod 的 Achievements.[LocalizedKey].DisplayName 获取
     /// </summary>
-    public bool Editable;
+    public TextGetter DisplayName
+    {
+        get => !_displayName.IsNone ? _displayName : _displayName = Mod.GetLocalization($"Pages.{FullName}.DisplayName");
+        set => _displayName = value;
+    }
+    protected TextGetter _displayName;
     #endregion
 
     #region 重置与开始
@@ -220,6 +223,7 @@ public class AchievementPage : ICollection<Achievement>, IWithStaticData, INetUp
 
     public void PostInitialize()
     {
+        _ = DisplayName;
         SetDefaultPositionForAchievements();
     }
     public void SetDefaultPositionForAchievements()

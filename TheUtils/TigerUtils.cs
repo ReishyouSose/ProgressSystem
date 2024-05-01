@@ -2556,7 +2556,20 @@ public static partial class TigerClasses
     public class ValueDG<T>(Func<T> getDefaultValue)
     {
         private T? value;
-        public T Value => value ??= getDefaultValue();
+        private bool got;
+        public T Value
+        {
+            get
+            {
+                if (got)
+                {
+                    return value!;
+                }
+                got = true;
+                value = getDefaultValue();
+                return value;
+            }
+        }
         public static implicit operator T(ValueDG<T> self) => self.Value;
     }
     public struct UncheckedUlongTime : IEquatable<UncheckedUlongTime>, IComparable, IComparable<UncheckedUlongTime>
