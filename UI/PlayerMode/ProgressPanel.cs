@@ -55,7 +55,7 @@ namespace ProgressSystem.UI.PlayerMode
             groupView.autoPos[0] = 10;
             groupFilter.Register(groupView);
 
-            VerticalScrollbar gv = new(100, canDrag: false);
+            VerticalScrollbar gv = new(100);
             groupView.SetVerticalScrollbar(gv);
             groupFilter.Register(gv);
 
@@ -74,10 +74,10 @@ namespace ProgressSystem.UI.PlayerMode
             })
             { buttonXoffset = 10 };
 
-            pageList.showArea.SetPos(110, 0);
+            pageList.showArea.SetPos(left, 0);
             pageList.showArea.SetSize(200, 30);
 
-            pageList.expandArea.SetPos(110, 30);
+            pageList.expandArea.SetPos(left, 30);
             pageList.expandArea.SetSize(200, 100);
 
             pageList.expandView.autoPos[0] = 5;

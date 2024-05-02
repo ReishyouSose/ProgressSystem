@@ -915,7 +915,7 @@ namespace ProgressSystem.UI.DeveloperMode
             #region Mod 列表
             UIVnlPanel groupFilter = new(0, 0);
             groupFilter.SetPos(0, 150);
-            groupFilter.SetSize(100, -150, 0, 1);
+            groupFilter.SetSize(120, -150, 0, 1);
             groupFilter.Info.SetMargin(10);
             mainPanel.Register(groupFilter);
 
@@ -924,18 +924,19 @@ namespace ProgressSystem.UI.DeveloperMode
             groupView.autoPos[0] = 10;
             groupFilter.Register(groupView);
 
-            VerticalScrollbar gv = new(100, canDrag: false);
+            VerticalScrollbar gv = new(90, false, false);
             groupView.SetVerticalScrollbar(gv);
+            gv.Info.Left.Pixel += 10;
             groupFilter.Register(gv);
             #endregion
 
             #region 事件版
+            int left = 130;
             UIVnlPanel eventPanel = new(0, 0);
             eventPanel.Info.SetMargin(10);
-            eventPanel.SetPos(110, 40);
-            eventPanel.SetSize(-110, -40, 1, 1, false);
+            eventPanel.SetPos(left, 40);
+            eventPanel.SetSize(-left, -40, 1, 1, false);
             mainPanel.Register(eventPanel);
-            int left = 110;
             #endregion
 
             #region 进度表列表
@@ -947,10 +948,10 @@ namespace ProgressSystem.UI.DeveloperMode
             })
             { buttonXoffset = 10 };
 
-            pageList.showArea.SetPos(110, 0);
+            pageList.showArea.SetPos(left, 0);
             pageList.showArea.SetSize(200, 30);
 
-            pageList.expandArea.SetPos(110, 30);
+            pageList.expandArea.SetPos(left, 30);
             pageList.expandArea.SetSize(200, 100);
 
             pageList.expandView.autoPos[0] = 5;
@@ -999,7 +1000,7 @@ namespace ProgressSystem.UI.DeveloperMode
                 };
                 groupView.AddElement(modSlot);
             }
-            groupView.InnerUIE[0].Events.LeftDown(null);
+            groupView.Calculation();
             #endregion
 
             #region 新建进度表
@@ -1097,11 +1098,11 @@ namespace ProgressSystem.UI.DeveloperMode
             savePathInputBg.Register(savePathInputer);
 
             #region 打开资源管理器按钮
-            UIAdjust selectSavePath = new(AssetLoader.VnlAdjust)
+            UI3FrameImage selectSavePath = new(AssetLoader.VnlAdjust, x => false)
             {
                 hoverText = "打开资源管理器选择复制路径"
             };
-            selectSavePath.SetCenter(-30, 0, 1, 0.5f);
+            selectSavePath.SetCenter(-40, 0, 1, 0.5f);
             selectSavePath.Events.OnLeftDown += evt =>
             {
                 Main.QueueMainThreadAction(() =>

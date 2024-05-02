@@ -1,9 +1,9 @@
-﻿using ProgressSystem.Common.Systems;
+﻿using ProgressSystem.Common.Configs;
+using ProgressSystem.Common.Systems;
 using ProgressSystem.Core.NetUpdate;
 using ProgressSystem.UI.DeveloperMode;
 using ProgressSystem.UI.PlayerMode;
 using Terraria.GameInput;
-using ProgressSystem.Common.Configs;
 
 namespace ProgressSystem.Common.Players
 {
@@ -33,6 +33,7 @@ namespace ProgressSystem.Common.Players
                 static void OpenEditor()
                 {
                     Main.playerInventory = false;
+                    GEEditor.Ins.OnInitialization();
                     if (!editorInitialized)
                     {
                         editorInitialized = true;
