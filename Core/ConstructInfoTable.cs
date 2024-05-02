@@ -207,7 +207,7 @@ namespace ProgressSystem.Core
                 try
                 {
                     _value = value is IConvertible convertible ? Convert.ChangeType(convertible, Type) : value;
-                    HasValue = true;
+                    HasValue = _value != null;
                     return true;
                 }
                 catch
