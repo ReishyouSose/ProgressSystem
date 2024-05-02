@@ -328,6 +328,7 @@ namespace ProgressSystem.UI.DeveloperMode
             int y = 0;
             UIVnlPanel achNameInputBg = new(0, 0);
             achNameInputBg.SetSize(0, 30, 1);
+            achNameInputBg.Info.RightMargin.Pixel = 10;
             panel.Register(achNameInputBg);
             y += achNameInputBg.Height + 10;
 
@@ -387,14 +388,15 @@ namespace ProgressSystem.UI.DeveloperMode
                 UIAchSlot? currentSlot = EditingAchSlot;
                 if (nameChecker.color == Color.Green && currentSlot != null)
                 {
-                    Achievement currentAch = EditingAch!;
+                    Achievement ach = EditingAch!;
                     string oldName = EditingAchFullName;
-                    string newName = achNameInputer.Text;
                     slotByFullName.Remove(oldName);
                     EditingPage!.Remove(oldName);
-                    currentAch.Name = newName;
-                    slotByFullName.Add(newName, currentSlot);
-                    EditingPage.Add(currentAch);
+
+                    ach.Name = achNameInputer.Text;
+                    EditingPage!.Add(ach);
+                    slotByFullName.Add(ach.FullName, currentSlot);
+                    ach.ShouldSaveStaticData = true;
                     ChangeSaveState(false);
                 }
             };
@@ -935,7 +937,7 @@ namespace ProgressSystem.UI.DeveloperMode
             mainPanel.Register(eventPanel);
             int left = 110;
             #endregion
-            
+
             #region 进度表列表
             pageList = new(mainPanel, eventPanel, x =>
             {
@@ -1087,6 +1089,7 @@ namespace ProgressSystem.UI.DeveloperMode
             UIVnlPanel savePathInputBg = new(0, 0);
             savePathInputBg.SetPos(left, 0);
             savePathInputBg.SetSize(-left, 30, 1);
+            savePathInputBg.Info.RightMargin.Pixel = 10;
             mainPanel.Register(savePathInputBg);
 
             savePathInputer = new("输入保存路径");
@@ -1257,7 +1260,7 @@ namespace ProgressSystem.UI.DeveloperMode
 
             UIClose clearText = new();
             clearText.Events.OnLeftDown += evt => pageInputer.ClearText();
-            clearText.SetCenter(-10, 0, 1, 0.5f);
+            clearText.SetCenter(-20, 0, 1, 0.5f);
             inputBg.Register(clearText);
 
             UIText submit = new("创建");
