@@ -655,16 +655,11 @@ namespace ProgressSystem.UI.DeveloperMode
             requireView.SetHorizontalScrollbar(rqsH);
             requirePanel.Register(rqsH);
 
-            UIDropDownList<UIText> constructList = new(panel, constructBg, x =>
-            {
-                UIText text = new(x.text);
-                text.SetPos(10, 5);
-                return text;
-            })
-            { buttonXoffset = 10 };
+            UIDropDownList<UIText> constructList = new(panel, constructBg, x => new(x.text)) { buttonXoffset = 10 };
 
             constructList.showArea.SetPos(0, 40);
             constructList.showArea.SetSize(leftWidth, 30);
+            constructList.showArea.SetMargin(10, 5);
 
             constructList.expandArea.SetPos(0, 80);
             constructList.expandArea.SetSize(leftWidth, -80, 0, 1);
@@ -720,16 +715,11 @@ namespace ProgressSystem.UI.DeveloperMode
             constructView.SetVerticalScrollbar(dataV);
             constructBg.Register(dataV);
 
-            UIDropDownList<UIText> constructList = new(panel, constructBg, x =>
-            {
-                UIText text = new(x.text);
-                text.SetPos(10, 5);
-                return text;
-            })
-            { buttonXoffset = 10 };
+            UIDropDownList<UIText> constructList = new(panel, constructBg, x => new(x.text)) { buttonXoffset = 10 };
 
             constructList.showArea.SetPos(0, 40);
             constructList.showArea.SetSize(leftWidth, 30);
+            constructList.showArea.SetMargin(10, 5);
 
             constructList.expandArea.SetPos(0, 80);
             constructList.expandArea.SetSize(leftWidth, -80, 0, 1);
@@ -940,16 +930,11 @@ namespace ProgressSystem.UI.DeveloperMode
             #endregion
 
             #region 进度表列表
-            pageList = new(mainPanel, eventPanel, x =>
-            {
-                UIText text = new(x.text);
-                text.SetPos(10, 5);
-                return text;
-            })
-            { buttonXoffset = 10 };
+            pageList = new(mainPanel, eventPanel, x => new(x.text)) { buttonXoffset = 10 };
 
             pageList.showArea.SetPos(left, 0);
             pageList.showArea.SetSize(200, 30);
+            pageList.showArea.SetMargin(10, 5);
 
             pageList.expandArea.SetPos(left, 30);
             pageList.expandArea.SetSize(200, 100);
@@ -1188,14 +1173,11 @@ namespace ProgressSystem.UI.DeveloperMode
                     }
                     Achievement orig = preSetting.ach;
                     Achievement pre = ge.ach;
-                    /*
-                    // 可以互为前置
                     if (pre.Predecessors.Contains(orig))
                     {
                         Main.NewText("不可互为前置");
                         continue;
                     }
-                    */
                     if (preSetting.PreAch.Contains(ge))
                     {
                         RemoveRequireLine(orig, pre);

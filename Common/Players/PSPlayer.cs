@@ -44,6 +44,7 @@ namespace ProgressSystem.Common.Players
                 static void OpenPanel()
                 {
                     Main.playerInventory = false;
+                    ProgressPanel.Ins.OnInitialization();
                     if (!progressPanelInitialized)
                     {
                         progressPanelInitialized = true;

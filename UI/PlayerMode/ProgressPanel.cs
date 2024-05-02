@@ -46,7 +46,7 @@ namespace ProgressSystem.UI.PlayerMode
         private void RegisterMainPanel(UIVnlPanel bg)
         {
             UIVnlPanel groupFilter = new(0, 0);
-            groupFilter.SetSize(100, 0, 0, 1);
+            groupFilter.SetSize(120, 0, 0, 1);
             groupFilter.Info.SetMargin(10);
             bg.Register(groupFilter);
 
@@ -59,23 +59,20 @@ namespace ProgressSystem.UI.PlayerMode
             groupView.SetVerticalScrollbar(gv);
             groupFilter.Register(gv);
 
+            int left = 130;
             UIVnlPanel eventPanel = new(0, 0);
             eventPanel.Info.SetMargin(10);
-            eventPanel.SetPos(110, 40);
-            eventPanel.SetSize(-110, -40, 1, 1, false);
+            eventPanel.SetPos(left, 40);
+            eventPanel.SetSize(-left, -40, 1, 1, false);
             bg.Register(eventPanel);
-            int left = 110;
 
-            UIDropDownList<UIText> pageList = new(bg, eventPanel, x =>
-            {
-                UIText text = new(x.text);
-                text.SetPos(10, 5);
-                return text;
-            })
-            { buttonXoffset = 10 };
+            UIDropDownList<UIText> pageList = new(bg, eventPanel, x => new(x.text)) { buttonXoffset = 10 };
 
             pageList.showArea.SetPos(left, 0);
             pageList.showArea.SetSize(200, 30);
+            pageList.showArea.SetMargin(10, 5);
+            pageList.showArea.DrawRec[0] = Color.White;
+            pageList.showArea.DrawRec[1] = Color.Red;
 
             pageList.expandArea.SetPos(left, 30);
             pageList.expandArea.SetSize(200, 100);
