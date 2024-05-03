@@ -100,7 +100,7 @@ public class CombineRequirement : Requirement, IAchievementNode
         {
             Count = tag.GetWithDefault<int>("Count");
         }
-        this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFS, "Requirements", tag);
+        this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFSF, "Requirements", tag);
     }
     #endregion
 

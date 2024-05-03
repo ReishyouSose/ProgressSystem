@@ -869,7 +869,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
     }
     public virtual void LoadStaticData(TagCompound tag)
     {
-        this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFS, "Requirements", tag, (a, t) =>
+        this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFSF, "Requirements", tag, (a, t) =>
         {
             /*
             if (tag.TryGet("DisplayNameKey", out string displayNameKey))
@@ -912,7 +912,7 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
         {
             Position = position;
         }
-        this.LoadStaticDataListTemplate(Rewards.GetS, Rewards!.SetFS, "Rewards", tag);
+        this.LoadStaticDataListTemplate(Rewards.GetS, Rewards!.SetFSF, "Rewards", tag);
     }
     #endregion
 

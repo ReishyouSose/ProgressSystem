@@ -53,6 +53,18 @@ public class RewardList : IList<Reward>, IReadOnlyList<Reward>
         data.Add(reward);
         OnAdd?.Invoke(reward);
     }
+    public void AddWithOutOnAdd(Reward reward)
+    {
+        data.Add(reward);
+    }
+    public void AddWithoutOnAddIfNotNull(Reward? reward)
+    {
+        data.Add(reward!);
+        if (reward != null)
+        {
+            OnAdd?.Invoke(reward);
+        }
+    }
     public void Insert(int index, Reward reward)
     {
         data.Insert(index, reward);
@@ -62,6 +74,26 @@ public class RewardList : IList<Reward>, IReadOnlyList<Reward>
     {
         data.AddRange(rewards);
         foreach (var reward in rewards)
+        {
+            OnAdd?.Invoke(reward);
+        }
+    }
+    public void SetFSF(int index, Reward? reward)
+    {
+        if (index < 0)
+        {
+            AddWithoutOnAddIfNotNull(reward);
+        }
+        while (data.Count <= index)
+        {
+            data.Add(null!);
+        }
+        if (data[index] != null)
+        {
+            OnRemove?.Invoke(data[index]);
+        }
+        data[index] = reward!;
+        if (reward != null)
         {
             OnAdd?.Invoke(reward);
         }

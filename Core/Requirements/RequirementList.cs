@@ -53,6 +53,18 @@ public class RequirementList : IList<Requirement>, IReadOnlyList<Requirement>
         data.Add(requirement);
         OnAdd?.Invoke(requirement);
     }
+    public void AddWithOutOnAdd(Requirement requirement)
+    {
+        data.Add(requirement);
+    }
+    public void AddWithoutOnAddIfNotNull(Requirement? requirement)
+    {
+        data.Add(requirement!);
+        if (requirement != null)
+        {
+            OnAdd?.Invoke(requirement);
+        }
+    }
     public void Insert(int index, Requirement requirement)
     {
         data.Insert(index, requirement);
@@ -62,6 +74,26 @@ public class RequirementList : IList<Requirement>, IReadOnlyList<Requirement>
     {
         data.AddRange(requirements);
         foreach (var requirement in requirements)
+        {
+            OnAdd?.Invoke(requirement);
+        }
+    }
+    public void SetFSF(int index, Requirement? requirement)
+    {
+        if (index < 0)
+        {
+            AddWithoutOnAddIfNotNull(requirement);
+        }
+        while (data.Count <= index)
+        {
+            data.Add(null!);
+        }
+        if (data[index] != null)
+        {
+            OnRemove?.Invoke(data[index]);
+        }
+        data[index] = requirement!;
+        if (requirement != null)
         {
             OnAdd?.Invoke(requirement);
         }

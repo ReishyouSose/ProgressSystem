@@ -2,6 +2,7 @@
 
 public static class StaticDataHelper
 {
+    public delegate T CreateChildDelegate<T>(string fullName, TagCompound tag);
     public static void SaveStaticDataTemplate<T, TChild>(this T self, IEnumerable<TChild> children,
         Func<TChild, string> getChildFullName,
         string childrenName, TagCompound tag,
@@ -29,7 +30,8 @@ public static class StaticDataHelper
         Action<TChild, Mod, string> setChildModAndName,
         Action<string, TChild> addChildWithFullName,
         string childrenName, TagCompound tag,
-        Action<T, TagCompound>? extraLoadStaticData = null)
+        Action<T, TagCompound>? extraLoadStaticData = null,
+        CreateChildDelegate<TChild?>? createChild = null)
         where T : IWithStaticData where TChild : IWithStaticData
     {
         self.ShouldSaveStaticData = tag.GetWithDefault<bool>("SaveStatic");
@@ -50,13 +52,24 @@ public static class StaticDataHelper
                 child.LoadStaticData(childData);
                 continue;
             }
-            var tri = GetObjectWithStaticData<TChild>(fullName, childData);
-            if (tri == null)
+            if (createChild == null)
             {
-                continue;
+                var tri = GetObjectWithStaticData<TChild>(fullName, childData);
+                if (tri == null)
+                {
+                    continue;
+                }
+                (child, Mod mod, string name) = tri.Value;
+                setChildModAndName(child, mod, name);
             }
-            (child, Mod mod, string name) = tri.Value;
-            setChildModAndName(child, mod, name);
+            else
+            {
+                child = createChild(fullName, childData);
+                if (child == null)
+                {
+                    continue;
+                }
+            }
             addChildWithFullName(fullName, child);
             child.LoadStaticData(childData);
         }
@@ -84,7 +97,7 @@ public static class StaticDataHelper
                     index = -1;
                 }
                 addChildWithIndex(index, child);
-            }, childrenName, tag, extraLoadStaticData);
+            }, childrenName, tag, extraLoadStaticData, (fullName, tag) => GetObjectWithStaticData<TChild>(tag));
     }
     public static (T Value, Mod Mod, string Name)? GetObjectWithStaticData<T>(string fullName, TagCompound data) where T : IWithStaticData
     {
@@ -99,25 +112,31 @@ public static class StaticDataHelper
             return null;
         }
         string name = tokens[1];
-        if (!data.TryGet("Type", out string typeName))
-        {
-            return null;
-        }
-        tokens = typeName.Split('.', 2);
-        if (!ModLoader.TryGetMod(tokens[0], out Mod modOfType))
-        {
-            return null;
-        }
-        Type? type = modOfType.GetType().Assembly.GetType(typeName);
-        if (type == null || !type.IsAssignableTo(typeof(T)))
-        {
-            return null;
-        }
-        T? result = (T?)Activator.CreateInstance(type, true);
+        T? result = GetObjectWithStaticData<T>(data);
         if (result == null)
         {
             return null;
         }
         return (result, mod, name);
+    }
+    public static T? GetObjectWithStaticData<T>(TagCompound data) where T : IWithStaticData
+    {
+
+        if (!data.TryGet("Type", out string typeName))
+        {
+            return default;
+        }
+        var tokens = typeName.Split('.', 2);
+        if (!ModLoader.TryGetMod(tokens[0], out Mod modOfType))
+        {
+            return default;
+        }
+        Type? type = modOfType.GetType().Assembly.GetType(typeName);
+        if (type == null || !type.IsAssignableTo(typeof(T)))
+        {
+            return default;
+        }
+        T? result = (T?)Activator.CreateInstance(type, true);
+        return result;
     }
 }
