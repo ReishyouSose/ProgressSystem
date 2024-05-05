@@ -863,6 +863,10 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
             tag.SetWithDefault("RequirementCountNeeded", RequirementCountNeeded);
             tag.SetWithDefaultN("PredecessorCountNeeded", PredecessorCountNeeded);
             tag.SetWithDefault("NeedSubmit", NeedSubmit);
+            if (Predecessors.Any())
+            {
+                tag["Predecessors"] = Predecessors.Select(p => p.FullName).ToList();
+            }
         });
         tag.SetWithDefaultN("Position", Position);
         this.SaveStaticDataListTemplate(Rewards, "Rewards", tag);
@@ -907,6 +911,10 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
             RequirementCountNeeded = tag.GetWithDefault<int>("RequirementCountNeeded");
             PredecessorCountNeeded = tag.GetWithDefaultN<int>("PredecessorCountNeeded");
             tag.GetWithDefault("NeedSubmit", out NeedSubmit);
+            if (tag.TryGet("Predecessors", out List<string> predecessorNames))
+            {
+                SetPredecessorNames(predecessorNames, true);
+            }
         });
         if (tag.TryGet<Vector2>("Position", out var position))
         {
