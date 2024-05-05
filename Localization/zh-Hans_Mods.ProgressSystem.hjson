@@ -93,6 +93,7 @@ Pages: {
 	ProgressSystem: {
 		TestPage.DisplayName: 测试页
 		// 114514.DisplayName: "114514"
+		Terraria.DisplayName: Terraria
 	}
 }
 
@@ -157,6 +158,32 @@ Achievements: {
 				// DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Combine Test.DisplayName
 				// Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Combine Test.Tooltip
 				// Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Combine Test.Description
+			}
+		}
+
+		Terraria: {
+			Start: {
+				DisplayName: 一切的开始
+				Tooltip: 第一次进入游戏
+				Description: 这有什么点进来看的必要吗（
+			}
+
+			MeetUnexpectedly: {
+				DisplayName: 初次的邂逅
+				Tooltip: 与向导交谈
+				Description: 光标移动到向导身上，然后按“交互键”就行了
+			}
+
+			OpenChest: {
+				DisplayName: 神秘惊喜
+				Tooltip: 开启箱子
+				Description: 找到任意箱子并将光标移动上去，然后按“交互键”就行了
+			}
+
+			OpenInventory: {
+				DisplayName: 异次元口袋
+				Tooltip: 打开物品栏
+				Description: 按“物品栏键”即可
 			}
 		}
 	}
