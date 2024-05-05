@@ -113,25 +113,6 @@ public class CombineRequirement : Requirement, IAchievementNode
     public override float GetProgress() => ((IProgressable)this).GetProgressOfChildren();
     #endregion
 
-    #region 监听
-    protected override void BeginListen()
-    {
-        base.BeginListen();
-        foreach (Requirement requirement in Requirements)
-        {
-            requirement.BeginListenSafe();
-        }
-    }
-    protected override void EndListen()
-    {
-        base.EndListen();
-        foreach (Requirement requirement in Requirements)
-        {
-            requirement.EndListenSafe();
-        }
-    }
-    #endregion
-
     #region 完成状况
     protected void TryComplete()
     {

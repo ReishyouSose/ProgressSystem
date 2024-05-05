@@ -25,6 +25,7 @@ public class CombineReward : Reward, IAchievementNode
             r.OnStartReceived += () => ElementStartReceive(r);
             r.OnTotallyReceived += ElementTotallyReceived;
         });
+        OnStart += UpdateState;
     }
     public CombineReward(int count) : this()
     {

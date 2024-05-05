@@ -48,6 +48,27 @@ public class TalkToNPCRequirement : Requirement
     }
     protected NPC? dummyNPC;
     protected override object?[] DisplayNameArgs => [NPCType > 0 ? SampleNPC(NPCType).TypeName : ConditionDescription?.Value ?? "?"];
+    public override void SaveStaticData(TagCompound tag)
+    {
+        base.SaveStaticData(tag);
+        if (!ShouldSaveStaticData)
+        {
+            return;
+        }
+        tag["NPCType"] = NPCType;
+    }
+    public override void LoadStaticData(TagCompound tag)
+    {
+        base.LoadStaticData(tag);
+        if (!ShouldSaveStaticData)
+        {
+            return;
+        }
+        if (tag.TryGet("NPCType", out int npcType))
+        {
+            NPCType = npcType;
+        }
+    }
 }
 
 public class TalkToAnyNPCRequirement : TalkToNPCRequirement
