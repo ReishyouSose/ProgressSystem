@@ -71,6 +71,7 @@ public class ItemReward(Item item) : Reward
     }
     public override void LoadStaticData(TagCompound tag)
     {
+        base.LoadStaticData(tag);
         if (!ShouldSaveStaticData)
         {
             return;
