@@ -94,6 +94,7 @@ Pages: {
 		TestPage.DisplayName: 测试页
 		// 114514.DisplayName: "114514"
 		Terraria.DisplayName: Terraria
+		// 111.DisplayName: Mods.ProgressSystem.Pages.ProgressSystem.111.DisplayName
 	}
 }
 

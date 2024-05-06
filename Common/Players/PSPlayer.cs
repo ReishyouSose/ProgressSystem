@@ -1,7 +1,7 @@
 ﻿using ProgressSystem.Common.Configs;
 using ProgressSystem.Common.Systems;
 using ProgressSystem.Core.NetUpdate;
-using ProgressSystem.UI.DeveloperMode;
+using ProgressSystem.UI.DeveloperMode.AchEditor;
 using ProgressSystem.UI.PlayerMode;
 using Terraria.GameInput;
 
@@ -33,13 +33,13 @@ namespace ProgressSystem.Common.Players
                 static void OpenEditor()
                 {
                     Main.playerInventory = false;
-                    GEEditor.Ins.OnInitialization();
+                    AchEditor.Ins.OnInitialization();
                     if (!editorInitialized)
                     {
                         editorInitialized = true;
-                        GEEditor.Ins.OnInitialization();
+                        AchEditor.Ins.OnInitialization();
                     }
-                    GEEditor.Ins.Info.IsVisible = true;
+                    AchEditor.Ins.Info.IsVisible = true;
                 }
                 static void OpenPanel()
                 {
@@ -52,7 +52,7 @@ namespace ProgressSystem.Common.Players
                     }
                     ProgressPanel.Ins.Info.IsVisible = true;
                 }
-                static void CloseEditor() => GEEditor.Ins.Info.IsVisible = false;
+                static void CloseEditor() => AchEditor.Ins.Info.IsVisible = false;
                 static void ClosePanel() => ProgressPanel.Ins.Info.IsVisible = false;
                 if (ProgressPanel.Ins.Info.IsVisible)
                 {
@@ -62,7 +62,7 @@ namespace ProgressSystem.Common.Players
                         OpenEditor();
                     }
                 }
-                else if (GEEditor.Ins.Info.IsVisible)
+                else if (AchEditor.Ins.Info.IsVisible)
                 {
                     CloseEditor();
                     OpenPanel();

@@ -25,13 +25,6 @@ namespace ProgressSystem.UI.PlayerMode
             base.OnInitialization();
             if (Main.gameMenu)
                 return;
-            Events.OnUpdate += evt =>
-            {
-                if (Main.playerInventory)
-                {
-                    Info.IsVisible = false;
-                }
-            };
             RemoveAll();
 
             achPanel = new(1000, 800);

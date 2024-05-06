@@ -84,7 +84,7 @@ namespace ProgressSystem.UI.DeveloperMode.ExtraUI
                     x = Math.Max(x, 0);
                     y = Math.Max(y, 0);
                     Vector2 p = new(x, y);
-                    if (!GEEditor.AchPos.Contains(p))
+                    if (!AchEditor.AchEditor.AchPos.Contains(p))
                     {
                         adsorption = new(x, y);
                         pos = adsorption.Value;
