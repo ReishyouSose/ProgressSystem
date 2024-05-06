@@ -71,8 +71,6 @@ namespace ProgressSystem.UI.PlayerMode
             pageList.showArea.SetPos(left, 0);
             pageList.showArea.SetSize(200, 30);
             pageList.showArea.SetMargin(10, 5);
-            pageList.showArea.DrawRec[0] = Color.White;
-            pageList.showArea.DrawRec[1] = Color.Red;
 
             pageList.expandArea.SetPos(left, 30);
             pageList.expandArea.SetSize(200, 100);
@@ -137,6 +135,17 @@ namespace ProgressSystem.UI.PlayerMode
                 groupView.AddElement(modSlot);
             }
             groupView.InnerUIE[0].Events.LeftDown(null);
+
+            UIText refresh = new("刷新");
+            refresh.SetPos(left, 5);
+            refresh.SetSize(refresh.TextSize);
+            refresh.HoverToGold();
+            refresh.Events.OnLeftDown += evt =>
+            {
+                OnInitialization();
+                Info.IsVisible = true;
+            };
+            bg.Register(refresh);
         }
         private Action<bool> SetFocusNeedSubmit = null!;
         private void RegisterFocus(UIVnlPanel bg)

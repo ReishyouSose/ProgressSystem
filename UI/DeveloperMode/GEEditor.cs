@@ -1767,6 +1767,8 @@ namespace ProgressSystem.UI.DeveloperMode
                             return;
                         }
                         text.requirements.Remove(text.requirement);
+                        EditingAch.ShouldSaveStaticData = true;
+                        ChangeSaveState(false);
                         if (EditingCombineRequire == text.requirement)
                         {
                             EditingCombineRequire = null;
@@ -1818,6 +1820,8 @@ namespace ProgressSystem.UI.DeveloperMode
                             return;
                         }
                         text.rewards.Remove(text.reward);
+                        EditingAch.ShouldSaveStaticData = true;
+                        ChangeSaveState(false);
                         if (EditingCombineReward == text.reward)
                         {
                             EditingCombineReward = null;

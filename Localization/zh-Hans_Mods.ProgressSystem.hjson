@@ -159,6 +159,38 @@ Achievements: {
 				// Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Combine Test.Description
 			}
 		}
+
+		114514: {
+			成就1: {
+				// DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就1.DisplayName
+				// Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就1.Tooltip
+				// Description: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就1.Description
+			}
+
+			成就2: {
+				// DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就2.DisplayName
+				// Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就2.Tooltip
+				// Description: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就2.Description
+			}
+
+			成就3: {
+				// DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就3.DisplayName
+				// Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就3.Tooltip
+				// Description: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就3.Description
+			}
+
+			成就4: {
+				// DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就4.DisplayName
+				// Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就4.Tooltip
+				// Description: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就4.Description
+			}
+
+			成就5: {
+				// DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就5.DisplayName
+				// Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就5.Tooltip
+				// Description: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就5.Description
+			}
+		}
 	}
 }
 

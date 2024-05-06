@@ -1,4 +1,4 @@
 displayName = Progress System
 author = Reits, SilverMoon, Tigerzzz, CWGenesis
-version = 0.1
+version = 0.1111
 dllReferences = RUIModule
