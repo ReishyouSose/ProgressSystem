@@ -114,6 +114,9 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
         {
             UIAchSlot ge = (UIAchSlot)uie;
             Achievement ach = ge.ach;
+            ChangeEditingAch(ach);
+            if (ach.ShouldSaveStaticData)
+                return;
             if (LeftAlt)
             {
                 frameSelect.Clear();
@@ -164,12 +167,13 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                 selectedStart = new(mouse.X / 80, mouse.Y / 80);
             }
             AchPos.Remove(ge.pos);
-            ChangeEditingAch(ach);
             dragging = true;
         }
         private void GESlotUpdate(BaseUIElement uie)
         {
             UIAchSlot ge = (UIAchSlot)uie;
+            if (ge.ach.ShouldSaveStaticData)
+                return;
             if (collision != null)
             {
                 bool intersects = ge.HitBox().Intersects(collision.selector);

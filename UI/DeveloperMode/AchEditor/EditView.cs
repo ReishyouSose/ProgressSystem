@@ -142,7 +142,6 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                     ach.Name = achNameInputer.Text;
                     EditingPage!.Add(ach);
                     slotByFullName.Add(ach.FullName, currentSlot);
-                    ach.ShouldSaveStaticData = true;
                     ChangeSaveState(false);
                 }
             };
@@ -166,7 +165,6 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                     ref bool needSubmit = ref EditingAch.NeedSubmit;
                     needSubmit = !needSubmit;
                     submit.ChangeText($"需要手动提交    {(needSubmit ? "是" : "否")}");
-                    EditingAch.ShouldSaveStaticData = true;
                     ChangeSaveState(false);
                 }
             };
@@ -199,7 +197,6 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                     return;
                 need++;
                 preCount.ChangeText(need.Value.ToString(), false);
-                EditingAch.ShouldSaveStaticData = true;
                 ChangeSaveState(false);
             };
             preNeedCountBg.Register(preIncrease);
@@ -229,7 +226,6 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                     text = "0";
                 }
                 preCount.ChangeText(text, false);
-                EditingAch.ShouldSaveStaticData = true;
                 ChangeSaveState(false);
             };
             preNeedCountBg.Register(preCount);
@@ -250,7 +246,6 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                     return;
                 need--;
                 preCount.ChangeText(need.Value.ToString(), false);
-                EditingAch.ShouldSaveStaticData = true;
                 ChangeSaveState(false);
             };
             preNeedCountBg.Register(preDecrease);
@@ -303,7 +298,6 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                 {
                     EditingAch.RequirementCountNeeded += 1;
                     UpdateRqsCountText();
-                    EditingAch.ShouldSaveStaticData = true;
                     CheckRequirements();
                     ChangeSaveState(false);
                 }
@@ -339,7 +333,6 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                 {
                     EditingAch.RequirementCountNeeded -= 1;
                     UpdateRqsCountText();
-                    EditingAch.ShouldSaveStaticData = true;
                     CheckRequirements();
                     ChangeSaveState(false);
                 }
@@ -766,7 +759,6 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                             return;
                         }
                         text.requirements.Remove(text.requirement);
-                        EditingAch.ShouldSaveStaticData = true;
                         ChangeSaveState(false);
                         if (EditingCombineRequire == text.requirement)
                         {
@@ -819,7 +811,6 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                             return;
                         }
                         text.rewards.Remove(text.reward);
-                        EditingAch.ShouldSaveStaticData = true;
                         ChangeSaveState(false);
                         if (EditingCombineReward == text.reward)
                         {

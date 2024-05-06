@@ -269,6 +269,8 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
         /// <param name="range"></param>
         private void RemoveAchSlot(UIAchSlot slot, bool range = false)
         {
+            if (slot.ach.ShouldSaveStaticData)
+                return;
             string achName = slot.ach.FullName;
             achView.RemoveElement(slot);
             slotByFullName.Remove(achName);

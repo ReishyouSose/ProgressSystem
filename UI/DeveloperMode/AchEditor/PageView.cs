@@ -242,7 +242,6 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                     i++;
                 Achievement ach = new(EditingPage, editingMod, name + i);
                 EditingPage.AddF(ach);
-                ach.ShouldSaveStaticData = true;
                 RegisterAchSlot(ach, pos);
             };
             achView.Events.OnRightDown += evt =>
