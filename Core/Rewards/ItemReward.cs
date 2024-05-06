@@ -60,4 +60,25 @@ public class ItemReward(Item item) : Reward
         base.LoadDataInPlayer(tag);
         tag.GetWithDefault("LeftStack", out leftStack, Item.stack);
     }
+    public override void SaveStaticData(TagCompound tag)
+    {
+        base.SaveStaticData(tag);
+        if (!ShouldSaveStaticData)
+        {
+            return;
+        }
+        tag.SetWithDefault("Item", Item, TigerExtensions.ItemCheckDefault);
+    }
+    public override void LoadStaticData(TagCompound tag)
+    {
+        base.LoadStaticData(tag);
+        if (!ShouldSaveStaticData)
+        {
+            return;
+        }
+        if (tag.TryGet<Item>("Item", out var item))
+        {
+            Item = item;
+        }
+    }
 }

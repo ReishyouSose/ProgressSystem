@@ -93,6 +93,7 @@ Pages: {
 	ProgressSystem: {
 		TestPage.DisplayName: Test Page
 		114514.DisplayName: "114514"
+		Terraria.DisplayName: Terraria
 	}
 }
 
@@ -160,35 +161,29 @@ Achievements: {
 			}
 		}
 
-		114514: {
-			成就1: {
-				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就1.DisplayName
-				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就1.Tooltip
-				Description: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就1.Description
+		Terraria: {
+			Start: {
+				DisplayName: The beginning of everything
+				Tooltip: First time entering the game
+				Description: Is there any compelling reason to click and see this?
 			}
 
-			成就2: {
-				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就2.DisplayName
-				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就2.Tooltip
-				Description: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就2.Description
+			MeetUnexpectedly: {
+				DisplayName: The first encounter
+				Tooltip: Talk to the guide
+				Description: Move the cursor over the guide, then press the 'Interact key'
 			}
 
-			成就3: {
-				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就3.DisplayName
-				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就3.Tooltip
-				Description: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就3.Description
+			OpenChest: {
+				DisplayName: Mysterious surprise
+				Tooltip: Open the chest
+				Description: Find any chest and move the cursor over it, then press the 'Interact key'
 			}
 
-			成就4: {
-				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就4.DisplayName
-				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就4.Tooltip
-				Description: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就4.Description
-			}
-
-			成就5: {
-				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就5.DisplayName
-				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就5.Tooltip
-				Description: Mods.ProgressSystem.Achievements.ProgressSystem.114514.成就5.Description
+			OpenInventory: {
+				DisplayName: Interdimensional pocket
+				Tooltip: Open inventory
+				Description: Press the 'Inventory key' to do so
 			}
 		}
 	}

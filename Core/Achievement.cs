@@ -863,13 +863,17 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
             tag.SetWithDefault("RequirementCountNeeded", RequirementCountNeeded);
             tag.SetWithDefaultN("PredecessorCountNeeded", PredecessorCountNeeded);
             tag.SetWithDefault("NeedSubmit", NeedSubmit);
+            if (Predecessors.Any())
+            {
+                tag["Predecessors"] = Predecessors.Select(p => p.FullName).ToList();
+            }
         });
         tag.SetWithDefaultN("Position", Position);
         this.SaveStaticDataListTemplate(Rewards, "Rewards", tag);
     }
     public virtual void LoadStaticData(TagCompound tag)
     {
-        this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFS, "Requirements", tag, (a, t) =>
+        this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFSF, "Requirements", tag, (a, t) =>
         {
             /*
             if (tag.TryGet("DisplayNameKey", out string displayNameKey))
@@ -907,12 +911,16 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
             RequirementCountNeeded = tag.GetWithDefault<int>("RequirementCountNeeded");
             PredecessorCountNeeded = tag.GetWithDefaultN<int>("PredecessorCountNeeded");
             tag.GetWithDefault("NeedSubmit", out NeedSubmit);
+            if (tag.TryGet("Predecessors", out List<string> predecessorNames))
+            {
+                SetPredecessorNames(predecessorNames, true);
+            }
         });
         if (tag.TryGet<Vector2>("Position", out var position))
         {
             Position = position;
         }
-        this.LoadStaticDataListTemplate(Rewards.GetS, Rewards!.SetFS, "Rewards", tag);
+        this.LoadStaticDataListTemplate(Rewards.GetS, Rewards!.SetFSF, "Rewards", tag);
     }
     #endregion
 

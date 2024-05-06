@@ -100,7 +100,7 @@ public class CombineRequirement : Requirement, IAchievementNode
         {
             Count = tag.GetWithDefault<int>("Count");
         }
-        this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFS, "Requirements", tag);
+        this.LoadStaticDataListTemplate(Requirements.GetS, Requirements!.SetFSF, "Requirements", tag);
     }
     #endregion
 
@@ -111,25 +111,6 @@ public class CombineRequirement : Requirement, IAchievementNode
     #region 进度
     public override IEnumerable<IProgressable> ProgressChildren() => Requirements;
     public override float GetProgress() => ((IProgressable)this).GetProgressOfChildren();
-    #endregion
-
-    #region 监听
-    protected override void BeginListen()
-    {
-        base.BeginListen();
-        foreach (Requirement requirement in Requirements)
-        {
-            requirement.BeginListenSafe();
-        }
-    }
-    protected override void EndListen()
-    {
-        base.EndListen();
-        foreach (Requirement requirement in Requirements)
-        {
-            requirement.EndListenSafe();
-        }
-    }
     #endregion
 
     #region 完成状况

@@ -25,6 +25,7 @@ public class CombineReward : Reward, IAchievementNode
             r.OnStartReceived += () => ElementStartReceive(r);
             r.OnTotallyReceived += ElementTotallyReceived;
         });
+        OnStart += UpdateState;
     }
     public CombineReward(int count) : this()
     {
@@ -243,7 +244,7 @@ public class CombineReward : Reward, IAchievementNode
         {
             Count = tag.GetWithDefault<int>("Count");
         }
-        this.LoadStaticDataListTemplate(Rewards.GetS, Rewards!.SetFS, "Rewards", tag);
+        this.LoadStaticDataListTemplate(Rewards.GetS, Rewards!.SetFSF, "Rewards", tag);
     }
     #endregion
 

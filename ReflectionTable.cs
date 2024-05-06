@@ -116,7 +116,7 @@ namespace ProgressSystem
                 {
                     try
                     {
-                        _value = value.GetType().IsClass ? Convert.ChangeType(value, _type) : value;
+                        _value = value is IConvertible convertible ? Convert.ChangeType(convertible, _type) : value;
                         return true;
                     }
                     catch
