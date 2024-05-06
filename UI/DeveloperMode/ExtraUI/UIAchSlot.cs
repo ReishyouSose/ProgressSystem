@@ -49,7 +49,7 @@ namespace ProgressSystem.UI.DeveloperMode.ExtraUI
         {
             Events.OnLeftDown += evt =>
             {
-                if (ach.ShouldSaveStaticData)
+                if (ach.CreatedByCode)
                     return;
                 if (!dragging)
                 {

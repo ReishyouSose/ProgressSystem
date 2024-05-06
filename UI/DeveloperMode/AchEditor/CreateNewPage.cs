@@ -50,7 +50,7 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                     pageList.AddElement(pageName);
                     pageName.Events.OnLeftDown += evt => LoadPage();
                     EditingPage = AchievementPage.Create(editingMod, name);
-                    EditingPage.ShouldSaveStaticData = true;
+                    EditingPage.CreatedByEditor = true;
                     ClearTemp();
                     SaveProgress();
                 }

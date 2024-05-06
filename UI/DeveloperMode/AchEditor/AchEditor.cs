@@ -269,7 +269,7 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
         /// <param name="range"></param>
         private void RemoveAchSlot(UIAchSlot slot, bool range = false)
         {
-            if (slot.ach.ShouldSaveStaticData)
+            if (slot.ach.CreatedByCode)
                 return;
             string achName = slot.ach.FullName;
             achView.RemoveElement(slot);
@@ -283,6 +283,7 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
             {
                 ChangeEditingAch(null);
             }
+            slot.ach.Page.Remove(slot.ach);
             ChangeSaveState(false);
         }
         private void ChangeEditingAch(Achievement? ach)

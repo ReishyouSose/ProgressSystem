@@ -170,14 +170,14 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
     public virtual void SaveDataInWorld(TagCompound tag) { }
     public virtual void LoadDataInWorld(TagCompound tag) { }
 
-    public bool ShouldSaveStaticData { get; set; }
+    public bool ShouldSaveStaticData { get => Achievement.ShouldSaveStaticData; set { } }
     public virtual void SaveStaticData(TagCompound tag)
     {
         if (!ShouldSaveStaticData)
         {
             return;
         }
-        tag["SaveStatic"] = true;
+        // tag["SaveStatic"] = true;
         tag["Type"] = GetType().FullName;
         /*
         tag.SetWithDefault("DisplayNameKey", DisplayName.LocalizedTextValue?.Key);
@@ -189,7 +189,7 @@ public abstract class Reward : ILoadable, IWithStaticData, INetUpdate, IAchievem
     }
     public virtual void LoadStaticData(TagCompound tag)
     {
-        ShouldSaveStaticData = tag.GetWithDefault<bool>("SaveStatic");
+        // ShouldSaveStaticData = tag.GetWithDefault<bool>("SaveStatic");
         /*
         if (tag.TryGet("DisplayNameKey", out string displayNameKey))
         {

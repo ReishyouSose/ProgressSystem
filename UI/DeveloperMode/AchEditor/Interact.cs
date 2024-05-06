@@ -115,7 +115,7 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
             UIAchSlot ge = (UIAchSlot)uie;
             Achievement ach = ge.ach;
             ChangeEditingAch(ach);
-            if (ach.ShouldSaveStaticData)
+            if (ach.CreatedByCode)
                 return;
             if (LeftAlt)
             {
@@ -172,7 +172,7 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
         private void GESlotUpdate(BaseUIElement uie)
         {
             UIAchSlot ge = (UIAchSlot)uie;
-            if (ge.ach.ShouldSaveStaticData)
+            if (ge.ach.CreatedByCode)
                 return;
             if (collision != null)
             {
@@ -223,7 +223,7 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
             ge.Events.OnLeftDown += AchSlotLeftCheck;
             ge.Events.OnLeftUp += evt =>
             {
-                if (ge.ach.ShouldSaveStaticData)
+                if (ge.ach.CreatedByCode)
                     return;
                 dragging = false;
                 draggingSelected = false;

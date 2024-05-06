@@ -444,6 +444,16 @@ public class AchievementPage : ICollection<Achievement>, IWithStaticData, INetUp
         tag.LoadDictionaryData("Achievements", achievements, (a, t) => a.LoadDataInPlayer(t));
     }
     public bool ShouldSaveStaticData { get; set; }
+    public bool CreatedByCode
+    {
+        get => !ShouldSaveStaticData;
+        set => ShouldSaveStaticData = !value;
+    }
+    public bool CreatedByEditor
+    {
+        get => ShouldSaveStaticData;
+        set => ShouldSaveStaticData = value;
+    }
     public virtual void SaveStaticData(TagCompound tag)
     {
         this.SaveStaticDataTemplate(achievements.Values, a => a.FullName, "Achievements", tag);

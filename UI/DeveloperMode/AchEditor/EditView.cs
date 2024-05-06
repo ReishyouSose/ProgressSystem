@@ -290,7 +290,6 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                 {
                     combine.Count += 1;
                     UpdateRqsCountText();
-                    combine.ShouldSaveStaticData = true;
                     CheckRequirements();
                     ChangeSaveState(false);
                 }
@@ -325,7 +324,6 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                 {
                     combine.Count -= 1;
                     UpdateRqsCountText();
-                    combine.ShouldSaveStaticData = true;
                     CheckRequirements();
                     ChangeSaveState(false);
                 }
@@ -360,10 +358,7 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                     Main.NewText("请先选择一个需求层级/成就栏位");
                     return;
                 }
-                CombineRequirement require = new(1)
-                {
-                    ShouldSaveStaticData = true
-                };
+                CombineRequirement require = new(1);
                 editingRequires.Add(require);
                 EditingCombineRequire = require;
                 UpdateRqsCountText();
@@ -513,7 +508,6 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                 {
                     combine.Count += 1;
                     UpdateRwsCountText();
-                    combine.ShouldSaveStaticData = true;
                     CheckRewards();
                     ChangeSaveState(false);
                 }
@@ -541,7 +535,6 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                 {
                     combine.Count -= 1;
                     UpdateRwsCountText();
-                    combine.ShouldSaveStaticData = true;
                     CheckRewards();
                     ChangeSaveState(false);
                 }
@@ -569,10 +562,7 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                     Main.NewText("请先选择一个奖励层级");
                     return;
                 }
-                CombineReward combine = new()
-                {
-                    ShouldSaveStaticData = true
-                };
+                CombineReward combine = new();
                 editingRewards.Add(combine);
                 EditingCombineReward = combine;
                 CheckRewards();
@@ -662,8 +652,7 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                 }
                 if (data.TryConstruct(out Requirement? require))
                 {
-                    require!.ShouldSaveStaticData = true;
-                    editingRequires.Add(require);
+                    editingRequires.Add(require!);
                     CheckRequirements();
                     ChangeSaveState(false);
                 }
@@ -731,8 +720,7 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                 }
                 if (data.TryConstruct(out Reward? reward))
                 {
-                    reward!.ShouldSaveStaticData = true;
-                    EditingRewards.Add(reward);
+                    EditingRewards.Add(reward!);
                     CheckRewards();
                     ChangeSaveState(false);
                 }

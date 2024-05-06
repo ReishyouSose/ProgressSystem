@@ -118,7 +118,7 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                 int i = 1;
                 while (EditingPage.Achievements.ContainsKey(editingMod.Name + "." + name + i))
                     i++;
-                Achievement ach = new(EditingPage, editingMod, name + i);
+                Achievement ach = new(EditingPage, editingMod, name + i) { CreatedByEditor = true };
                 EditingPage.AddF(ach);
                 RegisterAchSlot(ach, pos);
             };
@@ -230,7 +230,7 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
             deleteProgress.Events.OnMouseOut += evt => deleteProgress.color = Color.White;
             deleteProgress.Events.OnLeftDown += evt =>
             {
-                if (EditingPage == null)
+                if (EditingPage == null || EditingPage.CreatedByCode)
                 {
                     return;
                 }

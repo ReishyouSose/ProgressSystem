@@ -845,7 +845,18 @@ public class Achievement : IWithStaticData, INetUpdate, IProgressable, IAchievem
         tag.LoadListData("Requirements", Requirements, (r, t) => r.LoadDataInPlayer(t));
         tag.LoadListData("Rewards", Rewards, (r, t) => r.LoadDataInPlayer(t));
     }
+
     public bool ShouldSaveStaticData { get; set; }
+    public bool CreatedByCode
+    {
+        get => !ShouldSaveStaticData;
+        set => ShouldSaveStaticData = !value;
+    }
+    public bool CreatedByEditor
+    {
+        get => ShouldSaveStaticData;
+        set => ShouldSaveStaticData = value;
+    }
     public virtual void SaveStaticData(TagCompound tag)
     {
         this.SaveStaticDataListTemplate(Requirements, "Requirements", tag, (a, t) =>
