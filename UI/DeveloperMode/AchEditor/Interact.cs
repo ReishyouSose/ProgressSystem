@@ -223,6 +223,8 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
             ge.Events.OnLeftDown += AchSlotLeftCheck;
             ge.Events.OnLeftUp += evt =>
             {
+                if (ge.ach.ShouldSaveStaticData)
+                    return;
                 dragging = false;
                 draggingSelected = false;
                 if (ge.ach.Position != ge.pos)

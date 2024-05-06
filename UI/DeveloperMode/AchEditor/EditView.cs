@@ -845,8 +845,8 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
             if (index == 0)
                 rewardView.Calculation();
         }
-        private void UpdateRqsCountText() => rqsCountText.ChangeText(EditingCombineRequire?.Count.ToString() ??
+        private void UpdateRqsCountText() => rqsCountText?.ChangeText(EditingCombineRequire?.Count.ToString() ??
             EditingAch?.RequirementCountNeeded.ToString() ?? "未选", false);
-        private void UpdateRwsCountText() => rwsCountText.ChangeText(EditingCombineReward?.Count.ToString() ?? "未选", false);
+        private void UpdateRwsCountText() => rwsCountText?.ChangeText(EditingCombineReward?.Count.ToString() ?? "未选", false);
     }
 }

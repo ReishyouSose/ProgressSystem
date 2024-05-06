@@ -49,6 +49,8 @@ namespace ProgressSystem.UI.DeveloperMode.ExtraUI
         {
             Events.OnLeftDown += evt =>
             {
+                if (ach.ShouldSaveStaticData)
+                    return;
                 if (!dragging)
                 {
                     dragging = true;

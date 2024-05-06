@@ -93,6 +93,115 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
             left += pageList.showArea.Width + 10;
             #endregion
 
+            #region 成就界面
+            achView = new();
+            achView.SetSize(-20, -20, 1, 1);
+            achView.Events.OnLeftDown += evt =>
+            {
+                if (!LeftAlt && preSetting != null)
+                {
+                    preSetting.preSetting = false;
+                    preSetting = null;
+                }
+            };
+            achView.Events.OnLeftDoubleClick += evt =>
+            {
+                if (EditingPage == null)
+                {
+                    return;
+                }
+                Point mouse = (Main.MouseScreen - achView.ChildrenElements[0].HitBox(false).TopLeft()).ToPoint();
+                Vector2 pos = new(mouse.X / 80, mouse.Y / 80);
+                if (EditingAchSlot?.pos == pos)
+                    return;
+                string name = BaseName;
+                int i = 1;
+                while (EditingPage.Achievements.ContainsKey(editingMod.Name + "." + name + i))
+                    i++;
+                Achievement ach = new(EditingPage, editingMod, name + i);
+                EditingPage.AddF(ach);
+                RegisterAchSlot(ach, pos);
+            };
+            achView.Events.OnRightDown += evt =>
+            {
+                collision = new();
+                achView.AddElement(collision);
+                if (!LeftCtrl)
+                {
+                    foreach (UIAchSlot ge in frameSelect)
+                    {
+                        ge.selected = false;
+                    }
+                    frameSelect.Clear();
+                }
+            };
+            achView.Events.OnRightUp += evt =>
+            {
+                achView.RemoveElement(collision);
+                foreach (UIAchSlot ge in tempSelect)
+                {
+                    frameSelect.Add(ge);
+                }
+                collision = null;
+                tempSelect.Clear();
+                interacted.Clear();
+                if (!LeftAlt || preSetting == null || frameSelect.Count == 0)
+                {
+                    return;
+                }
+                foreach (UIAchSlot ge in frameSelect)
+                {
+                    if (preSetting == ge)
+                    {
+                        ge.selected = false;
+                        continue;
+                    }
+                    Achievement orig = preSetting.ach;
+                    Achievement pre = ge.ach;
+                    if (pre.Predecessors.Contains(orig))
+                    {
+                        Main.NewText("不可互为前置");
+                        continue;
+                    }
+                    if (preSetting.PreAch.Contains(ge))
+                    {
+                        RemoveRequireLine(orig, pre);
+                    }
+                    else
+                    {
+                        RegisterRequireLine(orig, pre);
+                    }
+                    ChangeSaveState(false);
+                    ge.selected = false;
+                }
+                ChangeSaveState(false);
+                frameSelect.Clear();
+            };
+            eventPanel.Register(achView);
+
+            VerticalScrollbar ev = new(80);
+            ev.Info.Left.Pixel += 10;
+            achView.SetVerticalScrollbar(ev);
+            eventPanel.Register(ev);
+
+            HorizontalScrollbar eh = new(80) { useScrollWheel = false };
+            eh.Info.Top.Pixel += 10;
+            achView.SetHorizontalScrollbar(eh);
+            eventPanel.Register(eh);
+
+            Texture2D line = TextureAssets.MagicPixel.Value;
+            Color color = Color.White;
+            for (int i = 0; i < 50; i++)
+            {
+                UIImage hline = new(line, 5000, 2, color: color);
+                hline.SetPos(0, i * 80);
+                achView.AddElement(hline);
+
+                UIImage vline = new(line, 2, 5000, color: color);
+                vline.SetPos(80 * i, 0);
+                achView.AddElement(vline);
+            }
+
             #region 注册所有的 Mod
             CheckMods();
             #endregion
@@ -214,115 +323,6 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
             #endregion
 
             #endregion
-
-            #region 成就界面
-            achView = new();
-            achView.SetSize(-20, -20, 1, 1);
-            achView.Events.OnLeftDown += evt =>
-            {
-                if (!LeftAlt && preSetting != null)
-                {
-                    preSetting.preSetting = false;
-                    preSetting = null;
-                }
-            };
-            achView.Events.OnLeftDoubleClick += evt =>
-            {
-                if (EditingPage == null)
-                {
-                    return;
-                }
-                Point mouse = (Main.MouseScreen - achView.ChildrenElements[0].HitBox(false).TopLeft()).ToPoint();
-                Vector2 pos = new(mouse.X / 80, mouse.Y / 80);
-                if (EditingAchSlot?.pos == pos)
-                    return;
-                string name = BaseName;
-                int i = 1;
-                while (EditingPage.Achievements.ContainsKey(editingMod.Name + "." + name + i))
-                    i++;
-                Achievement ach = new(EditingPage, editingMod, name + i);
-                EditingPage.AddF(ach);
-                RegisterAchSlot(ach, pos);
-            };
-            achView.Events.OnRightDown += evt =>
-            {
-                collision = new();
-                achView.AddElement(collision);
-                if (!LeftCtrl)
-                {
-                    foreach (UIAchSlot ge in frameSelect)
-                    {
-                        ge.selected = false;
-                    }
-                    frameSelect.Clear();
-                }
-            };
-            achView.Events.OnRightUp += evt =>
-            {
-                achView.RemoveElement(collision);
-                foreach (UIAchSlot ge in tempSelect)
-                {
-                    frameSelect.Add(ge);
-                }
-                collision = null;
-                tempSelect.Clear();
-                interacted.Clear();
-                if (!LeftAlt || preSetting == null || frameSelect.Count == 0)
-                {
-                    return;
-                }
-                foreach (UIAchSlot ge in frameSelect)
-                {
-                    if (preSetting == ge)
-                    {
-                        ge.selected = false;
-                        continue;
-                    }
-                    Achievement orig = preSetting.ach;
-                    Achievement pre = ge.ach;
-                    if (pre.Predecessors.Contains(orig))
-                    {
-                        Main.NewText("不可互为前置");
-                        continue;
-                    }
-                    if (preSetting.PreAch.Contains(ge))
-                    {
-                        RemoveRequireLine(orig, pre);
-                    }
-                    else
-                    {
-                        RegisterRequireLine(orig, pre);
-                    }
-                    ChangeSaveState(false);
-                    ge.selected = false;
-                }
-                ChangeSaveState(false);
-                frameSelect.Clear();
-            };
-            eventPanel.Register(achView);
-
-            VerticalScrollbar ev = new(80);
-            ev.Info.Left.Pixel += 10;
-            achView.SetVerticalScrollbar(ev);
-            eventPanel.Register(ev);
-
-            HorizontalScrollbar eh = new(80) { useScrollWheel = false };
-            eh.Info.Top.Pixel += 10;
-            achView.SetHorizontalScrollbar(eh);
-            eventPanel.Register(eh);
-
-            Texture2D line = TextureAssets.MagicPixel.Value;
-            Color color = Color.White;
-            for (int i = 0; i < 50; i++)
-            {
-                UIImage hline = new(line, 5000, 2, color: color);
-                hline.SetPos(0, i * 80);
-                achView.AddElement(hline);
-
-                UIImage vline = new(line, 2, 5000, color: color);
-                vline.SetPos(80 * i, 0);
-                achView.AddElement(vline);
-            }
             #endregion
         }
         private void CheckMods()

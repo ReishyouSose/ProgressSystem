@@ -292,10 +292,10 @@ namespace ProgressSystem.UI.DeveloperMode.AchEditor
                 EditingAchFullName = "";
                 EditingCombineRequire = null;
                 EditingCombineReward = null;
-                achNameInputer.ClearText();
-                preCount.ChangeText("未选", false);
-                requireView.ClearAllElements();
-                rewardView.ClearAllElements();
+                achNameInputer?.ClearText();
+                preCount?.ChangeText("未选", false);
+                requireView?.ClearAllElements();
+                rewardView?.ClearAllElements();
                 return;
             }
             else
