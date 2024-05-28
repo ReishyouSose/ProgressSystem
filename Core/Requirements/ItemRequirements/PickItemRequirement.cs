@@ -16,24 +16,23 @@ public class PickItemRequirement : ItemRequirement
         base.BeginListen();
         if (ItemType > 0)
         {
-            PlayerListener.OnLocalPlayerPickItemOfTypeAdd(ItemType, ListenPickItem);
+            PlayerListener.OnLocalPlayerPickItem.Add(ItemType, ListenPickItem);
         }
         else
         {
-            PlayerListener.OnLocalPlayerPickItem += ListenPickItem;
+            PlayerListener.OnLocalPlayerPickItem.Any += ListenPickItem;
         }
     }
     protected override void EndListen()
     {
         base.EndListen();
-        PlayerListener.OnLocalPlayerPickItem -= ListenPickItem;
         if (ItemType > 0)
         {
-            PlayerListener.OnLocalPlayerPickItemOfTypeRemove(ItemType, ListenPickItem);
+            PlayerListener.OnLocalPlayerPickItem.Remove(ItemType, ListenPickItem);
         }
         else
         {
-            PlayerListener.OnLocalPlayerPickItem -= ListenPickItem;
+            PlayerListener.OnLocalPlayerPickItem.Any -= ListenPickItem;
         }
     }
     private void ListenPickItem(Item item)

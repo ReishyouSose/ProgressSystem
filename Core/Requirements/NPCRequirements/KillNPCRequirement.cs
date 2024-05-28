@@ -94,17 +94,31 @@ public class KillNPCRequirement : Requirement
     protected override void BeginListen()
     {
         base.BeginListen();
-        PlayerListener.OnLocalPlayerKillNPC += ListenKillNPC;
+        if (NPCType == 0)
+        {
+            PlayerListener.OnLocalPlayerKillNPC.Any += ListenKillNPC;
+        }
+        else
+        {
+            PlayerListener.OnLocalPlayerKillNPC.Add(NPCType, ListenKillNPC);
+        }
         DoIf(CountNow >= Count, CompleteSafe);
     }
     protected override void EndListen()
     {
         base.EndListen();
-        PlayerListener.OnLocalPlayerKillNPC -= ListenKillNPC;
+        if (NPCType == 0)
+        {
+            PlayerListener.OnLocalPlayerKillNPC.Any -= ListenKillNPC;
+        }
+        else
+        {
+            PlayerListener.OnLocalPlayerKillNPC.Remove(NPCType, ListenKillNPC);
+        }
     }
     private void ListenKillNPC(NPC npc)
     {
-        if (NPCType > 0 && npc.type != NPCType || Condition?.Invoke(npc) == false)
+        if (Condition?.Invoke(npc) == false)
         {
             return;
         }

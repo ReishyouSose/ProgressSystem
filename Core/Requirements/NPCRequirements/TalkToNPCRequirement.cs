@@ -3,9 +3,24 @@ using Terraria.Localization;
 
 namespace ProgressSystem.Core.Requirements.NPCRequirements;
 
-// TODO: Listen Talk to npc
 public class TalkToNPCRequirement : Requirement
 {
+    #region 钩子
+    static TalkToNPCRequirement()
+    {
+        On_Player.SetTalkNPC += Hook;
+    }
+    static void Hook(On_Player.orig_SetTalkNPC orig, Player self, int npcIndex, bool fromNet = false)
+    {
+        orig(self, npcIndex, fromNet);
+        if (OnTalkToNPC != null && Main.npc.IndexInRange(npcIndex))
+        {
+            OnTalkToNPC(Main.npc[npcIndex]);
+        }
+    }
+    public static Action<NPC>? OnTalkToNPC;
+    #endregion
+
     public int NPCType;
     public Func<NPC, bool>? Condition;
     public LocalizedText? ConditionDescription;
@@ -48,6 +63,25 @@ public class TalkToNPCRequirement : Requirement
     }
     protected NPC? dummyNPC;
     protected override object?[] DisplayNameArgs => [NPCType > 0 ? SampleNPC(NPCType).TypeName : ConditionDescription?.Value ?? "?"];
+
+    #region 监听
+    protected override void BeginListen()
+    {
+        OnTalkToNPC += ListenTalkToNPC;
+    }
+    protected override void EndListen()
+    {
+        OnTalkToNPC -= ListenTalkToNPC;
+    }
+    void ListenTalkToNPC(NPC npc)
+    {
+        if (Condition?.Invoke(npc) != false)
+        {
+            CompleteSafe();
+        }
+    }
+    #endregion
+
     public override void SaveStaticData(TagCompound tag)
     {
         base.SaveStaticData(tag);

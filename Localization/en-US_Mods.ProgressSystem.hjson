@@ -61,6 +61,7 @@ Requirements: {
 	TalkToAnyNPCRequirement: {
 		DisplayName: Mods.ProgressSystem.Requirements.TalkToAnyNPCRequirement.DisplayName
 		Tooltip: Mods.ProgressSystem.Requirements.TalkToAnyNPCRequirement.Tooltip
+		ConditionDescription: Mods.ProgressSystem.Requirements.TalkToAnyNPCRequirement.ConditionDescription
 	}
 
 	TalkToNPCRequirement: {
@@ -81,6 +82,7 @@ Requirements: {
 	InteractWithAnyChestRequirement: {
 		DisplayName: Mods.ProgressSystem.Requirements.InteractWithAnyChestRequirement.DisplayName
 		Tooltip: Mods.ProgressSystem.Requirements.InteractWithAnyChestRequirement.Tooltip
+		ConditionDescription: Mods.ProgressSystem.Requirements.InteractWithAnyChestRequirement.ConditionDescription
 	}
 
 	InteractWithChestRequirement: {
@@ -159,6 +161,30 @@ Achievements: {
 				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Combine Test.DisplayName
 				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Combine Test.Tooltip
 				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Combine Test.Description
+			}
+
+			"Open Backpack": {
+				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Open Backpack.DisplayName
+				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Open Backpack.Tooltip
+				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Open Backpack.Description
+			}
+
+			"Open Bestiary": {
+				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Open Bestiary.DisplayName
+				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Open Bestiary.Tooltip
+				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Open Bestiary.Description
+			}
+
+			"Talk To Any NPC": {
+				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Talk To Any NPC.DisplayName
+				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Talk To Any NPC.Tooltip
+				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Talk To Any NPC.Description
+			}
+
+			"Open Chest": {
+				DisplayName: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Open Chest.DisplayName
+				Tooltip: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Open Chest.Tooltip
+				Description: Mods.ProgressSystem.Achievements.ProgressSystem.TestPage.Open Chest.Description
 			}
 		}
 

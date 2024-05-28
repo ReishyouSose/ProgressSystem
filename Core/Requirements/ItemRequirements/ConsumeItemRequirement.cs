@@ -14,11 +14,11 @@ public class ConsumeItemRequirement : ItemRequirement
         base.BeginListen();
         if (ItemType > 0)
         {
-            PlayerListener.OnLocalPlayerConsumeItemOfTypeAdd(ItemType, ListenConsumeItem);
+            PlayerListener.OnLocalPlayerConsumeItem.Add(ItemType, ListenConsumeItem);
         }
         else
         {
-            PlayerListener.OnLocalPlayerConsumeItem += ListenConsumeItem;
+            PlayerListener.OnLocalPlayerConsumeItem.Any += ListenConsumeItem;
         }
     }
     protected override void EndListen()
@@ -26,11 +26,11 @@ public class ConsumeItemRequirement : ItemRequirement
         base.EndListen();
         if (ItemType > 0)
         {
-            PlayerListener.OnLocalPlayerConsumeItemOfTypeRemove(ItemType, ListenConsumeItem);
+            PlayerListener.OnLocalPlayerConsumeItem.Remove(ItemType, ListenConsumeItem);
         }
         else
         {
-            PlayerListener.OnLocalPlayerConsumeItem -= ListenConsumeItem;
+            PlayerListener.OnLocalPlayerConsumeItem.Any -= ListenConsumeItem;
         }
     }
     private void ListenConsumeItem(Item item)

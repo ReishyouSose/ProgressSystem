@@ -5,6 +5,7 @@ using ProgressSystem.Core.Requirements;
 using ProgressSystem.Core.Requirements.ItemRequirements;
 using ProgressSystem.Core.Requirements.MiscRequirements;
 using ProgressSystem.Core.Requirements.NPCRequirements;
+using ProgressSystem.Core.Requirements.TileRequirements;
 using ProgressSystem.Core.Rewards;
 using ProgressSystem.Core.StaticData;
 using System.IO;
@@ -77,6 +78,14 @@ public class AchievementManager : ModSystem, IWithStaticData, INetUpdate, IProgr
         {
             Repeatable = true
         });
+        page.Add(new Achievement(page, ModInstance, "Open Backpack",
+            requirements: [new OpenBackpackRequirement()]));
+        page.Add(new Achievement(page, ModInstance, "Open Bestiary",
+            requirements: [new OpenBestiaryRequirement()]));
+        page.Add(new Achievement(page, ModInstance, "Talk To Any NPC",
+            requirements: [new TalkToAnyNPCRequirement()]));
+        page.Add(new Achievement(page, ModInstance, "Open Chest",
+            requirements: [new InteractWithAnyChestRequirement()]));
     }
     #endregion
 

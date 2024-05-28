@@ -4562,7 +4562,7 @@ public static partial class TigerExtensions
 
             #endregion
 
-            #region GetKeyByIndex
+            #region GetValueByIndex
 
             DynamicMethod getValueByIndexDynamicMethod = new("GetDictionaryValueByIndex", typeof(TValue), [dictionaryType, typeof(int)], dictionaryType, true);
             il = getValueByIndexDynamicMethod.GetILGenerator();

@@ -17,11 +17,11 @@ public class CraftItemRequirement : ItemRequirement
         base.BeginListen();
         if (ItemType > 0)
         {
-            PlayerListener.OnLocalPlayerCraftItemOfTypeAdd(ItemType, ListenCraftItem);
+            PlayerListener.OnLocalPlayerCraftItem.Add(ItemType, ListenCraftItem);
         }
         else
         {
-            PlayerListener.OnLocalPlayerCraftItem += ListenCraftItem;
+            PlayerListener.OnLocalPlayerCraftItem.Any += ListenCraftItem;
         }
     }
     protected override void EndListen()
@@ -29,11 +29,11 @@ public class CraftItemRequirement : ItemRequirement
         base.EndListen();
         if (ItemType > 0)
         {
-            PlayerListener.OnLocalPlayerCraftItemOfTypeRemove(ItemType, ListenCraftItem);
+            PlayerListener.OnLocalPlayerCraftItem.Remove(ItemType, ListenCraftItem);
         }
         else
         {
-            PlayerListener.OnLocalPlayerCraftItem -= ListenCraftItem;
+            PlayerListener.OnLocalPlayerCraftItem.Any -= ListenCraftItem;
         }
     }
     private void ListenCraftItem(Item item, RecipeItemCreationContext context)
